@@ -22,6 +22,8 @@ interface SectionAccordionItemProps {
   onSelectQuestion: (qIdx: number) => void;
   onPageChange: (dir: "prev" | "next") => void;
   onSubmit: () => void;
+  isReviewMode?: boolean;
+  onExitReview?: () => void;
 }
 
 export const SectionAccordionItem: React.FC<SectionAccordionItemProps> = ({
@@ -41,6 +43,8 @@ export const SectionAccordionItem: React.FC<SectionAccordionItemProps> = ({
   onSelectQuestion,
   onPageChange,
   onSubmit,
+  isReviewMode,
+  onExitReview,
 }) => {
   const sectionQuestions = React.useMemo(() => {
     return allQuestions.filter((q) => section.questionIds.includes(q.id));
@@ -172,17 +176,30 @@ export const SectionAccordionItem: React.FC<SectionAccordionItemProps> = ({
               </Button>
             </div>
           )}
-          <Button
-            size="sm"
-            className={`w-full h-10 text-[11px] font-black rounded-xl transition-all ${isActive ? "primary-gradient police-shadow" : "bg-muted text-muted-foreground opacity-60"}`}
-            disabled={!isActive}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSubmit();
-            }}
-          >
-            {result?.submitted ? "NỘP LẠI PHẦN NÀY" : "NỘP PHẦN NÀY"}
-          </Button>
+          {!isReviewMode ? (
+            <Button
+              size="sm"
+              className={`w-full h-10 text-[11px] font-black rounded-xl transition-all ${isActive ? "primary-gradient police-shadow" : "bg-muted text-muted-foreground opacity-60"}`}
+              disabled={!isActive}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSubmit();
+              }}
+            >
+              {result?.submitted ? "NỘP LẠI PHẦN NÀY" : "NỘP PHẦN NÀY"}
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              className="w-full h-10 text-[11px] font-black rounded-xl transition-all primary-gradient police-shadow text-white"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onExitReview) onExitReview();
+              }}
+            >
+              QUAY LẠI BẢNG ĐIỂM
+            </Button>
+          )}
         </div>
       )}
     </div>

@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import type { Unit, Question } from "../../types";
+import React, { useState } from "react";
+import type { Unit, Question } from "@/types";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,10 +11,9 @@ import {
   Zap,
 } from "lucide-react";
 
-import { MultipleChoiceQuestion } from "./questions/MultipleChoiceQuestion";
-import { MatchingQuestion } from "./questions/MatchingQuestion";
-import { ArrangementQuestion } from "./questions/ArrangementQuestion";
-import { InputQuestion } from "./questions/InputQuestion";
+import { QuestionRenderer } from "./components/QuestionRenderer";
+import { useQuestionAnswers } from "./hooks/useQuestionAnswers";
+import { shuffleArray } from "./utils/testUtils";
 import { PracticeSidebar } from "./layout/PracticeSidebar";
 import { PracticeHeader } from "./layout/PracticeHeader";
 import { PracticeResults } from "./results/PracticeResults";
@@ -24,15 +23,6 @@ export interface QuickTestProps {
   completedUnitIds: number[];
   onBack: () => void;
   onComplete?: (score: number) => void;
-}
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const shuffled = [...arr];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
 }
 
 function generateQuickTestQuestions(
@@ -118,68 +108,25 @@ export const QuickTest: React.FC<QuickTestProps> = ({
     generateQuickTestQuestions(lessons, completedUnitIds),
   );
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [matchingAnswers, setMatchingAnswers] = useState<
-    Record<string, Record<string, string>>
-  >({});
-  const [arrangementAnswers, setArrangementAnswers] = useState<
-    Record<string, string[]>
-  >({});
-  const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
+  const {
+    answers,
+    setAnswers,
+    matchingAnswers,
+    setMatchingAnswers,
+    arrangementAnswers,
+    setArrangementAnswers,
+    selectedLeft,
+    setSelectedLeft,
+    matchingRightOptionsByQuestionId,
+    isQuestionAnswered,
+    calculateCorrectCount,
+    getCombinedAnswers,
+  } = useQuestionAnswers(questions);
+
   const [submitted, setSubmitted] = useState(false);
+  const [isReviewMode, setIsReviewMode] = useState(false);
 
   const currentQ = questions[currentIndex];
-
-  const matchingRightOptionsByQuestionId = useMemo(() => {
-    const stableOrders: Record<string, { left: string; right: string }[]> = {};
-    questions.forEach((q) => {
-      if (q.type === "Matching") {
-        stableOrders[q.id] = shuffleArray([...(q.pairs || [])]);
-      }
-    });
-    return stableOrders;
-  }, [questions]);
-
-  const isQuestionAnswered = (q: Question) => {
-    if (q.type === "Matching") {
-      const pairCount = q.pairs?.length || 0;
-      return (
-        pairCount > 0 &&
-        Object.keys(matchingAnswers[q.id] || {}).length === pairCount
-      );
-    }
-    if (q.type === "Arrangement") {
-      return (arrangementAnswers[q.id] || []).length > 0;
-    }
-    return (
-      typeof answers[q.id] === "string" &&
-      (answers[q.id] as string).trim().length > 0
-    );
-  };
-
-  const calculateScore = () => {
-    return questions.filter((q) => {
-      if (q.type === "Matching") {
-        const userMatches = matchingAnswers[q.id] || {};
-        return q.pairs?.every((p) => userMatches[p.left] === p.right);
-      }
-      if (q.type === "Arrangement") {
-        const userArranged = (arrangementAnswers[q.id] || []).join(" ").trim();
-        const correctAns = (q.answer as string) || "";
-        return userArranged.toLowerCase() === correctAns.trim().toLowerCase();
-      }
-      const userAns = String(answers[q.id] || "")
-        .trim()
-        .toLowerCase();
-      const correctAns = String(q.answer || "")
-        .trim()
-        .toLowerCase();
-      const acceptable = (q.acceptableAnswers || []).map((a) =>
-        a.trim().toLowerCase(),
-      );
-      return userAns === correctAns || acceptable.includes(userAns);
-    }).length;
-  };
 
   if (questions.length === 0) {
     return (
@@ -213,17 +160,10 @@ export const QuickTest: React.FC<QuickTestProps> = ({
     );
   }
 
-  if (submitted) {
-    const scoreValue = calculateScore();
+  if (submitted && !isReviewMode) {
+    const scoreValue = calculateCorrectCount(questions);
     const percent = Math.round((scoreValue / questions.length) * 100);
-    const combinedAnswers: Record<
-      string,
-      string | Record<string, string> | string[]
-    > = {
-      ...answers,
-      ...matchingAnswers,
-      ...arrangementAnswers,
-    };
+    const combinedAnswers = getCombinedAnswers();
 
     return (
       <PracticeResults
@@ -232,6 +172,7 @@ export const QuickTest: React.FC<QuickTestProps> = ({
         questions={questions}
         userAnswers={combinedAnswers}
         onBack={onBack}
+        onReview={() => setIsReviewMode(true)}
         title="⚡ KẾT QUẢ TEST NHANH"
       />
     );
@@ -249,21 +190,30 @@ export const QuickTest: React.FC<QuickTestProps> = ({
             <Button
               size="lg"
               className={`w-full h-16 text-lg font-black rounded-xl primary-gradient police-shadow transition-all ${
-                questions.every((q) => isQuestionAnswered(q))
+                isReviewMode || questions.every((q) => isQuestionAnswered(q))
                   ? "scale-100 opacity-100"
                   : "opacity-50 scale-95"
               }`}
-              disabled={!questions.every((q) => isQuestionAnswered(q))}
+              disabled={
+                !isReviewMode && !questions.every((q) => isQuestionAnswered(q))
+              }
               onClick={() => {
-                setSubmitted(true);
-                if (onComplete)
-                  onComplete(
-                    Math.round((calculateScore() / questions.length) * 100),
-                  );
+                if (isReviewMode) {
+                  setIsReviewMode(false);
+                } else {
+                  setSubmitted(true);
+                  if (onComplete)
+                    onComplete(
+                      Math.round(
+                        (calculateCorrectCount(questions) / questions.length) *
+                          100,
+                      ),
+                    );
+                }
               }}
             >
               <Send className="mr-3 h-6 w-6" />
-              NỘP BÀI
+              {isReviewMode ? "XEM LẠI KẾT QUẢ" : "NỘP BÀI"}
             </Button>
           }
         >
@@ -313,69 +263,52 @@ export const QuickTest: React.FC<QuickTestProps> = ({
                 </div>
 
                 <div className="space-y-3 py-2">
-                  {currentQ.type === "MCQ" || currentQ.type === "Scenario" ? (
-                    <MultipleChoiceQuestion
-                      question={currentQ}
-                      selectedAnswer={answers[currentQ.id]}
-                      onSelect={(ans) =>
-                        setAnswers((prev) => ({ ...prev, [currentQ.id]: ans }))
-                      }
-                    />
-                  ) : currentQ.type === "Matching" ? (
-                    <MatchingQuestion
-                      question={currentQ}
-                      matchingAnswers={matchingAnswers[currentQ.id] || {}}
-                      selectedLeft={selectedLeft}
-                      onSelectLeft={setSelectedLeft}
-                      onMatch={(left, right) => {
-                        const current = matchingAnswers[currentQ.id] || {};
-                        setMatchingAnswers((prev) => ({
-                          ...prev,
-                          [currentQ.id]: { ...current, [left]: right },
-                        }));
-                        setSelectedLeft(null);
-                      }}
-                      shuffledRightOptions={
-                        matchingRightOptionsByQuestionId[currentQ.id] || []
-                      }
-                    />
-                  ) : currentQ.type === "Arrangement" ? (
-                    <ArrangementQuestion
-                      question={currentQ}
-                      selectedWords={arrangementAnswers[currentQ.id] || []}
-                      onAddWord={(word) => {
-                        const current = arrangementAnswers[currentQ.id] || [];
-                        setArrangementAnswers((prev) => ({
-                          ...prev,
-                          [currentQ.id]: [...current, word],
-                        }));
-                      }}
-                      onRemoveWord={(idx) => {
-                        const current = [
-                          ...(arrangementAnswers[currentQ.id] || []),
-                        ];
-                        current.splice(idx, 1);
-                        setArrangementAnswers((prev) => ({
-                          ...prev,
-                          [currentQ.id]: current,
-                        }));
-                      }}
-                      onReset={() =>
-                        setArrangementAnswers((prev) => ({
-                          ...prev,
-                          [currentQ.id]: [],
-                        }))
-                      }
-                    />
-                  ) : (
-                    <InputQuestion
-                      question={currentQ}
-                      value={answers[currentQ.id] || ""}
-                      onChange={(val) =>
-                        setAnswers((prev) => ({ ...prev, [currentQ.id]: val }))
-                      }
-                    />
-                  )}
+                  <QuestionRenderer
+                    question={currentQ}
+                    answers={answers}
+                    matchingAnswers={matchingAnswers}
+                    arrangementAnswers={arrangementAnswers}
+                    selectedLeft={selectedLeft}
+                    matchingRightOptions={
+                      matchingRightOptionsByQuestionId[currentQ.id] || []
+                    }
+                    onAnswerChange={(qid, val) =>
+                      setAnswers((prev) => ({ ...prev, [qid]: val }))
+                    }
+                    onMatchingSelectLeft={(qid, left) =>
+                      setSelectedLeft((prev) => ({ ...prev, [qid]: left }))
+                    }
+                    onMatchingMatch={(qid, left, right) => {
+                      const current = matchingAnswers[qid] || {};
+                      setMatchingAnswers((prev) => ({
+                        ...prev,
+                        [qid]: { ...current, [left]: right },
+                      }));
+                      setSelectedLeft((prev) => ({ ...prev, [qid]: null }));
+                    }}
+                    onArrangementAdd={(qid, word) => {
+                      const current = arrangementAnswers[qid] || [];
+                      setArrangementAnswers((prev) => ({
+                        ...prev,
+                        [qid]: [...current, word],
+                      }));
+                    }}
+                    onArrangementRemove={(qid, idx) => {
+                      const current = [...(arrangementAnswers[qid] || [])];
+                      current.splice(idx, 1);
+                      setArrangementAnswers((prev) => ({
+                        ...prev,
+                        [qid]: current,
+                      }));
+                    }}
+                    onArrangementReset={(qid) =>
+                      setArrangementAnswers((prev) => ({
+                        ...prev,
+                        [qid]: [],
+                      }))
+                    }
+                    showResults={isReviewMode}
+                  />
                 </div>
               </div>
             </CardContent>

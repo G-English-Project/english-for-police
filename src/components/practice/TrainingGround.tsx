@@ -1,20 +1,13 @@
-import React, {
-  useState,
-  useRef,
-  useCallback,
-  useEffect,
-  useMemo,
-} from "react";
-import type { Unit, Question } from "../../types";
+import React, { useState, useRef, useCallback, useEffect } from "react";
+import type { Unit, Question } from "@/types";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Timer, ChevronLeft, CheckCircle2 } from "lucide-react";
 
-import { MultipleChoiceQuestion } from "./questions/MultipleChoiceQuestion";
-import { MatchingQuestion } from "./questions/MatchingQuestion";
-import { ArrangementQuestion } from "./questions/ArrangementQuestion";
-import { InputQuestion } from "./questions/InputQuestion";
+import { QuestionRenderer } from "./components/QuestionRenderer";
+import { useQuestionAnswers } from "./hooks/useQuestionAnswers";
+import { shuffleArray } from "./utils/testUtils";
 import { PracticeSidebar } from "./layout/PracticeSidebar";
 import { PracticeResults } from "./results/PracticeResults";
 
@@ -22,15 +15,6 @@ interface TrainingGroundProps {
   unit: Unit;
   onBack: () => void;
   onComplete: (score: number) => void;
-}
-
-function shuffleArray<T>(arr: T[]): T[] {
-  const shuffled = [...arr];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
 }
 
 function generateTrainingGroundQuestions(unit: Unit): Question[] {
@@ -156,71 +140,38 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
   const [questions] = useState<Question[]>(() =>
     generateTrainingGroundQuestions(unit),
   );
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [matchingAnswers, setMatchingAnswers] = useState<
-    Record<string, Record<string, string>>
-  >({});
-  const [arrangementAnswers, setArrangementAnswers] = useState<
-    Record<string, string[]>
-  >({});
-  const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
+  const {
+    answers,
+    setAnswers,
+    matchingAnswers,
+    setMatchingAnswers,
+    arrangementAnswers,
+    setArrangementAnswers,
+    selectedLeft,
+    setSelectedLeft,
+    matchingRightOptionsByQuestionId,
+    isQuestionAnswered,
+    calculateCorrectCount,
+    getCombinedAnswers,
+  } = useQuestionAnswers(questions);
+
   const [timeLeft, setTimeLeft] = useState(600);
   const [isFinished, setIsFinished] = useState(false);
   const [showResults, setShowResults] = useState(false);
+  const [isReviewMode, setIsReviewMode] = useState(false);
   const [currentScore, setCurrentScore] = useState<number | null>(null);
   const [hasReportedCompletion, setHasReportedCompletion] = useState(false);
   const timerRef = useRef<number | undefined>(undefined);
-
-  const matchingRightOptionsByQuestionId = useMemo(() => {
-    const stableOrders: Record<string, { left: string; right: string }[]> = {};
-    questions.forEach((q) => {
-      if (q.type === "Matching") {
-        stableOrders[q.id] = shuffleArray([...(q.pairs || [])]);
-      }
-    });
-    return stableOrders;
-  }, [questions]);
 
   const handleFinish = useCallback(() => {
     setIsFinished(true);
     setShowResults(true);
     if (timerRef.current) clearInterval(timerRef.current);
 
-    let correctCount = 0;
-    questions.forEach((q) => {
-      if (q.type === "MCQ" || q.type === "Scenario") {
-        if (answers[q.id] === q.answer) correctCount++;
-      } else if (
-        q.type === "Dictation" ||
-        q.type === "FillInBlank" ||
-        q.type === "Speaking"
-      ) {
-        const userAns = String(answers[q.id] || "")
-          .trim()
-          .toLowerCase();
-        const correctAns = String(q.answer || "")
-          .trim()
-          .toLowerCase();
-        const acceptable = (q.acceptableAnswers || []).map((a) =>
-          a.trim().toLowerCase(),
-        );
-        if (userAns === correctAns || acceptable.includes(userAns))
-          correctCount++;
-      } else if (q.type === "Matching") {
-        const userPairs = matchingAnswers[q.id] || {};
-        if ((q.pairs || []).every((p) => userPairs[p.left] === p.right))
-          correctCount++;
-      } else if (q.type === "Arrangement") {
-        const userArranged = (arrangementAnswers[q.id] || []).join(" ").trim();
-        const correctAns = String(q.answer || "").trim();
-        if (userArranged.toLowerCase() === correctAns.toLowerCase())
-          correctCount++;
-      }
-    });
-
+    const correctCount = calculateCorrectCount(questions);
     const finalScore = Math.round((correctCount / questions.length) * 100);
     setCurrentScore(finalScore);
-  }, [answers, matchingAnswers, arrangementAnswers, questions]);
+  }, [calculateCorrectCount, questions]);
 
   const handleBackToHome = () => {
     if (!hasReportedCompletion && currentScore !== null) {
@@ -252,35 +203,11 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  const isQuestionAnswered = (q: Question) => {
-    if (q.type === "Matching") {
-      const pairCount = q.pairs?.length || 0;
-      return (
-        pairCount > 0 &&
-        Object.keys(matchingAnswers[q.id] || {}).length === pairCount
-      );
-    }
-    if (q.type === "Arrangement") {
-      return (arrangementAnswers[q.id] || []).length > 0;
-    }
-    return (
-      typeof answers[q.id] === "string" &&
-      (answers[q.id] as string).trim().length > 0
-    );
-  };
-
   const answeredCount = questions.filter((q) => isQuestionAnswered(q)).length;
   const allQuestionsAnswered = answeredCount === questions.length;
 
-  if (showResults) {
-    const combinedAnswers: Record<
-      string,
-      string | Record<string, string> | string[]
-    > = {
-      ...answers,
-      ...matchingAnswers,
-      ...arrangementAnswers,
-    };
+  if (showResults && !isReviewMode) {
+    const combinedAnswers = getCombinedAnswers();
 
     return (
       <PracticeResults
@@ -289,6 +216,7 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
         questions={questions}
         userAnswers={combinedAnswers}
         onBack={handleBackToHome}
+        onReview={() => setIsReviewMode(true)}
         title="KIỂM TRA NĂNG LỰC"
       />
     );
@@ -322,10 +250,23 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
             </Button>
             <Button
               className="w-full h-11 font-bold primary-gradient police-shadow group"
-              disabled={isFinished || !allQuestionsAnswered}
-              onClick={handleFinish}
+              disabled={
+                (!isReviewMode && isFinished) ||
+                (!isReviewMode && !allQuestionsAnswered)
+              }
+              onClick={() => {
+                if (isReviewMode) {
+                  setIsReviewMode(false);
+                } else {
+                  handleFinish();
+                }
+              }}
             >
-              {isFinished ? "ĐANG NỘP..." : "NỘP BÀI"}
+              {isReviewMode
+                ? "QUAY LẠI KẾT QUẢ"
+                : isFinished
+                  ? "ĐANG NỘP..."
+                  : "NỘP BÀI"}
             </Button>
           </>
         }
@@ -381,67 +322,52 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
               </CardHeader>
               <CardContent className="pl-16 pr-6 pb-8">
                 <div className="space-y-3">
-                  {q.type === "MCQ" || q.type === "Scenario" ? (
-                    <MultipleChoiceQuestion
-                      question={q}
-                      selectedAnswer={answers[q.id]}
-                      onSelect={(ans) =>
-                        setAnswers((prev) => ({ ...prev, [q.id]: ans }))
-                      }
-                    />
-                  ) : q.type === "Matching" ? (
-                    <MatchingQuestion
-                      question={q}
-                      matchingAnswers={matchingAnswers[q.id] || {}}
-                      selectedLeft={selectedLeft}
-                      onSelectLeft={setSelectedLeft}
-                      onMatch={(left, right) => {
-                        const current = matchingAnswers[q.id] || {};
-                        setMatchingAnswers((prev) => ({
-                          ...prev,
-                          [q.id]: { ...current, [left]: right },
-                        }));
-                        setSelectedLeft(null);
-                      }}
-                      shuffledRightOptions={
-                        matchingRightOptionsByQuestionId[q.id] || []
-                      }
-                    />
-                  ) : q.type === "Arrangement" ? (
-                    <ArrangementQuestion
-                      question={q}
-                      selectedWords={arrangementAnswers[q.id] || []}
-                      onAddWord={(word) => {
-                        const current = arrangementAnswers[q.id] || [];
-                        setArrangementAnswers((prev) => ({
-                          ...prev,
-                          [q.id]: [...current, word],
-                        }));
-                      }}
-                      onRemoveWord={(idx) => {
-                        const current = [...(arrangementAnswers[q.id] || [])];
-                        current.splice(idx, 1);
-                        setArrangementAnswers((prev) => ({
-                          ...prev,
-                          [q.id]: current,
-                        }));
-                      }}
-                      onReset={() =>
-                        setArrangementAnswers((prev) => ({
-                          ...prev,
-                          [q.id]: [],
-                        }))
-                      }
-                    />
-                  ) : (
-                    <InputQuestion
-                      question={q}
-                      value={answers[q.id] || ""}
-                      onChange={(val) =>
-                        setAnswers((prev) => ({ ...prev, [q.id]: val }))
-                      }
-                    />
-                  )}
+                  <QuestionRenderer
+                    question={q}
+                    answers={answers}
+                    matchingAnswers={matchingAnswers}
+                    arrangementAnswers={arrangementAnswers}
+                    selectedLeft={selectedLeft}
+                    matchingRightOptions={
+                      matchingRightOptionsByQuestionId[q.id] || []
+                    }
+                    onAnswerChange={(qid, val) =>
+                      setAnswers((prev) => ({ ...prev, [qid]: val }))
+                    }
+                    onMatchingSelectLeft={(qid, left) =>
+                      setSelectedLeft((prev) => ({ ...prev, [qid]: left }))
+                    }
+                    onMatchingMatch={(qid, left, right) => {
+                      const current = matchingAnswers[qid] || {};
+                      setMatchingAnswers((prev) => ({
+                        ...prev,
+                        [qid]: { ...current, [left]: right },
+                      }));
+                      setSelectedLeft((prev) => ({ ...prev, [qid]: null }));
+                    }}
+                    onArrangementAdd={(qid, word) => {
+                      const current = arrangementAnswers[qid] || [];
+                      setArrangementAnswers((prev) => ({
+                        ...prev,
+                        [qid]: [...current, word],
+                      }));
+                    }}
+                    onArrangementRemove={(qid, idx) => {
+                      const current = [...(arrangementAnswers[qid] || [])];
+                      current.splice(idx, 1);
+                      setArrangementAnswers((prev) => ({
+                        ...prev,
+                        [qid]: current,
+                      }));
+                    }}
+                    onArrangementReset={(qid) =>
+                      setArrangementAnswers((prev) => ({
+                        ...prev,
+                        [qid]: [],
+                      }))
+                    }
+                    showResults={isReviewMode}
+                  />
                 </div>
               </CardContent>
             </Card>

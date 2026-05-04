@@ -6,10 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Shuffle } from "lucide-react";
 
-import { MultipleChoiceQuestion } from "./questions/MultipleChoiceQuestion";
-import { MatchingQuestion } from "./questions/MatchingQuestion";
-import { ArrangementQuestion } from "./questions/ArrangementQuestion";
-import { InputQuestion } from "./questions/InputQuestion";
+import { QuestionRenderer } from "./components/QuestionRenderer";
 import { PracticeSidebar } from "./layout/PracticeSidebar";
 import { PracticeHeader } from "./layout/PracticeHeader";
 import { PracticeResults } from "./results/PracticeResults";
@@ -18,11 +15,9 @@ import { PracticeResults } from "./results/PracticeResults";
 import {
   type Section,
   type TestMode,
-  type MatchingPair,
   QUESTIONS_PER_PAGE,
   generateGeneralQuestions,
   buildSections,
-  shuffleArray,
 } from "./utils/testUtils";
 import { useGeneralTestState } from "./hooks/useGeneralTestState";
 import { SectionAccordionItem } from "./components/SectionAccordionItem";
@@ -61,6 +56,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
   >(0);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [currentIndexInSection, setCurrentIndexInSection] = useState(0);
+  const [isReviewMode, setIsReviewMode] = useState(false);
 
   // 3. Test Logic Hook
   const {
@@ -72,6 +68,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     setArrangementAnswers,
     selectedLeft,
     setSelectedLeft,
+    matchingRightOptionsByQuestionId,
     showResults,
     setShowResults,
     overallScore,
@@ -80,8 +77,9 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     setSectionResults,
     isQuestionAnswered,
     calculateScore,
+    getCombinedAnswers,
     resetBaseState,
-  } = useGeneralTestState();
+  } = useGeneralTestState(questions);
 
   const sections: Section[] = useMemo(
     () => buildSections(questions, testMode, bankLimit),
@@ -131,16 +129,6 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     [sections, questions, isQuestionAnswered],
   );
 
-  const matchingRightOptionsByQuestionId = useMemo(() => {
-    const stableOrders: Record<string, MatchingPair[]> = {};
-    questions.forEach((q) => {
-      if (q.type === "Matching") {
-        stableOrders[q.id] = shuffleArray([...(q.pairs || [])]);
-      }
-    });
-    return stableOrders;
-  }, [questions]);
-
   const currentQuestion = pagedSectionQuestions[currentIndexInSection];
 
   // 5. Handlers
@@ -181,6 +169,10 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
   };
 
   const handleBack = () => {
+    if (isReviewMode) {
+      setIsReviewMode(false);
+      return;
+    }
     if (showResults && onComplete) onComplete(overallScore);
     onBack();
   };
@@ -201,14 +193,15 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     );
   }
 
-  if (showResults) {
+  if (showResults && !isReviewMode) {
     return (
       <PracticeResults
         score={overallScore}
         totalQuestions={questions.length}
         questions={questions}
-        userAnswers={{ ...answers, ...matchingAnswers, ...arrangementAnswers }}
+        userAnswers={getCombinedAnswers()}
         onBack={handleBack}
+        onReview={() => setIsReviewMode(true)}
         title="KẾT QUẢ TEST TỔNG HỢP"
       />
     );
@@ -296,6 +289,8 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
                   setCurrentIndexInSection(0);
                 }}
                 onSubmit={handleSubmitSection}
+                isReviewMode={isReviewMode}
+                onExitReview={() => setIsReviewMode(false)}
               />
             ))}
           </div>
@@ -330,102 +325,59 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
                     )}
 
                     <div className="space-y-3 py-1">
-                      {(currentQuestion.type === "MCQ" ||
-                        currentQuestion.type === "Scenario") && (
-                        <MultipleChoiceQuestion
-                          question={currentQuestion}
-                          selectedAnswer={answers[currentQuestion.id]}
-                          onSelect={(ans) =>
-                            setAnswers((prev) => ({
-                              ...prev,
-                              [currentQuestion.id]: ans,
-                            }))
-                          }
-                        />
-                      )}
-                      {currentQuestion.type === "Matching" && (
-                        <MatchingQuestion
-                          question={currentQuestion}
-                          matchingAnswers={
-                            matchingAnswers[currentQuestion.id] || {}
-                          }
-                          selectedLeft={
-                            selectedLeft[currentQuestion.id] || null
-                          }
-                          onSelectLeft={(left) =>
-                            setSelectedLeft((prev) => ({
-                              ...prev,
-                              [currentQuestion.id]: left,
-                            }))
-                          }
-                          onMatch={(l, r) => {
-                            const newMatches = {
-                              ...(matchingAnswers[currentQuestion.id] || {}),
-                              [l]: r,
-                            };
-                            setMatchingAnswers((prev) => ({
-                              ...prev,
-                              [currentQuestion.id]: newMatches,
-                            }));
-                            setSelectedLeft((prev) => ({
-                              ...prev,
-                              [currentQuestion.id]: null,
-                            }));
-                          }}
-                          shuffledRightOptions={
-                            matchingRightOptionsByQuestionId[
-                              currentQuestion.id
-                            ] || []
-                          }
-                        />
-                      )}
-                      {currentQuestion.type === "Arrangement" && (
-                        <ArrangementQuestion
-                          question={currentQuestion}
-                          selectedWords={
-                            arrangementAnswers[currentQuestion.id] || []
-                          }
-                          onAddWord={(w) =>
-                            setArrangementAnswers((prev) => ({
-                              ...prev,
-                              [currentQuestion.id]: [
-                                ...(prev[currentQuestion.id] || []),
-                                w,
-                              ],
-                            }))
-                          }
-                          onRemoveWord={(idx) => {
-                            const nextArr = [
-                              ...(arrangementAnswers[currentQuestion.id] || []),
-                            ];
-                            nextArr.splice(idx, 1);
-                            setArrangementAnswers((prev) => ({
-                              ...prev,
-                              [currentQuestion.id]: nextArr,
-                            }));
-                          }}
-                          onReset={() =>
-                            setArrangementAnswers((prev) => ({
-                              ...prev,
-                              [currentQuestion.id]: [],
-                            }))
-                          }
-                        />
-                      )}
-                      {(currentQuestion.type === "Dictation" ||
-                        currentQuestion.type === "FillInBlank" ||
-                        currentQuestion.type === "Speaking") && (
-                        <InputQuestion
-                          question={currentQuestion}
-                          value={answers[currentQuestion.id] || ""}
-                          onChange={(ans) =>
-                            setAnswers((prev) => ({
-                              ...prev,
-                              [currentQuestion.id]: ans,
-                            }))
-                          }
-                        />
-                      )}
+                      <QuestionRenderer
+                        question={currentQuestion}
+                        answers={answers}
+                        matchingAnswers={matchingAnswers}
+                        arrangementAnswers={arrangementAnswers}
+                        selectedLeft={selectedLeft}
+                        matchingRightOptions={
+                          matchingRightOptionsByQuestionId[
+                            currentQuestion.id
+                          ] || []
+                        }
+                        onAnswerChange={(qid, val) =>
+                          setAnswers((prev) => ({ ...prev, [qid]: val }))
+                        }
+                        onMatchingSelectLeft={(qid, left) =>
+                          setSelectedLeft((prev) => ({ ...prev, [qid]: left }))
+                        }
+                        onMatchingMatch={(qid, left, right) => {
+                          const newMatches = {
+                            ...(matchingAnswers[qid] || {}),
+                            [left]: right,
+                          };
+                          setMatchingAnswers((prev) => ({
+                            ...prev,
+                            [qid]: newMatches,
+                          }));
+                          setSelectedLeft((prev) => ({ ...prev, [qid]: null }));
+                        }}
+                        onArrangementAdd={(qid, w) =>
+                          setArrangementAnswers((prev) => ({
+                            ...prev,
+                            [qid]: [...(prev[qid] || []), w],
+                          }))
+                        }
+                        onArrangementRemove={(qid, idx) => {
+                          const nextArr = [...(arrangementAnswers[qid] || [])];
+                          nextArr.splice(idx, 1);
+                          setArrangementAnswers((prev) => ({
+                            ...prev,
+                            [qid]: nextArr,
+                          }));
+                        }}
+                        onArrangementReset={(qid) =>
+                          setArrangementAnswers((prev) => ({
+                            ...prev,
+                            [qid]: [],
+                          }))
+                        }
+                        showResults={
+                          isReviewMode ||
+                          sectionResults[currentSectionIndex]?.submitted
+                        }
+                      />
                     </div>
                   </>
                 )}

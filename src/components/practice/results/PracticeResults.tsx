@@ -10,6 +10,7 @@ interface PracticeResultsProps {
   questions: Question[];
   userAnswers: Record<string, string | Record<string, string> | string[]>;
   onBack: () => void;
+  onReview?: () => void;
   title?: string;
 }
 
@@ -19,6 +20,7 @@ export const PracticeResults: React.FC<PracticeResultsProps> = ({
   questions,
   userAnswers,
   onBack,
+  onReview,
   title = "KẾT QUẢ BÀI LÀM",
 }) => {
   const isCorrect = (q: Question) => {
@@ -127,10 +129,26 @@ export const PracticeResults: React.FC<PracticeResultsProps> = ({
         })}
       </div>
 
-      <Button size="lg" className="w-full h-12 font-bold" onClick={onBack}>
-        <Home className="mr-2 h-4 w-4" />
-        QUAY LẠI ({score}%)
-      </Button>
+      <div className="flex gap-4">
+        <Button
+          size="lg"
+          variant="outline"
+          className="flex-1 h-12 font-bold"
+          onClick={onBack}
+        >
+          <Home className="mr-2 h-4 w-4" />
+          QUAY LẠI ({score}%)
+        </Button>
+        {onReview && (
+          <Button
+            size="lg"
+            className="flex-1 h-12 font-bold primary-gradient police-shadow text-white"
+            onClick={onReview}
+          >
+            XEM LẠI CHI TIẾT
+          </Button>
+        )}
+      </div>
     </div>
   );
 };
