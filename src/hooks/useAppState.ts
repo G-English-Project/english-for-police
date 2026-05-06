@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { DailyTask, FlaggedItem, Unit, UserProgress } from "@/types";
 import { initialLessons } from "@/data/lesson/lessons";
+import { fetchLessons, importLessons } from "@/lib/lessonApi";
 
 export function useAppState() {
   const [lessons, setLessons] = useState<Unit[]>(() => {
@@ -92,6 +93,25 @@ export function useAppState() {
   });
 
   // Persist to localStorage
+  useEffect(() => {
+    const syncLessonsFromBackend = async () => {
+      try {
+        let remoteLessons = await fetchLessons();
+        if (!remoteLessons.length) {
+          await importLessons(initialLessons);
+          remoteLessons = await fetchLessons();
+        }
+        if (remoteLessons.length) {
+          setLessons(remoteLessons);
+        }
+      } catch (error) {
+        console.error("Failed to sync lessons from backend", error);
+      }
+    };
+
+    void syncLessonsFromBackend();
+  }, []);
+
   useEffect(() => {
     localStorage.setItem("police_english_progress", JSON.stringify(progress));
   }, [progress]);
