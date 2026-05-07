@@ -15,6 +15,8 @@ import {
   FlashcardReviewPage,
   FlashcardResultsPage,
   GeneralTestPage,
+  AccountManagementPage,
+  StudentDossierPage,
 } from "@/pages";
 
 // Lazy-loaded route components
@@ -237,6 +239,11 @@ export function AppRouter() {
                   onSave={(newLessons) => setLessons(newLessons)}
                 />
               }
+            />
+            <Route path="/admin/accounts" element={<AccountManagementPage />} />
+            <Route
+              path="/admin/accounts/:userId"
+              element={<StudentDossierPage />}
             />
           </Routes>
         </Suspense>

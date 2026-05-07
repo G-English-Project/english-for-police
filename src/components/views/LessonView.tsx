@@ -111,7 +111,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
         />
 
         {/* Shortcuts */}
-        <div className="bg-card rounded-xl border police-shadow overflow-hidden">
+        <div className="bg-card rounded-md border police-shadow overflow-hidden">
           <div className="p-4">
             <LessonShortcutButtons
               onStartPractice={startPractice}

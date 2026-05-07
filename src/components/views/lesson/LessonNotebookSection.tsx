@@ -14,7 +14,7 @@ export const LessonNotebookSection: React.FC<LessonNotebookSectionProps> = ({
   const unitFlaggedItems = flaggedItems.filter((f) => f.unitId === unitId);
 
   return (
-    <div className="bg-card rounded-xl border police-shadow overflow-hidden">
+    <div className="bg-card rounded-md border police-shadow overflow-hidden">
       <div className="p-4 border-b bg-muted/50">
         <h4 className="font-heading font-bold flex items-center gap-2 text-sm">
           <BookMarked className="h-4 w-4 text-secondary" />

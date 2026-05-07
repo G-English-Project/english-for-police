@@ -1,15 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { authService } from "@/services/auth.service";
 import type { LoginRequest, RegisterRequest } from "@/models/auth.model";
 import type { User } from "@/models/user.model";
 
+const AUTH_CHANGED_EVENT = "auth-changed";
+
+function getStoredUser() {
+  const savedUser = localStorage.getItem("auth_user");
+  return savedUser ? (JSON.parse(savedUser) as User) : null;
+}
+
 export function useAuth() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem("auth_user");
-    return savedUser ? JSON.parse(savedUser) : null;
-  });
+  const [user, setUser] = useState<User | null>(() => getStoredUser());
+
+  useEffect(() => {
+    const syncAuth = () => setUser(getStoredUser());
+    window.addEventListener("storage", syncAuth);
+    window.addEventListener(AUTH_CHANGED_EVENT, syncAuth);
+    return () => {
+      window.removeEventListener("storage", syncAuth);
+      window.removeEventListener(AUTH_CHANGED_EVENT, syncAuth);
+    };
+  }, []);
 
   const login = async (data: LoginRequest) => {
     setIsLoading(true);
@@ -18,6 +32,7 @@ export function useAuth() {
       const response = await authService.login(data);
       setUser(response.user);
       localStorage.setItem("auth_user", JSON.stringify(response.user));
+      window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
       return response;
     } catch (err) {
       const apiError = err as { message?: string };
@@ -52,6 +67,7 @@ export function useAuth() {
     authService.logout();
     setUser(null);
     localStorage.removeItem("auth_user");
+    window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
   };
 
   return {

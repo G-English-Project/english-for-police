@@ -71,7 +71,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       <div className="xl:sticky xl:top-20 self-start">
         <div className="space-y-6">
           {/* Hero Section Moved to Left */}
-          <Card className="primary-gradient relative overflow-hidden border-none police-shadow rounded-2xl p-5 text-white">
+          <Card className="primary-gradient relative overflow-hidden border-none police-shadow rounded-lg p-5 text-white">
             <div className="absolute -right-4 -top-4 text-[80px] font-heading font-black opacity-10 pointer-events-none select-none" />
             <div className="relative z-10">
               <div className="flex items-center gap-2 text-secondary mb-2">
@@ -92,7 +92,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           {/* Mini Progress Card */}
           <Card className="police-shadow border-none bg-white p-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="h-10 w-10 rounded-xl primary-gradient flex items-center justify-center text-white shadow-lg shadow-primary/20">
+              <div className="h-10 w-10 rounded-md primary-gradient flex items-center justify-center text-white shadow-lg shadow-primary/20">
                 <Target className="h-5 w-5" />
               </div>
               <div>
@@ -223,7 +223,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       <div className="space-y-8">
         {/* Tasks and Review */}
         <div className="space-y-6">
-          <Card className="police-shadow border-none rounded-2xl overflow-hidden">
+          <Card className="police-shadow border-none rounded-lg overflow-hidden">
             <CardHeader className="bg-slate-50/80 border-b border-slate-100 pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
@@ -245,7 +245,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <AccordionItem
                     key={task.id}
                     value={task.id}
-                    className={`border rounded-xl px-4 transition-all duration-300 ${task.completed ? "bg-emerald-50/30 border-emerald-100 shadow-sm" : "bg-white border-slate-100 hover:border-primary/20 hover:shadow-md"}`}
+                    className={`border rounded-md px-4 transition-all duration-300 ${task.completed ? "bg-emerald-50/30 border-emerald-100 shadow-sm" : "bg-white border-slate-100 hover:border-primary/20 hover:shadow-md"}`}
                   >
                     <AccordionTrigger className="hover:no-underline py-4">
                       <div className="flex items-center space-x-4 text-left w-full mr-2">
@@ -279,7 +279,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </AccordionTrigger>
                     <AccordionContent className="pt-2 border-t border-dashed border-slate-100 mt-2">
                       <div className="flex flex-col gap-4">
-                        <div className="flex items-start gap-3 text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div className="flex items-start gap-3 text-xs text-slate-500 bg-slate-50 p-3 rounded-md border border-slate-100">
                           <Info className="h-4 w-4 shrink-0 text-primary mt-0.5" />
                           <p className="leading-relaxed">
                             {task.description ||
@@ -289,7 +289,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         <Button
                           size="sm"
                           variant={task.completed ? "outline" : "default"}
-                          className={`w-full text-xs font-bold h-10 rounded-xl transition-all ${!task.completed ? "primary-gradient border-none shadow-lg shadow-primary/20" : ""}`}
+                          className={`w-full text-xs font-bold h-10 rounded-md transition-all ${!task.completed ? "primary-gradient border-none shadow-lg shadow-primary/20" : ""}`}
                           onClick={() => handleNavigate(task.navigatePath)}
                         >
                           {task.completed
@@ -306,7 +306,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </Card>
 
           {/* Review Card */}
-          <Card className="police-shadow border-none rounded-2xl overflow-hidden">
+          <Card className="police-shadow border-none rounded-lg overflow-hidden">
             <CardHeader className="bg-slate-50/80 border-b border-slate-100">
               <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
                 <Flag className="h-4 w-5 text-secondary fill-current" />
@@ -320,7 +320,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     <Badge
                       key={i}
                       variant="secondary"
-                      className="bg-white text-slate-700 border border-slate-200 shadow-sm hover:border-secondary transition-all py-1.5 px-4 rounded-xl"
+                      className="bg-white text-slate-700 border border-slate-200 shadow-sm hover:border-secondary transition-all py-1.5 px-4 rounded-md"
                     >
                       {item.key}
                     </Badge>

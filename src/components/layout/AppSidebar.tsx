@@ -266,7 +266,7 @@ export function AppSidebar({
 
         <div className="px-6 space-y-4">
           {query.trim().length > 0 && searchTree.length === 0 && (
-            <div className="text-center py-12 px-4 rounded-2xl bg-muted/30 border border-dashed border-border/50">
+            <div className="text-center py-12 px-4 rounded-lg bg-muted/30 border border-dashed border-border/50">
               <p className="text-muted-foreground text-sm font-medium">
                 Không tìm thấy kết quả.
               </p>
@@ -282,7 +282,7 @@ export function AppSidebar({
               <div
                 key={node.unit.id}
                 className={cn(
-                  "rounded-2xl border transition-all duration-300",
+                  "rounded-lg border transition-all duration-300",
                   isExpanded
                     ? "bg-white shadow-xl border-primary/10"
                     : "bg-card hover:bg-white hover:shadow-md border-border/50",
@@ -405,7 +405,7 @@ export function AppSidebar({
 
           <div className="space-y-6">
             {flaggedItems.length === 0 ? (
-              <div className="text-center py-10 px-4 rounded-2xl bg-muted/20 border border-dashed border-border/50">
+              <div className="text-center py-10 px-4 rounded-lg bg-muted/20 border border-dashed border-border/50">
                 <p className="italic text-muted-foreground/60 text-[11px] font-medium">
                   Chưa có mục nào được lưu vào sổ tay.
                 </p>

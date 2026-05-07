@@ -23,7 +23,7 @@ export const LessonTableOfContents: React.FC<LessonTableOfContentsProps> = ({
   ];
 
   return (
-    <div className="bg-card rounded-xl border police-shadow overflow-hidden">
+    <div className="bg-card rounded-md border police-shadow overflow-hidden">
       <div className="p-4 border-b bg-muted/50 flex items-center justify-between">
         <h4 className="font-heading font-bold flex items-center gap-2 text-sm">
           <List className="h-4 w-4 text-primary" />

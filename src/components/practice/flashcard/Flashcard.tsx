@@ -32,7 +32,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         className={`relative w-full h-full transition-all duration-500 preserve-3d ${isFlipped ? "rotate-y-180" : ""}`}
       >
         {/* Front Side */}
-        <div className="absolute inset-0 backface-hidden bg-linear-to-br from-[#2e3856] to-[#1a1f35] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col p-8 overflow-hidden border border-white/10 group-hover:border-white/20 transition-colors">
+        <div className="absolute inset-0 backface-hidden bg-linear-to-br from-[#2e3856] to-[#1a1f35] rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col p-8 overflow-hidden border border-white/10 group-hover:border-white/20 transition-colors">
           <div className="flex justify-between items-start">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20 bg-white/5 px-3 py-1 rounded-full border border-white/5">
               POLICE ENGLISH
@@ -79,7 +79,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
         </div>
 
         {/* Back Side */}
-        <div className="absolute inset-0 backface-hidden rotate-y-180 bg-linear-to-br from-[#1a1f35] to-[#0f1225] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col p-8 overflow-hidden border border-white/10">
+        <div className="absolute inset-0 backface-hidden rotate-y-180 bg-linear-to-br from-[#1a1f35] to-[#0f1225] rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col p-8 overflow-hidden border border-white/10">
           <div className="flex justify-start">
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500/40 bg-emerald-500/5 px-3 py-1 rounded-full border border-emerald-500/10">
               KẾT QUẢ

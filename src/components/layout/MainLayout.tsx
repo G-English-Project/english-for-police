@@ -1,8 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { Shield, ArrowUp } from "lucide-react";
+import {
+  Shield,
+  ArrowUp,
+  ChevronDown,
+  LogOut,
+  Users,
+  FileUser,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { AuthDialogs } from "@/components/auth/AuthDialogs";
+import { useAuth } from "@/hooks/use-auth";
+import { UserRole } from "@/models/user.model";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface MainLayoutProps {
   selectedUnitId?: number;
@@ -19,6 +36,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authView, setAuthView] = useState<"login" | "register">("login");
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
 
   const openLogin = () => {
     setAuthView("login");
@@ -50,6 +69,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     });
   };
 
+  const initials = (user?.fullName ?? "U")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n) => n[0]?.toUpperCase())
+    .join("");
+
   return (
     <SidebarInset className="flex flex-col relative">
       <header className="sticky top-0 z-40 w-full h-16 border-b border-primary/20 primary-gradient shrink-0 flex items-center">
@@ -69,24 +95,107 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="default"
-              className="h-11 px-5 text-base font-semibold text-white hover:bg-white/20 hover:text-white"
-              onClick={openLogin}
-            >
-              Đăng nhập
-            </Button>
-            <Button
-              variant="secondary"
-              size="default"
-              className="h-11 px-5 text-base font-semibold bg-white text-primary hover:bg-white/90"
-              onClick={openRegister}
-            >
-              Đăng ký
-            </Button>
-          </div>
+          {isAuthenticated && user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="secondary"
+                  className="h-10 px-3 rounded-md bg-white text-primary border border-white/20 shadow-sm hover:bg-white/90 transition-all gap-2 group"
+                >
+                  <div className="h-7 w-7 rounded-md bg-primary text-white flex items-center justify-center text-xs font-bold shadow-sm transition-transform">
+                    {initials}
+                  </div>
+                  <div className="hidden md:flex flex-col items-start leading-tight">
+                    <span className="text-sm font-semibold text-primary truncate max-w-40">
+                      {user.fullName}
+                    </span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-primary/60 group-hover:text-primary transition-colors" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="w-64 p-1.5 bg-white border-border shadow-lg rounded-lg animate-in fade-in zoom-in-95 duration-200"
+              >
+                <div className="px-3 py-3 flex items-center gap-3 bg-muted/30 rounded-md mb-1.5">
+                  <div className="h-10 w-10 rounded-md bg-primary flex items-center justify-center text-base font-bold text-white shadow-sm">
+                    {initials}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-primary truncate">
+                      {user.fullName}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+
+                <DropdownMenuSeparator className="my-1.5" />
+
+                <div className="space-y-0.5">
+                  {user.role === UserRole.ADMIN && (
+                    <>
+                      <div className="px-3 py-1.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
+                          Quản trị viên
+                        </span>
+                      </div>
+                      <DropdownMenuItem
+                        className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer hover:bg-accent focus:bg-accent transition-colors group"
+                        onClick={() => navigate("/admin/accounts")}
+                      >
+                        <Users className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <span className="text-sm font-medium text-foreground">
+                          Danh sách tài khoản
+                        </span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer hover:bg-accent focus:bg-accent transition-colors group"
+                        onClick={() => navigate("/admin/accounts/1")}
+                      >
+                        <FileUser className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <span className="text-sm font-medium text-foreground">
+                          Tiến trình học tập
+                        </span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="my-1.5" />
+                    </>
+                  )}
+
+                  <DropdownMenuItem
+                    className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer hover:bg-destructive/10 focus:bg-destructive/10 text-destructive transition-colors group"
+                    onClick={() => {
+                      logout();
+                      navigate("/");
+                    }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span className="text-sm font-medium">Đăng xuất</span>
+                  </DropdownMenuItem>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="default"
+                className="h-11 px-5 text-base font-semibold text-white hover:bg-white/20 hover:text-white"
+                onClick={openLogin}
+              >
+                Đăng nhập
+              </Button>
+              <Button
+                variant="secondary"
+                size="default"
+                className="h-11 px-5 text-base font-semibold bg-white text-primary hover:bg-white/90"
+                onClick={openRegister}
+              >
+                Đăng ký
+              </Button>
+            </div>
+          )}
         </div>
       </header>
 
