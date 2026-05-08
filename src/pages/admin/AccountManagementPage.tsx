@@ -75,22 +75,38 @@ export default function AccountManagementPage() {
         title="Danh Sách Học Viên"
         description="Theo dõi mức độ sẵn sàng, phát hiện học viên cần hỗ trợ và mở hồ sơ chi tiết để đưa ra quyết định huấn luyện."
         right={
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto">
-            <AdminKpiCard
-              label="Tổng số"
-              value={stats.total.toString()}
-              icon={<UserCircle className="h-4 w-4 text-primary" />}
-            />
-            <AdminKpiCard
-              label="Sẵn sàng nhiệm vụ"
-              value={stats.readyCount.toString()}
-              icon={<ShieldCheck className="h-4 w-4 text-secondary" />}
-            />
-            <AdminKpiCard
-              label="Cần hỗ trợ"
-              value={stats.watchCount.toString()}
-              icon={<AlertTriangle className="h-4 w-4 text-destructive" />}
-            />
+          <div className="flex flex-col gap-3 w-full lg:w-auto">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => navigate("/admin/dashboard")}
+                className="rounded-md border border-border bg-card px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-muted/20 transition-all"
+              >
+                Tổng quan
+              </button>
+              <button
+                onClick={() => navigate("/admin/compare")}
+                className="rounded-md border border-border bg-card px-4 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-muted/20 transition-all"
+              >
+                So sánh
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+              <AdminKpiCard
+                label="Tổng số"
+                value={stats.total.toString()}
+                icon={<UserCircle className="h-4 w-4 text-primary" />}
+              />
+              <AdminKpiCard
+                label="Sẵn sàng nhiệm vụ"
+                value={stats.readyCount.toString()}
+                icon={<ShieldCheck className="h-4 w-4 text-secondary" />}
+              />
+              <AdminKpiCard
+                label="Cần hỗ trợ"
+                value={stats.watchCount.toString()}
+                icon={<AlertTriangle className="h-4 w-4 text-destructive" />}
+              />
+            </div>
           </div>
         }
       />

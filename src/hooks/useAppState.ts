@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { DailyTask, FlaggedItem, Unit, UserProgress } from "@/types";
 import { initialLessons } from "@/data/lesson/lessons";
-import { fetchLessons, importLessons, seedFullMockLessons } from "@/lib/lessonApi";
+import { fetchLessons, importLessons } from "@/lib/lessonApi";
 import { useSonner } from "@/hooks/use-sonner";
 
 export function useAppState() {
@@ -101,19 +101,11 @@ export function useAppState() {
       try {
         let remoteLessons = await fetchLessons();
         if (!remoteLessons.length) {
-          try {
-            await seedFullMockLessons();
-          } catch (seedError) {
-            console.error(
-              "Seed-full endpoint failed, fallback to import endpoint",
-              seedError,
-            );
-            notifyWarning(
-              "Máy chủ seed lỗi",
-              "Đang chuyển sang import dữ liệu bài học dự phòng.",
-            );
-            await importLessons(initialLessons);
-          }
+          notifyWarning(
+            "Máy chủ chưa có dữ liệu bài học",
+            "Đang import dữ liệu bài học dự phòng.",
+          );
+          await importLessons(initialLessons);
           remoteLessons = await fetchLessons();
         }
         if (remoteLessons.length) {

@@ -5,9 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Activity,
-  Award,
   BarChart3,
-  ChartLine,
   CheckCircle2,
   ChevronLeft,
   Clock,
@@ -207,16 +205,11 @@ export default function StudentDossierPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {unit.hasBadge && (
-                      <div className="bg-secondary/10 p-2 rounded-full shadow-inner">
-                        <Award className="h-5 w-5 text-secondary fill-secondary/20" />
-                      </div>
-                    )}
                     <Badge
                       variant="outline"
                       className="text-[10px] uppercase tracking-wider font-bold"
                     >
-                      {unit.progress}%
+                      {Math.round(unit.progress)}%
                     </Badge>
                   </div>
                 </div>
@@ -225,9 +218,7 @@ export default function StudentDossierPage() {
                     <div
                       key={i}
                       className={`flex-1 rounded-[1.5px] transition-all duration-700 ${
-                        i < (unit.progress / 100) * 20
-                          ? "bg-primary"
-                          : "bg-muted/50"
+                        i < (unit.progress / 100) * 20 ? "bg-primary" : "bg-muted/50"
                       }`}
                     />
                   ))}
@@ -238,54 +229,11 @@ export default function StudentDossierPage() {
         </Card>
 
         <div className="space-y-6">
-          <Card className="bg-card border border-border police-shadow rounded-lg overflow-hidden">
-            <CardHeader className="border-b border-border bg-muted/20 px-6 py-5">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Activity className="h-5 w-5 text-primary" />
-                </div>
-                <CardTitle className="text-lg font-black uppercase tracking-widest text-primary">
-                  Kết quả kiểm tra
-                </CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-border">
-                {dossier.testHistory.map((test) => (
-                  <div
-                    key={test.testId}
-                    className="px-6 py-5 flex items-center justify-between hover:bg-muted/20 transition-all"
-                  >
-                    <div className="space-y-2">
-                      <p className="font-black text-foreground uppercase text-xs tracking-widest">
-                        {test.title}
-                      </p>
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] font-bold border-border/60 text-muted-foreground/80 px-2 uppercase"
-                      >
-                        {test.date}
-                      </Badge>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-3xl font-black text-primary leading-none tracking-tighter">
-                        {test.percentage}%
-                      </p>
-                      <p className="text-[10px] text-muted-foreground font-black uppercase tracking-tighter opacity-70">
-                        {test.score} / {test.total}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
           <Card className="bg-card border border-border rounded-lg overflow-hidden">
             <CardHeader className="border-b border-border bg-muted/20 px-6 py-5">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-primary/10 rounded-lg">
-                  <ChartLine className="h-5 w-5 text-primary" />
+                  <Activity className="h-5 w-5 text-primary" />
                 </div>
                 <CardTitle className="text-lg font-black uppercase tracking-widest text-primary">
                   Gợi ý huấn luyện
