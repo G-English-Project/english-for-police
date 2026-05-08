@@ -16,6 +16,7 @@ interface ChartsAndStudentsCardProps {
     email: string;
     overallProgressPercent: number;
     overallScorePercent: number;
+    createdAt?: string | null;
   }>;
   studentUnitProgressMap: Record<
     number,
@@ -167,6 +168,9 @@ export function ChartsAndStudentsCard({
                           Email
                         </th>
                         <th className="text-center py-3 px-4 font-semibold text-slate-900">
+                          Ngày tham gia
+                        </th>
+                        <th className="text-center py-3 px-4 font-semibold text-slate-900">
                           Tiến độ
                         </th>
                         <th className="text-center py-3 px-4 font-semibold text-slate-900">
@@ -192,6 +196,11 @@ export function ChartsAndStudentsCard({
                               </td>
                               <td className="py-3 px-4 text-slate-600">
                                 {student.email}
+                              </td>
+                              <td className="py-3 px-4 text-center text-slate-600 tabular-nums">
+                                {student.createdAt
+                                  ? new Date(student.createdAt).toLocaleDateString("vi-VN")
+                                  : "-"}
                               </td>
                               <td className="py-3 px-4 text-center font-semibold text-slate-700 tabular-nums">
                                 {Math.round(student.overallProgressPercent)}%
@@ -219,7 +228,7 @@ export function ChartsAndStudentsCard({
                             </tr>
                             {isExpanded ? (
                               <tr className="border-b border-slate-100 last:border-b-0 bg-slate-50/60">
-                                <td colSpan={5} className="px-4 py-4">
+                                <td colSpan={6} className="px-4 py-4">
                                   {unitProgressList.length > 0 ? (
                                     <div className="space-y-2">
                                       <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">

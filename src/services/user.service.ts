@@ -8,6 +8,7 @@ export interface UserListItem {
   fullName: string;
   role: string;
   dateOfBirth: string;
+  createdAt?: string;
 }
 
 export interface UserDetail {

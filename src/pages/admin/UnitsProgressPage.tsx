@@ -80,6 +80,7 @@ export default function UnitsProgressPage() {
               overallScorePercent: dashboard?.overallScorePercent ?? 0,
               lastActivityAt: dashboard?.lastActivityAt ?? null,
               lastActiveLabel: dashboard?.lastActivityAt ?? "",
+              createdAt: user.createdAt ?? null,
             } satisfies StudentProgressSummaryApi;
           }),
         );

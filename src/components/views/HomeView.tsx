@@ -23,10 +23,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProgress } from "@/hooks/use-progress";
 import { useEffect, useMemo } from "react";
-import { Loader2, Flame } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useUsers } from "@/hooks/use-users";
-import { ContributionGraph } from "@/components/dashboard/ContributionGraph";
 
 interface HomeViewProps {
   lessons: Unit[];
@@ -51,7 +50,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     isLoading: isDashboardLoading,
   } = useProgress();
 
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { contributions, fetchUserById, fetchUserContributions } = useUsers();
 
   const calculatedStreak = useMemo(() => {
@@ -137,11 +136,19 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <Card className="primary-gradient relative overflow-hidden border-none police-shadow rounded-lg p-5 text-white">
             <div className="absolute -right-4 -top-4 text-[80px] font-heading font-black opacity-10 pointer-events-none select-none" />
             <div className="relative z-10">
-              <div className="flex items-center gap-2 text-secondary mb-2">
-                <Zap className="h-4 w-4 fill-current" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">
-                  Huấn luyện
-                </span>
+              <div className="flex items-center justify-between gap-2 text-secondary mb-2">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 fill-current" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">
+                    CHUỖI HỌC TẬP
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] font-black border-secondary/30 text-secondary bg-secondary/10"
+                  >
+                    {calculatedStreak} NGÀY
+                  </Badge>
+                </div>
               </div>
               <h1 className="text-2xl font-heading font-black mb-1.5 leading-tight">
                 Chào mừng quay trở lại
@@ -153,74 +160,36 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </Card>
 
           {/* Mini Progress Card */}
-          <Card className="police-shadow border-none bg-white p-4">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="h-10 w-10 rounded-md primary-gradient flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                <Target className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                  Tiến độ chung
-                </p>
-                <p className="text-xl font-black text-slate-800 flex items-center gap-2">
-                  {overallProgress}%
-                  {isDashboardLoading && (
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/30" />
-                  )}
-                </p>
-              </div>
-            </div>
-            <Progress value={overallProgress} className="h-2" />
-          </Card>
-
-          {/* Activity Streak Card */}
-          <Card className="police-shadow border-none bg-slate-900 text-white overflow-hidden group">
-            <CardHeader className="p-4 pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-secondary">
-                  <Flame className="h-4 w-4 fill-current animate-pulse" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">
-                    Chuỗi học tập
-                  </span>
+          <div className="relative">
+            <Card
+              className={`police-shadow border-none bg-white p-4 ${!isAuthenticated ? "pointer-events-none select-none opacity-70" : ""}`}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="h-10 w-10 rounded-md primary-gradient flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                  <Target className="h-5 w-5" />
                 </div>
-                <Badge
-                  variant="outline"
-                  className="text-[10px] font-black border-secondary/30 text-secondary bg-secondary/10"
-                >
-                  {calculatedStreak} NGÀY
-                </Badge>
-              </div>
-              <CardTitle className="text-base font-black mt-2">
-                Hoạt động huấn luyện
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-2">
-              <div className="bg-slate-800/30 rounded-md p-3 border border-white/5">
-                <ContributionGraph contributions={contributions} weeks={14} />
-              </div>
-
-              <div className="mt-4 flex items-center justify-between">
-                <div className="text-[10px] text-white/50 font-medium">
-                  Tổng hoạt động:{" "}
-                  <span className="text-white font-bold">
-                    {contributions.reduce((acc, c) => acc + c.count, 0)}
-                  </span>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    Tiến độ chung
+                  </p>
+                  <p className="text-xl font-black text-slate-800 flex items-center gap-2">
+                    {overallProgress}%
+                    {isDashboardLoading && (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground/30" />
+                    )}
+                  </p>
                 </div>
-                <Button
-                  variant="link"
-                  className="p-0 h-auto text-[10px] font-bold text-secondary hover:text-secondary/80 transition-colors uppercase tracking-wider"
-                  onClick={() => {
-                    const nextUnit = lessons.find(
-                      (l) => !progress.completedUnits.includes(l.id),
-                    );
-                    if (nextUnit) onSelectUnit(nextUnit);
-                  }}
-                >
-                  Học tiếp <ChevronRight className="ml-1 h-3 w-3" />
-                </Button>
               </div>
-            </CardContent>
-          </Card>
+              <Progress value={overallProgress} className="h-2" />
+            </Card>
+            {!isAuthenticated && (
+              <div className="absolute inset-0 rounded-lg bg-white/75 backdrop-blur-[1px] flex items-center justify-center">
+                <span className="text-xs font-semibold text-slate-700">
+                  Đăng nhập để mở khóa
+                </span>
+              </div>
+            )}
+          </div>
 
           {/* Leaderboard Placeholder */}
           <Card className="police-shadow border-dashed border-2 bg-slate-50/50 p-6 flex flex-col items-center justify-center text-center opacity-60">
@@ -307,7 +276,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* Column 3: Main Content */}
       <div className="space-y-8">
         {/* Tasks and Review */}
-        <div className="space-y-6">
+        <div className="space-y-6 relative">
           <Card className="police-shadow border-none rounded-lg overflow-hidden">
             <CardHeader className="bg-slate-50/80 border-b border-slate-100 pb-3">
               <div className="flex items-center justify-between">
@@ -431,6 +400,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
               )}
             </CardContent>
           </Card>
+
+          {!isAuthenticated && (
+            <div className="absolute inset-0 rounded-lg bg-white/78 backdrop-blur-[1px] flex items-center justify-center">
+              <span className="text-sm font-semibold text-slate-700">
+                Đăng nhập để mở khóa nhiệm vụ và mục ôn tập
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>

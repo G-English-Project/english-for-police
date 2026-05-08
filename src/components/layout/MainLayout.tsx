@@ -7,7 +7,6 @@ import {
   CalendarDays,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { AuthDialogs } from "@/components/auth/AuthDialogs";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,12 +22,14 @@ import {
 interface MainLayoutProps {
   selectedUnitId?: number;
   onLogoClick: () => void;
+  onOpenMenu?: () => void;
   children: React.ReactNode;
   noPadding?: boolean;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
   onLogoClick,
+  onOpenMenu,
   children,
   noPadding = false,
 }) => {
@@ -80,18 +81,51 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     : "-";
 
   return (
-    <SidebarInset className="flex flex-col relative">
+    <div className="flex flex-col relative min-h-screen">
       <header className="sticky top-0 z-40 w-full h-16 border-b border-primary/20 primary-gradient shrink-0 flex items-center">
         <div className="px-4 flex-1 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <SidebarTrigger className="h-10 w-10 text-white hover:bg-white/20 transition-colors" />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 text-white hover:bg-white/20 transition-colors"
+              onClick={onOpenMenu}
+            >
+              <img
+                src="https://zoox.com/assets/images/icons/menu.svg"
+                className="h-5 w-5 invert"
+                alt="Menu"
+                onError={(e) => {
+                  // Fallback to lucide icon if zoox icon fails
+                  e.currentTarget.style.display = "none";
+                  e.currentTarget.parentElement
+                    ?.querySelector(".fallback-icon")
+                    ?.classList.remove("hidden");
+                }}
+              />
+              <span className="fallback-icon hidden">
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="4" y1="12" x2="20" y2="12"></line>
+                  <line x1="4" y1="6" x2="20" y2="6"></line>
+                  <line x1="4" y1="18" x2="20" y2="18"></line>
+                </svg>
+              </span>
+            </Button>
 
             <div
               className="flex items-center gap-2 cursor-pointer group transition-transform active:scale-95"
               onClick={onLogoClick}
             >
               <h1 className="text-lg font-heading font-bold tracking-tight text-white group-hover:text-secondary transition-colors flex items-center gap-2">
-                Tiếng Anh chuyên biệt cho cảnh sát
                 <div className="bg-white/20 p-1 rounded-lg">
                   <img
                     src="/police.png"
@@ -233,6 +267,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       >
         <ArrowUp className="h-6 w-6 text-primary" />
       </Button>
-    </SidebarInset>
+    </div>
   );
 };

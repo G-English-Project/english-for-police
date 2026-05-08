@@ -17,9 +17,10 @@ export interface StudentProgressSummaryApi {
   role: string;
   overallProgressPercent: number;
   overallScorePercent: number;
-  lastActivityAt: string | null;
-  lastActiveLabel: string;
-}
+   lastActivityAt: string | null;
+   lastActiveLabel: string;
+   createdAt?: string | null;
+ }
 
 export interface DashboardOverviewApi {
   totalStudents: number;

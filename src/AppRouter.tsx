@@ -9,7 +9,6 @@ import {
 import { initSpeech, unlockSpeech } from "@/lib/speech";
 import type { Unit } from "@/types";
 
-import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { useAppState } from "@/hooks/useAppState";
@@ -53,6 +52,7 @@ export function AppRouter() {
   const [flashcardRound, setFlashcardRound] = useState(1);
   const [flashcardSummary, setFlashcardSummary] =
     useState<FlashcardSessionSummary | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const {
     lessons,
@@ -96,8 +96,10 @@ export function AppRouter() {
   }, [location.pathname]);
 
   return (
-    <SidebarProvider>
+    <>
       <AppSidebar
+        open={sidebarOpen}
+        onOpenChange={setSidebarOpen}
         lessons={lessons}
         flaggedItems={flaggedItems}
         onNavigateToUnit={navigateToLesson}
@@ -114,7 +116,11 @@ export function AppRouter() {
           )
         }
       />
-      <MainLayout selectedUnitId={activeUnitId} onLogoClick={navigateToHome}>
+      <MainLayout
+        selectedUnitId={activeUnitId}
+        onLogoClick={navigateToHome}
+        onOpenMenu={() => setSidebarOpen(true)}
+      >
         <Suspense
           fallback={
             <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">
@@ -256,6 +262,6 @@ export function AppRouter() {
           </Routes>
         </Suspense>
       </MainLayout>
-    </SidebarProvider>
+    </>
   );
 }
