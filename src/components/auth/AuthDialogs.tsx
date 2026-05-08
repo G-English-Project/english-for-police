@@ -1,5 +1,13 @@
 import { useState, useEffect } from "react";
-import { Shield, ArrowRight, Lock, Mail, Loader2 } from "lucide-react";
+import {
+  Shield,
+  ArrowRight,
+  Lock,
+  Mail,
+  Loader2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +38,7 @@ export function AuthDialogs({
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [dob, setDob] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -37,10 +46,23 @@ export function AuthDialogs({
     }
   }, [isOpen, view, setError]);
 
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      setShowPassword(false);
+    }
+    onOpenChange(open);
+  };
+
+  const handleViewChange = (nextView: "login" | "register") => {
+    setShowPassword(false);
+    setView(nextView);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       await login({ email, password });
+      setShowPassword(false);
       onOpenChange(false);
       setEmail("");
       setPassword("");
@@ -53,7 +75,7 @@ export function AuthDialogs({
     e.preventDefault();
     try {
       await register({ email, fullName, dateOfBirth: dob, password });
-      setView("login");
+      handleViewChange("login");
       setError(null);
       setFullName("");
       setDob("");
@@ -63,7 +85,7 @@ export function AuthDialogs({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="sm:max-w-md p-0 border-none overflow-hidden glass police-shadow">
         {view === "login" ? (
           <form onSubmit={handleLogin}>
@@ -112,24 +134,32 @@ export function AuthDialogs({
                     >
                       Mật khẩu
                     </Label>
-                    <button
-                      type="button"
-                      className="text-[10px] font-bold text-muted-foreground hover:text-primary uppercase tracking-widest transition-colors"
-                    >
-                      Quên mật khẩu?
-                    </button>
                   </div>
                   <div className="relative tactical-border">
                     <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className="border-none bg-transparent h-11 pl-7 pr-0 focus-visible:ring-0 placeholder:text-muted-foreground/30 font-medium"
+                      className="border-none bg-transparent h-11 pl-7 pr-8 focus-visible:ring-0 placeholder:text-muted-foreground/30 font-medium"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                      aria-label={
+                        showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -170,7 +200,7 @@ export function AuthDialogs({
                   Chưa có tài khoản?{" "}
                   <button
                     type="button"
-                    onClick={() => setView("register")}
+                    onClick={() => handleViewChange("register")}
                     className="text-primary font-bold hover:underline underline-offset-4"
                   >
                     Đăng ký ngay
@@ -262,16 +292,30 @@ export function AuthDialogs({
                   >
                     Mật khẩu
                   </Label>
-                  <div className="tactical-border">
+                  <div className="relative tactical-border">
                     <Input
                       id="registerPassword"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Tối thiểu 8 ký tự"
                       required
-                      className="border-none bg-transparent h-11 px-0 focus-visible:ring-0"
+                      className="border-none bg-transparent h-11 pl-0 pr-8 focus-visible:ring-0"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                      aria-label={
+                        showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -300,7 +344,7 @@ export function AuthDialogs({
                   Đã có hồ sơ?{" "}
                   <button
                     type="button"
-                    onClick={() => setView("login")}
+                    onClick={() => handleViewChange("login")}
                     className="text-primary font-bold hover:underline underline-offset-4"
                   >
                     Đăng nhập
