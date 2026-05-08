@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Shield, ArrowUp, ChevronDown, LogOut, BarChart3 } from "lucide-react";
+import { ArrowUp, ChevronDown, LogOut, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -82,8 +82,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             >
               <h1 className="text-lg font-heading font-bold tracking-tight text-white group-hover:text-secondary transition-colors flex items-center gap-2">
                 Tiếng Anh chuyên biệt cho cảnh sát
-                <div className="bg-white/20 p-1.5 rounded-lg">
-                  <Shield className="h-5 w-5 text-secondary fill-secondary" />
+                <div className="bg-white/20 p-1 rounded-lg">
+                  <img
+                    src="/police.png"
+                    alt="Police"
+                    className="h-6 w-6 rounded-sm object-cover"
+                  />
                 </div>
               </h1>
             </div>
