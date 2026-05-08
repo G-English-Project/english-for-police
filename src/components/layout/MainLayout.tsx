@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { ArrowUp, ChevronDown, LogOut, BarChart3 } from "lucide-react";
+import {
+  ArrowUp,
+  ChevronDown,
+  LogOut,
+  BarChart3,
+  CalendarDays,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -69,6 +75,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     .map((n) => n[0]?.toUpperCase())
     .join("");
 
+  const joinDateLabel = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString("vi-VN")
+    : "-";
+
   return (
     <SidebarInset className="flex flex-col relative">
       <header className="sticky top-0 z-40 w-full h-16 border-b border-primary/20 primary-gradient shrink-0 flex items-center">
@@ -126,6 +136,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                       {user.email}
                     </p>
                   </div>
+                </div>
+
+                <div className="mx-1.5 mb-1.5 rounded-md border border-border bg-background px-3 py-2">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    <span>Ngay tham gia</span>
+                  </div>
+                  <p className="mt-1 text-sm font-semibold text-foreground">
+                    {joinDateLabel}
+                  </p>
                 </div>
 
                 <DropdownMenuSeparator className="my-1.5" />

@@ -12,4 +12,6 @@ export interface User {
   fullName: string;
   role: UserRole;
   dateOfBirth: string;
+  createdAt?: string;
+  currentStreak?: number;
 }

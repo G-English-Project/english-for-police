@@ -10,6 +10,22 @@ export interface UserListItem {
   dateOfBirth: string;
 }
 
+export interface UserDetail {
+  userId: number;
+  shownId: string;
+  email: string;
+  fullName: string;
+  role: string;
+  dateOfBirth: string;
+  createdAt: string;
+  currentStreak: number;
+}
+
+export interface UserContributionItem {
+  date: string;
+  count: number;
+}
+
 interface UserListResponse {
   code: string;
   message: string;
@@ -20,6 +36,12 @@ interface UserListResponse {
     totalElements: number;
     totalPages: number;
   };
+}
+
+interface ApiResponse<T> {
+  code: string;
+  message: string;
+  data: T;
 }
 
 export const userService = {
@@ -38,5 +60,29 @@ export const userService = {
     const response = await api.get<UserListResponse>(endpoint);
     return response.data;
   },
-};
 
+  getUserById: async (userId: number): Promise<UserDetail> => {
+    const response = await api.get<ApiResponse<UserDetail>>(
+      API_ROUTES.USER.DETAIL(userId),
+    );
+    return response.data;
+  },
+
+  getUserContributions: async (
+    userId: number,
+    filters?: { year?: number; startDate?: string; endDate?: string },
+  ): Promise<UserContributionItem[]> => {
+    const params = new URLSearchParams();
+    if (filters?.year !== undefined) params.set("year", String(filters.year));
+    if (filters?.startDate) params.set("startDate", filters.startDate);
+    if (filters?.endDate) params.set("endDate", filters.endDate);
+
+    const baseEndpoint = API_ROUTES.USER.CONTRIBUTIONS(userId);
+    const endpoint = params.size
+      ? `${baseEndpoint}?${params.toString()}`
+      : baseEndpoint;
+    const response =
+      await api.get<ApiResponse<UserContributionItem[]>>(endpoint);
+    return response.data;
+  },
+};

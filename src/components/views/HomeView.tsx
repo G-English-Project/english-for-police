@@ -16,15 +16,17 @@ import {
   Check,
   Trophy,
   Target,
-  Sparkles,
 } from "lucide-react";
 import type { Unit, UserProgress, FlaggedItem, DailyTask } from "@/types";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProgress } from "@/hooks/use-progress";
-import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { useEffect, useMemo } from "react";
+import { Loader2, Flame } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useUsers } from "@/hooks/use-users";
+import { ContributionGraph } from "@/components/dashboard/ContributionGraph";
 
 interface HomeViewProps {
   lessons: Unit[];
@@ -49,9 +51,56 @@ export const HomeView: React.FC<HomeViewProps> = ({
     isLoading: isDashboardLoading,
   } = useProgress();
 
+  const { user } = useAuth();
+  const { contributions, fetchUserById, fetchUserContributions } = useUsers();
+
+  const calculatedStreak = useMemo(() => {
+    if (contributions.length === 0) return 0;
+
+    const contributionMap = new Map(
+      contributions.map((c) => [c.date, c.count]),
+    );
+
+    const todayDate = new Date();
+    const today = todayDate.toISOString().split("T")[0];
+    const yesterdayDate = new Date(todayDate);
+    yesterdayDate.setDate(todayDate.getDate() - 1);
+    const yesterday = yesterdayDate.toISOString().split("T")[0];
+
+    const hasToday = (contributionMap.get(today) || 0) > 0;
+    const hasYesterday = (contributionMap.get(yesterday) || 0) > 0;
+
+    if (!hasToday && !hasYesterday) return 0;
+
+    let streak = 0;
+    const checkDate = new Date();
+
+    if (!hasToday) {
+      checkDate.setDate(checkDate.getDate() - 1);
+    }
+
+    while (true) {
+      const dateStr = checkDate.toISOString().split("T")[0];
+      const count = contributionMap.get(dateStr) || 0;
+
+      if (count > 0) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  }, [contributions]);
+
   useEffect(() => {
     fetchDashboard();
-  }, [fetchDashboard]);
+    if (user?.userId) {
+      fetchUserById(user.userId);
+      fetchUserContributions(user.userId);
+    }
+  }, [fetchDashboard, fetchUserContributions, fetchUserById, user?.userId]);
 
   const completedCount = dailyTasks.tasks.filter((t) => t.completed).length;
   const overallProgress =
@@ -124,33 +173,52 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <Progress value={overallProgress} className="h-2" />
           </Card>
 
-          {/* Suggested Lesson */}
-          <Card className="police-shadow border-none bg-slate-700 text-white overflow-hidden group cursor-pointer hover:scale-[1.02] transition-transform">
+          {/* Activity Streak Card */}
+          <Card className="police-shadow border-none bg-slate-900 text-white overflow-hidden group">
             <CardHeader className="p-4 pb-2">
-              <div className="flex items-center gap-2 text-secondary mb-1">
-                <Sparkles className="h-3 w-3 fill-current" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">
-                  Gợi ý bài học
-                </span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-secondary">
+                  <Flame className="h-4 w-4 fill-current animate-pulse" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">
+                    Chuỗi học tập
+                  </span>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] font-black border-secondary/30 text-secondary bg-secondary/10"
+                >
+                  {calculatedStreak} NGÀY
+                </Badge>
               </div>
-              <CardTitle className="text-base font-black">
-                {lessons.find((l) => !progress.completedUnits.includes(l.id))
-                  ?.title || lessons[0]?.title}
+              <CardTitle className="text-base font-black mt-2">
+                Hoạt động huấn luyện
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <Button
-                variant="link"
-                className="p-0 h-auto text-xs text-white/80 group-hover:text-secondary transition-colors"
-                onClick={() => {
-                  const nextUnit = lessons.find(
-                    (l) => !progress.completedUnits.includes(l.id),
-                  );
-                  if (nextUnit) onSelectUnit(nextUnit);
-                }}
-              >
-                Tiếp tục ngay <ChevronRight className="ml-1 h-3 w-3" />
-              </Button>
+            <CardContent className="p-4 pt-2">
+              <div className="bg-slate-800/30 rounded-md p-3 border border-white/5">
+                <ContributionGraph contributions={contributions} weeks={14} />
+              </div>
+
+              <div className="mt-4 flex items-center justify-between">
+                <div className="text-[10px] text-white/50 font-medium">
+                  Tổng hoạt động:{" "}
+                  <span className="text-white font-bold">
+                    {contributions.reduce((acc, c) => acc + c.count, 0)}
+                  </span>
+                </div>
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-[10px] font-bold text-secondary hover:text-secondary/80 transition-colors uppercase tracking-wider"
+                  onClick={() => {
+                    const nextUnit = lessons.find(
+                      (l) => !progress.completedUnits.includes(l.id),
+                    );
+                    if (nextUnit) onSelectUnit(nextUnit);
+                  }}
+                >
+                  Học tiếp <ChevronRight className="ml-1 h-3 w-3" />
+                </Button>
+              </div>
             </CardContent>
           </Card>
 

@@ -9,6 +9,13 @@ export const API_ROUTES = {
   },
   USER: {
     LIST: "/api/v1/user",
+    DETAIL: (userId: number) => `/api/v1/user/${userId}`,
+    CONTRIBUTIONS: (userId: number) => `/api/v1/users/${userId}/contributions`,
+  },
+  LESSONS: {
+    IMPORT: "/api/v1/lessons/import",
+    LIST: "/api/v1/lessons",
+    DETAIL: (unitNumber: number) => `/api/v1/lessons/${unitNumber}`,
   },
   PROGRESS: {
     SUBMIT_ATTEMPT: "/api/v1/progress/attempts",

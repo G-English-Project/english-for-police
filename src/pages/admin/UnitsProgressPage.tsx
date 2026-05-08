@@ -8,17 +8,19 @@ import type {
 } from "@/models/reports.model";
 import type { UnitGroupedData } from "@/components/admin/units-progress/types";
 import { usePagination } from "@/hooks/app/use-pagination";
+import { useDebouncedValue } from "@/hooks/app/use-debounced-value";
 import {
   ChartsAndStudentsCard,
   OverviewStatsCard,
   UnitCardsList,
   UnitDetailsDialog,
 } from "@/components/admin/units-progress/UnitsProgressSections";
-import { userService } from "@/services/user.service";
+import { useUsers } from "@/hooks/use-users";
 
 const STUDENT_PAGE_SIZE = 10;
 
 export default function UnitsProgressPage() {
+  const { fetchUsers } = useUsers();
   const [students, setStudents] = useState<StudentProgressSummaryApi[]>([]);
   const [studentDetails, setStudentDetails] = useState<
     Map<number, StudentDashboardApi>
@@ -26,7 +28,7 @@ export default function UnitsProgressPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeUnit, setActiveUnit] = useState<UnitGroupedData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebouncedValue(searchQuery, 400);
   const {
     currentPage: currentStudentPage,
     totalPages: totalStudentPages,
@@ -37,21 +39,17 @@ export default function UnitsProgressPage() {
   } = usePagination(students, { pageSize: STUDENT_PAGE_SIZE });
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery.trim());
-      resetStudentPage();
-    }, 400);
-    return () => window.clearTimeout(timer);
-  }, [searchQuery, resetStudentPage]);
+    resetStudentPage();
+  }, [debouncedSearchQuery, resetStudentPage]);
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const users = await userService.getUsers({
+        const users = await fetchUsers({
           page: 0,
           size: 200,
-          searchName: debouncedSearchQuery || undefined,
+          searchName: debouncedSearchQuery.trim() || undefined,
         });
         const studentUsers = users.items.filter((u) => u.role === "STUDENT");
 
@@ -95,7 +93,7 @@ export default function UnitsProgressPage() {
     };
 
     void loadData();
-  }, [debouncedSearchQuery]);
+  }, [debouncedSearchQuery, fetchUsers]);
 
   const unitsGrouped = useMemo(() => {
     const unitMap = new Map<number, UnitGroupedData>();
