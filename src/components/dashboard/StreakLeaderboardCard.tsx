@@ -3,31 +3,14 @@ import { Loader2, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useStreakLeaderboard } from "@/hooks/use-streak-leaderboard";
-import { useAuth } from "@/hooks/use-auth";
 
 export function StreakLeaderboardCard() {
-  const { isAuthenticated } = useAuth();
   const { rankedLeaderboard, isLoading, fetchStreakLeaderboard } =
     useStreakLeaderboard();
 
   useEffect(() => {
-    if (!isAuthenticated) return;
     void fetchStreakLeaderboard();
-  }, [fetchStreakLeaderboard, isAuthenticated]);
-
-  if (!isAuthenticated) {
-    return (
-      <Card className="police-shadow border border-dashed border-slate-300 bg-slate-50/60 p-6 rounded-md flex flex-col items-center justify-center text-center">
-        <Trophy className="h-8 w-8 text-slate-300 mb-2" />
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-          Bảng xếp hạng
-        </p>
-        <p className="text-[11px] text-slate-500 mt-1">
-          Đăng nhập để xem bảng xếp hạng chuỗi học tập
-        </p>
-      </Card>
-    );
-  }
+  }, [fetchStreakLeaderboard]);
 
   return (
     <Card className="police-shadow border border-slate-200 bg-white overflow-hidden rounded-md">
@@ -48,9 +31,7 @@ export function StreakLeaderboardCard() {
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
         ) : rankedLeaderboard.length === 0 ? (
-          <p className="text-xs text-slate-500">
-            Chưa có dữ liệu xếp hạng.
-          </p>
+          <p className="text-xs text-slate-500">Chưa có dữ liệu xếp hạng.</p>
         ) : (
           rankedLeaderboard.slice(0, 5).map((item) => (
             <div
