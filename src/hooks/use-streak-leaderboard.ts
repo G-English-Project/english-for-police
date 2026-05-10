@@ -25,7 +25,12 @@ export function useStreakLeaderboard() {
       setRankedLeaderboard(toRankedStreakLeaderboard(data));
       return data;
     } catch (err) {
-      const apiError = err as { message?: string };
+      const apiError = err as { message?: string; status?: number };
+      if (apiError.status === 401 || apiError.status === 403) {
+        setLeaderboard([]);
+        setRankedLeaderboard([]);
+        return [];
+      }
       const message =
         apiError.message || "Khong the tai bang xep hang chuoi hoc tap.";
       setError(message);
