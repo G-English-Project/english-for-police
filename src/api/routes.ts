@@ -20,6 +20,7 @@ export const API_ROUTES = {
   PROGRESS: {
     SUBMIT_ATTEMPT: "/api/v1/progress/attempts",
     GET_PROGRESS: "/api/v1/progress",
+    LEADERBOARD_STREAKS: "/api/v1/progress/leaderboard/streaks",
   },
   PRACTICE: {
     QUESTIONS: "/api/v1/practice/questions",

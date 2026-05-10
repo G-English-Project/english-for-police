@@ -5,6 +5,7 @@ import type {
   QuizAttemptResponse,
   ProgressData,
   ProgressResponse,
+  StreakLeaderboardItem,
 } from "@/models/progress.model";
 
 export interface ProgressFilters {
@@ -40,6 +41,13 @@ export const progressService = {
 
     const endpoint = `${API_ROUTES.PROGRESS.GET_PROGRESS}?${params.toString()}`;
     const response = await api.get<ProgressResponse<ProgressData>>(endpoint);
+    return response.data;
+  },
+
+  getStreakLeaderboard: async (): Promise<StreakLeaderboardItem[]> => {
+    const response = await api.get<ProgressResponse<StreakLeaderboardItem[]>>(
+      API_ROUTES.PROGRESS.LEADERBOARD_STREAKS,
+    );
     return response.data;
   },
 

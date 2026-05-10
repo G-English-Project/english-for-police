@@ -84,6 +84,11 @@ export interface ProgressOverview {
   lastActivityAt: string;
 }
 
+export interface StreakLeaderboardItem {
+  name: string;
+  streak: number;
+}
+
 export interface ProgressData {
   overview: ProgressOverview;
   units: UnitProgress[];

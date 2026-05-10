@@ -14,7 +14,6 @@ import {
   ChevronRight,
   Zap,
   Check,
-  Trophy,
   Target,
 } from "lucide-react";
 import type { Unit, UserProgress, FlaggedItem, DailyTask } from "@/types";
@@ -26,6 +25,7 @@ import { useEffect, useMemo } from "react";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useUsers } from "@/hooks/use-users";
+import { StreakLeaderboardCard } from "@/components/dashboard/StreakLeaderboardCard";
 
 interface HomeViewProps {
   lessons: Unit[];
@@ -191,16 +191,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             )}
           </div>
 
-          {/* Leaderboard Placeholder */}
-          <Card className="police-shadow border-dashed border-2 bg-slate-50/50 p-6 flex flex-col items-center justify-center text-center opacity-60">
-            <Trophy className="h-8 w-8 text-slate-300 mb-2" />
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-              Bảng xếp hạng
-            </p>
-            <p className="text-[10px] text-slate-400 mt-1 italic">
-              Sắp ra mắt trong bản cập nhật tới
-            </p>
-          </Card>
+          <StreakLeaderboardCard />
         </div>
       </div>
 
