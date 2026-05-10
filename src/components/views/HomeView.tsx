@@ -137,14 +137,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <div className="absolute -right-4 -top-4 text-[80px] font-heading font-black opacity-10 pointer-events-none select-none" />
             <div className="relative z-10">
               <div className="flex items-center justify-between gap-2 text-secondary mb-2">
-                <div className="flex items-center gap-2">
-                  <Zap className="h-4 w-4 fill-current" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">
+                <div className="flex items-center gap-2.5">
+                  <Zap className="h-5 w-5 fill-current" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest">
                     CHUỖI HỌC TẬP
                   </span>
                   <Badge
                     variant="outline"
-                    className="text-[10px] font-black border-secondary/30 text-secondary bg-secondary/10"
+                    className="text-[11px] font-black border-secondary/30 text-secondary bg-secondary/10 px-2.5"
                   >
                     {calculatedStreak} NGÀY
                   </Badge>
