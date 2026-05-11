@@ -35,7 +35,7 @@ export function VocabSection({
       </div>
 
       <Card className="border border-border/60 bg-card/30 shadow-none overflow-hidden">
-        <CardContent className="space-y-6 p-4">
+        <CardContent className="space-y-6 p-4 max-h-[700px] overflow-y-auto custom-scrollbar">
           <div className="space-y-6">
             {draft.vocabulary.map((row, idx) => (
               <div

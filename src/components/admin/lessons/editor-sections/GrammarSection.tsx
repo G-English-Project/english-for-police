@@ -40,7 +40,7 @@ export function GrammarSection({
       </div>
 
       <Card className="border border-border/60 bg-card/30 shadow-none overflow-hidden">
-        <CardContent className="space-y-6 p-4">
+        <CardContent className="space-y-6 p-4 max-h-[800px] overflow-y-auto custom-scrollbar">
           {mode === "create" ? (
             <div className="flex flex-col items-center gap-3 p-8 rounded-xl bg-muted/20 border border-dashed text-muted-foreground/60 text-center">
               <AlertCircle className="h-8 w-8 opacity-20" />

@@ -44,7 +44,7 @@ export function PracticeSection({
       </div>
 
       <Card className="border border-border/60 bg-card/30 shadow-none overflow-hidden">
-        <CardContent className="space-y-8 p-4">
+        <CardContent className="space-y-8 p-4 max-h-[850px] overflow-y-auto custom-scrollbar">
           {LANES_ORDER.map((lane) => {
             const laneIndices = practiceIndicesByLane[lane];
             const meta = SECTION_META[lane];
