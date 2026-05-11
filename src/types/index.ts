@@ -20,22 +20,11 @@ export interface Collocation {
   noun: string;
 }
 
-/** Matches backend `LessonTestLane` — used for admin practice grouping and test sections. */
 export type LessonTestLane =
   | "VOCAB_MCQ"
   | "MATCHING"
   | "PHRASE_SCENARIO"
   | "FILL_ARRANGE";
-
-export interface PhraseTemplate {
-  id: number;
-  unitNumber: number;
-  patternEn: string;
-  patternVi: string;
-  contextNote?: string | null;
-  audioUrl?: string | null;
-  sortOrder: number;
-}
 
 export interface GrammarStructure {
   id: number;

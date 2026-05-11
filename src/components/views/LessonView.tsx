@@ -7,7 +7,6 @@ import { LessonTableOfContents } from "./lesson/LessonTableOfContents";
 import { LessonShortcutButtons } from "./lesson/LessonShortcutButtons";
 import { LessonVocabularySection } from "./lesson/LessonVocabularySection";
 import { LessonPhrasesSection } from "./lesson/LessonPhrasesSection";
-import { LessonMemoryBoostSection } from "./lesson/LessonMemoryBoostSection";
 import { PRACTICE_MENU_LABEL_TO_LANE } from "@/components/practice/utils/testUtils";
 
 interface LessonViewProps {
@@ -158,15 +157,6 @@ export const LessonView: React.FC<LessonViewProps> = ({
           onPlayAudio={playAudio}
           sectionRef={(el) => {
             sectionRefs.current["phrases"] = el;
-          }}
-        />
-
-        <LessonMemoryBoostSection
-          unit={unit}
-          flaggedItems={flaggedItems}
-          onToggleFlag={toggleFlag}
-          sectionRef={(el) => {
-            sectionRefs.current["memory"] = el;
           }}
         />
       </div>

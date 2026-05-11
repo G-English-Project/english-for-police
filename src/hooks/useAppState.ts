@@ -94,12 +94,11 @@ export function useAppState() {
     return { date: getTodayKey(), tasks: defaultTasks };
   });
 
-  // Persist to localStorage
   useEffect(() => {
     const syncLessonsFromBackend = async () => {
       let hasRemoteData = false;
       try {
-        let remoteLessons = await fetchLessons();
+        const remoteLessons = await fetchLessons();
         if (!remoteLessons.length) {
           notifyWarning(
             "Máy chủ chưa có dữ liệu bài học",
@@ -117,7 +116,6 @@ export function useAppState() {
           "Ứng dụng đang dùng dữ liệu cục bộ tạm thời.",
         );
       } finally {
-        // Offline-safe fallback: keep app usable when backend is unreachable.
         if (!hasRemoteData) {
           setLessons((prev) => (prev.length > 0 ? prev : initialLessons));
         }

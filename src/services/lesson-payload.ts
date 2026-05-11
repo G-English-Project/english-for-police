@@ -1,16 +1,14 @@
 import type { Question, Unit } from "@/types";
 
-function stripQuestionForApi(q: Question): Omit<
+function stripQuestionForApi(
+  q: Question,
+): Omit<
   Question,
   "id" | "backendQuestionId" | "backendUnitNumber" | "sourceCategory"
 > {
-  const {
-    id: _id,
-    backendQuestionId: _bq,
-    backendUnitNumber: _bu,
-    sourceCategory: _sc,
-    ...rest
-  } = q;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id, backendQuestionId, backendUnitNumber, sourceCategory, ...rest } =
+    q;
   const pairs =
     rest.pairs?.map((p) =>
       "left" in p && "right" in p
@@ -20,7 +18,6 @@ function stripQuestionForApi(q: Question): Omit<
   return { ...rest, pairs };
 }
 
-/** Body shape expected by english-BE `LessonResponseDto` (JSON). */
 export function unitToLessonApiBody(unit: Unit) {
   return {
     id: unit.id,
@@ -40,15 +37,14 @@ function normalizePair(
   const left =
     "left" in p && typeof p.left === "string"
       ? p.left
-      : Object.values(p)[0] ?? "";
+      : (Object.values(p)[0] ?? "");
   const right =
     "right" in p && typeof p.right === "string"
       ? p.right
-      : Object.values(p)[1] ?? "";
+      : (Object.values(p)[1] ?? "");
   return { left, right };
 }
 
-/** Ensure stable `Question.id` for React lists after API load. */
 export function normalizeLessonFromApi(unit: Unit): Unit {
   return {
     ...unit,
@@ -56,7 +52,9 @@ export function normalizeLessonFromApi(unit: Unit): Unit {
       ...q,
       id: q.id || `pq-${unit.id}-${index}`,
       pairs: q.pairs?.map((p) =>
-        "left" in p && "right" in p ? p : normalizePair(p as Record<string, string>),
+        "left" in p && "right" in p
+          ? p
+          : normalizePair(p as Record<string, string>),
       ),
     })),
   };
