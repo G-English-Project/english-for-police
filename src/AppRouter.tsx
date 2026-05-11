@@ -23,6 +23,7 @@ import {
   GeneralTestPage,
   UnitsProgressPage,
   AdminLessonsPage,
+  AdminLessonWorkspacePage,
 } from "@/pages";
 import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@/models/user.model";
@@ -304,6 +305,18 @@ export function AppRouter() {
               element={
                 user?.role === UserRole.ADMIN ? (
                   <AdminLessonsPage onLessonsUpdated={reloadLessonsFromApi} />
+                ) : (
+                  <Navigate to="/" replace />
+                )
+              }
+            />
+            <Route
+              path="/admin/lessons/:unitId/workspace"
+              element={
+                user?.role === UserRole.ADMIN ? (
+                  <AdminLessonWorkspacePage
+                    onLessonsUpdated={reloadLessonsFromApi}
+                  />
                 ) : (
                   <Navigate to="/" replace />
                 )

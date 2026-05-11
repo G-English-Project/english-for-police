@@ -5,3 +5,4 @@ export { FlashcardResultsPage } from "./FlashcardResultsPage";
 export { GeneralTestPage } from "./GeneralTestPage";
 export { default as UnitsProgressPage } from "./admin/UnitsProgressPage";
 export { default as AdminLessonsPage } from "./admin/AdminLessonsPage";
+export { default as AdminLessonWorkspacePage } from "./admin/AdminLessonWorkspacePage";

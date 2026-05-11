@@ -23,6 +23,11 @@ export interface GeneralTestQuestionPanelViewModel {
     { left: string; right: string }[]
   >;
   showResults: boolean;
+  /** Một nút nộp toàn bài (không nộp theo từng phần). */
+  inlineSubmit?: {
+    onSubmit: () => void;
+    submitting: boolean;
+  };
 }
 
 export interface GeneralTestQuestionPanelActions {
@@ -59,6 +64,7 @@ export const GeneralTestQuestionPanel: React.FC<GeneralTestQuestionPanelProps> =
     selectedLeft,
     matchingRightOptionsByQuestionId,
     showResults,
+    inlineSubmit,
   } = vm;
 
   const {
@@ -156,6 +162,20 @@ export const GeneralTestQuestionPanel: React.FC<GeneralTestQuestionPanelProps> =
           </Button>
         </div>
       )}
+
+      {inlineSubmit && sectionQuestionsLength > 0 ? (
+        <div className="border-t bg-primary/[0.06] px-5 py-4">
+          <Button
+            type="button"
+            size="lg"
+            className="w-full font-black text-sm primary-gradient police-shadow"
+            disabled={inlineSubmit.submitting}
+            onClick={inlineSubmit.onSubmit}
+          >
+            {inlineSubmit.submitting ? "Đang nộp…" : "Nộp bài"}
+          </Button>
+        </div>
+      ) : null}
     </Card>
   );
 };

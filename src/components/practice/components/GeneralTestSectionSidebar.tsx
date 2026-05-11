@@ -41,11 +41,12 @@ export interface GeneralTestSectionSidebarActions {
 interface GeneralTestSectionSidebarProps {
   vm: GeneralTestSectionSidebarViewModel;
   actions: GeneralTestSectionSidebarActions;
+  hideSectionSubmit?: boolean;
 }
 
 export const GeneralTestSectionSidebar: React.FC<
   GeneralTestSectionSidebarProps
-> = ({ vm, actions }) => {
+> = ({ vm, actions, hideSectionSubmit }) => {
   const {
     sections,
     currentSectionIndex,
@@ -73,7 +74,11 @@ export const GeneralTestSectionSidebar: React.FC<
   return (
     <PracticeSidebar
       title="DANH SÁCH CÂU HỎI"
-      description="Chọn từng phần để bắt đầu làm bài. Bạn có thể nộp bài riêng cho từng phần."
+      description={
+        hideSectionSubmit
+          ? "Chọn phần và số câu như khi làm bài. Nộp một lần bằng nút «Nộp bài» dưới khung đề."
+          : "Chọn từng phần để bắt đầu làm bài. Bạn có thể nộp bài riêng cho từng phần."
+      }
     >
       <div className="space-y-3">
         {sections.map((section, idx) => (
@@ -98,6 +103,7 @@ export const GeneralTestSectionSidebar: React.FC<
             isSubmitting={isSubmitting}
             isReviewMode={isReviewMode}
             onExitReview={onExitReview}
+            hideSectionSubmit={hideSectionSubmit}
           />
         ))}
       </div>

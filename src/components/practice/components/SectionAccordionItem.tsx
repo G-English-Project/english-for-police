@@ -25,6 +25,8 @@ interface SectionAccordionItemProps {
   isSubmitting?: boolean;
   isReviewMode?: boolean;
   onExitReview?: () => void;
+  /** Ẩn nút nộp theo phần — dùng một nút nộp toàn bài ở khung câu hỏi. */
+  hideSectionSubmit?: boolean;
 }
 
 export const SectionAccordionItem: React.FC<SectionAccordionItemProps> = ({
@@ -47,6 +49,7 @@ export const SectionAccordionItem: React.FC<SectionAccordionItemProps> = ({
   isSubmitting,
   isReviewMode,
   onExitReview,
+  hideSectionSubmit,
 }) => {
   const sectionQuestions = React.useMemo(() => {
     return allQuestions.filter((q) => section.questionIds.includes(q.id));
@@ -178,7 +181,18 @@ export const SectionAccordionItem: React.FC<SectionAccordionItemProps> = ({
               </Button>
             </div>
           )}
-          {!isReviewMode ? (
+          {isReviewMode ? (
+            <Button
+              size="sm"
+              className="w-full h-10 text-[11px] font-black rounded-xl transition-all primary-gradient police-shadow text-white"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onExitReview) onExitReview();
+              }}
+            >
+              QUAY LẠI BẢNG ĐIỂM
+            </Button>
+          ) : !hideSectionSubmit ? (
             <Button
               size="sm"
               className={`w-full h-10 text-[11px] font-black rounded-xl transition-all ${isActive ? "primary-gradient police-shadow" : "bg-muted text-muted-foreground opacity-60"}`}
@@ -199,16 +213,9 @@ export const SectionAccordionItem: React.FC<SectionAccordionItemProps> = ({
               )}
             </Button>
           ) : (
-            <Button
-              size="sm"
-              className="w-full h-10 text-[11px] font-black rounded-xl transition-all primary-gradient police-shadow text-white"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onExitReview) onExitReview();
-              }}
-            >
-              QUAY LẠI BẢNG ĐIỂM
-            </Button>
+            <p className="text-[10px] text-center text-muted-foreground px-1 leading-snug">
+              Nộp toàn bài bằng nút dưới khung câu hỏi.
+            </p>
           )}
         </div>
       )}

@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
-import type { LessonTestLane, Unit, Question } from "@/types";
+import type { LessonTestLane, Question, Unit } from "@/types";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
@@ -20,6 +20,7 @@ import {
 
 import {
   type Section,
+  type SectionResult,
   type TestMode,
   QUESTIONS_PER_PAGE,
   SECTION_META,
@@ -40,6 +41,33 @@ interface GeneralKnowledgeTestProps {
   mode?: "unit" | "all";
   onBack: () => void;
   onComplete?: (score: number) => void;
+}
+
+function isAnswerCorrectForQuestion(
+  q: Question,
+  combined: Record<string, string | Record<string, string> | string[]>,
+): boolean {
+  const ans = combined[q.id];
+  if (ans === undefined || ans === null) return false;
+  if (q.type === "Matching") {
+    const userPairs = ans as Record<string, string>;
+    return (q.pairs || []).every((p) => userPairs[p.left] === p.right);
+  }
+  if (q.type === "Arrangement") {
+    const userArranged = ((ans as string[]) || []).join(" ").trim();
+    return (
+      userArranged.toLowerCase() === String(q.answer ?? "").trim().toLowerCase()
+    );
+  }
+  const normalizedUser = String(ans).trim().toLowerCase();
+  const normalizedCorrect = String(q.answer ?? "").trim().toLowerCase();
+  const acceptable = (q.acceptableAnswers || []).map((a) =>
+    a.trim().toLowerCase(),
+  );
+  return (
+    normalizedUser === normalizedCorrect ||
+    acceptable.includes(normalizedUser)
+  );
 }
 
 export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
@@ -206,13 +234,18 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [resetBaseState]);
 
-  const handleSubmitSection = () => {
-    const scoreInfo = calculateScore(sectionQuestions);
-    const nextResults = {
-      ...sectionResults,
-      [currentSectionIndex]: { ...scoreInfo, submitted: true },
-    };
+  /** Một lần nộp toàn bài → chấm mọi phần, gửi API, màn kết quả. */
+  const handleSubmitPractice = useCallback(async () => {
+    if (scopedQuestions.length === 0 || sections.length === 0) return;
 
+    const nextResults: Record<number, SectionResult> = {};
+    sections.forEach((section, idx) => {
+      const sq = scopedQuestions.filter((q) =>
+        section.questionIds.includes(q.id),
+      );
+      const sc = calculateScore(sq);
+      nextResults[idx] = { ...sc, submitted: true };
+    });
     setSectionResults(nextResults);
 
     const overallCorrect = Object.values(nextResults).reduce(
@@ -223,64 +256,104 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
       scopedQuestions.length > 0
         ? Math.round((overallCorrect / scopedQuestions.length) * 100)
         : 0;
+    setOverallScore(calculatedOverallScore);
 
-    if (
-      sections.length > 0 &&
-      sections.every((_, idx) => nextResults[idx]?.submitted)
-    ) {
-      setOverallScore(calculatedOverallScore);
+    try {
+      const combinedAnswers = getCombinedAnswers();
+      const backendAnswers = mapAnswersToBackendPayload(
+        scopedQuestions,
+        combinedAnswers,
+      );
 
-      const submit = async () => {
-        try {
-          const combinedAnswers = getCombinedAnswers();
-          const backendAnswers = mapAnswersToBackendPayload(
-            scopedQuestions,
-            combinedAnswers,
-          );
+      if (backendAnswers.length === 0) {
+        notifyError(
+          "Không thể nộp bài",
+          "Bài test này không có câu hỏi đồng bộ với hệ thống chấm điểm.",
+        );
+        return;
+      }
 
-          if (backendAnswers.length === 0) {
-            notifyError(
-              "Không thể nộp bài",
-              "Bài test này không có câu hỏi đồng bộ với hệ thống chấm điểm.",
-            );
-            return;
+      const answersByUnit = backendAnswers.reduce(
+        (acc, item) => {
+          if (!acc[item.unitNumber]) {
+            acc[item.unitNumber] = [];
           }
+          acc[item.unitNumber].push({
+            questionId: item.questionId,
+            answer: item.answer,
+          });
+          return acc;
+        },
+        {} as Record<number, { questionId: string; answer: string }[]>,
+      );
 
-          const answersByUnit = backendAnswers.reduce(
-            (acc, item) => {
-              if (!acc[item.unitNumber]) {
-                acc[item.unitNumber] = [];
-              }
-              acc[item.unitNumber].push({
-                questionId: item.questionId,
-                answer: item.answer,
-              });
-              return acc;
-            },
-            {} as Record<number, { questionId: string; answer: string }[]>,
-          );
+      for (const [unitNumber, answers] of Object.entries(answersByUnit)) {
+        if (answers.length === 0) continue;
+        await submitAttempt({
+          unitNumber: Number(unitNumber),
+          answers,
+        });
+      }
 
-          for (const [unitNumber, answers] of Object.entries(answersByUnit)) {
-            if (answers.length === 0) continue;
-            await submitAttempt({
-              unitNumber: Number(unitNumber),
-              answers,
-            });
-          }
-
-          setShowResults(true);
-        } catch (error) {
-          console.error("Failed to submit general test results", error);
-          notifyError(
-            "Nộp bài thất bại",
-            "Kết quả chưa được lưu. Vui lòng thử lại.",
-          );
-        }
-      };
-
-      void submit();
+      setShowResults(true);
+    } catch (error) {
+      console.error("Failed to submit general test results", error);
+      notifyError(
+        "Nộp bài thất bại",
+        "Kết quả chưa được lưu. Vui lòng thử lại.",
+      );
     }
-  };
+  }, [
+    scopedQuestions,
+    sections,
+    calculateScore,
+    setSectionResults,
+    setOverallScore,
+    getCombinedAnswers,
+    notifyError,
+    submitAttempt,
+    setShowResults,
+  ]);
+
+  const currentFlatQuestionIndex = useMemo(() => {
+    let flat = 0;
+    for (let sIdx = 0; sIdx < currentSectionIndex; sIdx++) {
+      flat += scopedQuestions.filter((q) =>
+        sections[sIdx]?.questionIds.includes(q.id),
+      ).length;
+    }
+    flat += currentPageIndex * QUESTIONS_PER_PAGE + currentIndexInSection;
+    return flat;
+  }, [
+    currentSectionIndex,
+    currentPageIndex,
+    currentIndexInSection,
+    scopedQuestions,
+    sections,
+  ]);
+
+  const goToFlatQuestionIndex = useCallback(
+    (flat: number) => {
+      let remaining = flat;
+      for (let sIdx = 0; sIdx < sections.length; sIdx++) {
+        const secQs = scopedQuestions.filter((q) =>
+          sections[sIdx].questionIds.includes(q.id),
+        );
+        if (remaining < secQs.length) {
+          const page = Math.floor(remaining / QUESTIONS_PER_PAGE);
+          const idx = remaining % QUESTIONS_PER_PAGE;
+          setCurrentSectionIndex(sIdx);
+          setExpandedSectionIndex(sIdx);
+          setCurrentPageIndex(page);
+          setCurrentIndexInSection(idx);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          return;
+        }
+        remaining -= secQs.length;
+      }
+    },
+    [sections, scopedQuestions],
+  );
 
   const handleBack = () => {
     if (isReviewMode) {
@@ -323,7 +396,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
       );
       setCurrentIndexInSection(0);
     },
-    onSubmitSection: handleSubmitSection,
+    onSubmitSection: handleSubmitPractice,
     onExitReview: () => setIsReviewMode(false),
   };
 
@@ -341,6 +414,13 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     selectedLeft,
     matchingRightOptionsByQuestionId,
     showResults: isReviewMode || sectionResults[currentSectionIndex]?.submitted,
+    inlineSubmit:
+      !isReviewMode && scopedQuestions.length > 0
+        ? {
+            onSubmit: () => void handleSubmitPractice(),
+            submitting: isSubmitting,
+          }
+        : undefined,
   };
 
   const questionPanelActions: GeneralTestQuestionPanelActions = {
@@ -457,7 +537,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
         userAnswers={getCombinedAnswers()}
         onBack={handleBack}
         onReview={() => setIsReviewMode(true)}
-        title="KẾT QUẢ TEST TỔNG HỢP"
+        title="KẾT QUẢ LUYỆN TẬP"
       />
     );
   }
@@ -489,11 +569,44 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
         }}
       />
 
+      {isReviewMode ? (
+        <div className="px-4 pb-2 max-w-5xl mx-auto w-full animate-in fade-in duration-200">
+          <p className="text-[10px] font-bold text-center text-muted-foreground uppercase tracking-wider mb-2">
+            Chọn câu để xem đúng / sai (giống giao diện làm bài)
+          </p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {scopedQuestions.map((q, i) => {
+              const combined = getCombinedAnswers();
+              const ok = isAnswerCorrectForQuestion(q, combined);
+              const active = i === currentFlatQuestionIndex;
+              return (
+                <button
+                  key={q.id}
+                  type="button"
+                  title={ok ? "Đúng" : "Sai / chưa đạt"}
+                  className={`h-9 min-w-9 rounded-lg text-xs font-black border-2 transition-all ${
+                    active
+                      ? "border-primary bg-primary text-primary-foreground scale-110 shadow-md"
+                      : ok
+                        ? "border-green-500/60 bg-green-500/15 text-green-800 dark:text-green-300"
+                        : "border-red-500/50 bg-red-500/10 text-red-800 dark:text-red-300"
+                  }`}
+                  onClick={() => goToFlatQuestionIndex(i)}
+                >
+                  {i + 1}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-col lg:flex-row gap-8 items-start px-4">
-        {!effectiveLane ? (
+        {!effectiveLane || isReviewMode ? (
           <GeneralTestSectionSidebar
             vm={sectionSidebarVm}
             actions={sectionSidebarActions}
+            hideSectionSubmit
           />
         ) : null}
 

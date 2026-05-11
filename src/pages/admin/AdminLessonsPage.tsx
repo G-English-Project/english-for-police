@@ -1,7 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
-  ChevronDown,
   ChevronUp,
   Loader2,
   Plus,
@@ -61,7 +61,7 @@ function newQuestionId(unitId: number): string {
   return `pq-${unitId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function emptyUnit(suggestedId: number): Unit {
+export function emptyUnit(suggestedId: number): Unit {
   return {
     id: suggestedId,
     title: "",
@@ -125,7 +125,7 @@ const TEST_LANE_OPTIONS: { value: string; label: string }[] = [
 
 type EditorMode = "create" | "edit";
 
-function LessonEditorForm({
+export function LessonEditorForm({
   mode,
   draft,
   setDraft,
@@ -1207,13 +1207,13 @@ interface AdminLessonsPageProps {
 export default function AdminLessonsPage({
   onLessonsUpdated,
 }: AdminLessonsPageProps) {
+  const navigate = useNavigate();
   const { notifyError, notifySuccess } = useSonner();
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  /** null = closed; "create" = add panel above rows; number = unit id expanded for edit */
-  const [expanded, setExpanded] = useState<null | "create" | number>(null);
-  const [loadingEditId, setLoadingEditId] = useState<number | null>(null);
+  /** null = closed; "create" = add panel above rows */
+  const [expanded, setExpanded] = useState<null | "create">(null);
   const [draft, setDraft] = useState<Unit>(emptyUnit(1));
   const [phraseTemplates, setPhraseTemplates] = useState<PhraseTemplate[]>([]);
   const [grammarStructures, setGrammarStructures] = useState<GrammarStructure[]>(
@@ -1244,7 +1244,6 @@ export default function AdminLessonsPage({
 
   const closePanel = () => {
     setExpanded(null);
-    setLoadingEditId(null);
     setPhraseTemplates([]);
     setGrammarStructures([]);
   };
@@ -1260,40 +1259,18 @@ export default function AdminLessonsPage({
     setDraft(emptyUnit(suggestedNextId));
   };
 
-  const toggleEditRow = async (unitNumber: number) => {
-    if (expanded === unitNumber) {
-      closePanel();
-      return;
-    }
-    setExpanded(unitNumber);
-    setLoadingEditId(unitNumber);
-    try {
-      const [full, templates, structures] = await Promise.all([
-        lessonService.getLessonForAdmin(unitNumber),
-        lessonService.listPhraseTemplates(unitNumber),
-        lessonService.listGrammarStructures(unitNumber),
-      ]);
-      setDraft(full);
-      setPhraseTemplates(templates);
-      setGrammarStructures(structures);
-    } catch (e) {
-      console.error(e);
-      notifyError("Không tải được chương", String((e as Error).message ?? e));
-      closePanel();
-    } finally {
-      setLoadingEditId(null);
-    }
-  };
-
   const persist = async () => {
     setSaving(true);
     try {
       if (expanded === "create") {
         await lessonService.createLesson(draft);
         notifySuccess("Đã tạo chương", `Chương ${draft.id}`);
-      } else if (typeof expanded === "number") {
-        await lessonService.updateLesson(draft.id, draft);
-        notifySuccess("Đã cập nhật chương", `Chương ${draft.id}`);
+        const newId = draft.id;
+        closePanel();
+        await loadUnits();
+        await onLessonsUpdated();
+        navigate(`/admin/lessons/${newId}/workspace`);
+        return;
       }
       closePanel();
       await loadUnits();
@@ -1310,9 +1287,6 @@ export default function AdminLessonsPage({
     if (!window.confirm(`Xóa chương ${unitNumber}? Thao tác không hoàn tác.`)) {
       return;
     }
-    if (expanded === unitNumber) {
-      closePanel();
-    }
     try {
       await lessonService.deleteLesson(unitNumber);
       notifySuccess("Đã xóa chương", String(unitNumber));
@@ -1324,34 +1298,10 @@ export default function AdminLessonsPage({
     }
   };
 
-  const expandedRowEditor = (unitId: number) => (
-    <tr key={`${unitId}-editor`} className="bg-muted/20 animate-in fade-in duration-200">
-      <td colSpan={3} className="p-0 align-top">
-        <div className="border-t-2 border-primary/40 bg-gradient-to-b from-muted/40 to-background shadow-inner">
-          <div className="max-h-[min(75vh,900px)] overflow-y-auto overscroll-contain p-4 md:p-6">
-            <LessonEditorForm
-              mode="edit"
-              draft={draft}
-              setDraft={setDraft}
-              phraseTemplates={phraseTemplates}
-              setPhraseTemplates={setPhraseTemplates}
-              grammarStructures={grammarStructures}
-              setGrammarStructures={setGrammarStructures}
-              idPrefix={`edit-${unitId}`}
-              saving={saving}
-              onCancel={closePanel}
-              onSave={persist}
-            />
-          </div>
-        </div>
-      </td>
-    </tr>
-  );
-
   return (
     <AdminPageLayout
       title="Quản lý bài học"
-      description="Tạo, sửa và xóa chương (đơn vị bài học), gồm từ vựng, mẫu câu, cố định và câu hỏi luyện tập. Chỉnh sửa đáp án cần đăng nhập quản trị."
+      description="Thêm chương mới tại đây; soạn thảo chi tiết (từ vựng, mẫu câu, bài kiểm tra) mở trang không gian riêng cho từng chương."
       actions={
         <Button
           onClick={toggleCreatePanel}
@@ -1383,7 +1333,7 @@ export default function AdminLessonsPage({
               <tr className="border-b border-border bg-muted/30 text-left text-muted-foreground">
                 <th className="py-3 pl-4 sm:pl-6 pr-4 font-semibold w-[72px]">Mã</th>
                 <th className="py-3 pr-4 font-semibold">Tiêu đề</th>
-                <th className="py-3 pr-4 sm:pr-6 font-semibold text-right min-w-[200px]">
+                <th className="py-3 pr-4 sm:pr-6 font-semibold text-right min-w-[240px]">
                   Thao tác
                 </th>
               </tr>
@@ -1414,12 +1364,7 @@ export default function AdminLessonsPage({
               )}
               {units.map((u) => (
                 <Fragment key={u.id}>
-                  <tr
-                    className={cn(
-                      "border-b border-border/60 transition-colors",
-                      expanded === u.id && "bg-primary/5 ring-inset ring-1 ring-primary/15",
-                    )}
-                  >
+                  <tr className="border-b border-border/60 transition-colors">
                     <td className="py-3 pl-4 sm:pl-6 pr-4 font-mono font-semibold text-primary">
                       {u.id}
                     </td>
@@ -1427,20 +1372,14 @@ export default function AdminLessonsPage({
                     <td className="py-3 pr-4 sm:pr-6 text-right whitespace-nowrap space-x-2">
                       <Button
                         type="button"
-                        variant={expanded === u.id ? "secondary" : "outline"}
+                        variant="default"
                         size="sm"
                         className="gap-1"
-                        onClick={() => void toggleEditRow(u.id)}
-                        disabled={loadingEditId === u.id}
+                        onClick={() =>
+                          navigate(`/admin/lessons/${u.id}/workspace`)
+                        }
                       >
-                        {loadingEditId === u.id ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : expanded === u.id ? (
-                          <ChevronUp className="h-3.5 w-3.5" />
-                        ) : (
-                          <ChevronDown className="h-3.5 w-3.5" />
-                        )}
-                        {expanded === u.id ? "Thu gọn" : "Sửa"}
+                        Soạn chương
                       </Button>
                       <Button
                         type="button"
@@ -1454,7 +1393,6 @@ export default function AdminLessonsPage({
                       </Button>
                     </td>
                   </tr>
-                  {expanded === u.id && expandedRowEditor(u.id)}
                 </Fragment>
               ))}
             </tbody>
