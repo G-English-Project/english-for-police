@@ -13,7 +13,6 @@ import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import type {
   GrammarStructure,
   LessonTestLane,
-  PhraseTemplate,
   Question,
   Unit,
 } from "@/types";
@@ -72,7 +71,7 @@ export default function AdminLessonWorkspacePage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<Unit>(() => emptyUnit(1));
-  const [phraseTemplates, setPhraseTemplates] = useState<PhraseTemplate[]>([]);
+
   const [grammarStructures, setGrammarStructures] = useState<
     GrammarStructure[]
   >([]);
@@ -85,13 +84,11 @@ export default function AdminLessonWorkspacePage({
         return;
       }
       try {
-        const [full, templates, structures] = await Promise.all([
+        const [full, structures] = await Promise.all([
           lessonService.getLessonForAdmin(id),
-          lessonService.listPhraseTemplates(id),
           lessonService.listGrammarStructures(id),
         ]);
         setDraft(full);
-        setPhraseTemplates(templates);
         setGrammarStructures(structures);
       } catch (e) {
         console.error(e);
@@ -111,13 +108,11 @@ export default function AdminLessonWorkspacePage({
       return;
     }
     try {
-      const [full, templates, structures] = await Promise.all([
+      const [full, structures] = await Promise.all([
         lessonService.getLessonForAdmin(id),
-        lessonService.listPhraseTemplates(id),
         lessonService.listGrammarStructures(id),
       ]);
       setDraft(full);
-      setPhraseTemplates(templates);
       setGrammarStructures(structures);
     } catch (e) {
       console.error(e);
@@ -241,8 +236,7 @@ export default function AdminLessonWorkspacePage({
                 mode="edit"
                 draft={draft}
                 setDraft={setDraft}
-                phraseTemplates={phraseTemplates}
-                setPhraseTemplates={setPhraseTemplates}
+
                 grammarStructures={grammarStructures}
                 setGrammarStructures={setGrammarStructures}
                 idPrefix={`workspace-${draft.id}`}

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronUp, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { GrammarStructure, PhraseTemplate, Unit } from "@/types";
+import type { GrammarStructure, Unit } from "@/types";
 import { lessonService } from "@/services/lesson.service";
 import { useSonner } from "@/hooks/use-sonner";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
@@ -23,7 +23,7 @@ export default function AdminLessonsPage({
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<null | "create">(null);
   const [draft, setDraft] = useState<Unit>(emptyUnit(1));
-  const [phraseTemplates, setPhraseTemplates] = useState<PhraseTemplate[]>([]);
+
   const [grammarStructures, setGrammarStructures] = useState<
     GrammarStructure[]
   >([]);
@@ -68,7 +68,7 @@ export default function AdminLessonsPage({
 
   const closePanel = () => {
     setExpanded(null);
-    setPhraseTemplates([]);
+
     setGrammarStructures([]);
   };
 
@@ -78,7 +78,7 @@ export default function AdminLessonsPage({
       return;
     }
     setExpanded("create");
-    setPhraseTemplates([]);
+
     setGrammarStructures([]);
     setDraft(emptyUnit(suggestedNextId));
   };
@@ -151,8 +151,6 @@ export default function AdminLessonsPage({
         toggleCreatePanel={toggleCreatePanel}
         draft={draft}
         setDraft={setDraft}
-        phraseTemplates={phraseTemplates}
-        setPhraseTemplates={setPhraseTemplates}
         grammarStructures={grammarStructures}
         setGrammarStructures={setGrammarStructures}
         saving={saving}

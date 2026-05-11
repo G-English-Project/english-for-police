@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { LessonEditorForm } from "@/components/admin/lessons/LessonEditorForm";
-import type { Unit, PhraseTemplate, GrammarStructure } from "@/types";
+import type { Unit, GrammarStructure } from "@/types";
 
 export function UnitTable({
   units,
@@ -17,8 +17,6 @@ export function UnitTable({
   expanded,
   draft,
   setDraft,
-  phraseTemplates,
-  setPhraseTemplates,
   grammarStructures,
   setGrammarStructures,
   saving,
@@ -33,8 +31,6 @@ export function UnitTable({
   toggleCreatePanel: () => void;
   draft: Unit;
   setDraft: React.Dispatch<React.SetStateAction<Unit>>;
-  phraseTemplates: PhraseTemplate[];
-  setPhraseTemplates: React.Dispatch<React.SetStateAction<PhraseTemplate[]>>;
   grammarStructures: GrammarStructure[];
   setGrammarStructures: React.Dispatch<
     React.SetStateAction<GrammarStructure[]>
@@ -78,8 +74,6 @@ export function UnitTable({
                         mode="create"
                         draft={draft}
                         setDraft={setDraft}
-                        phraseTemplates={phraseTemplates}
-                        setPhraseTemplates={setPhraseTemplates}
                         grammarStructures={grammarStructures}
                         setGrammarStructures={setGrammarStructures}
                         idPrefix="create"
