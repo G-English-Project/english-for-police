@@ -191,11 +191,12 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
 
       <FlashcardStats learningCount={stats.learning} knownCount={stats.known} />
 
-      <div className="w-full flex flex-col md:flex-row items-center justify-center gap-6 md:gap-8 mt-4 md:mt-6">
-        <div className="w-full flex-1 max-w-3xl order-1 md:order-2">
+      <div className="w-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-8 mt-4 lg:mt-6">
+        <div className="w-full flex-1 max-w-3xl order-1 lg:order-2">
           <Flashcard
             front={currentCard.front}
             back={currentCard.back}
+            unitId={unit.id}
             phonetic={
               "phonetic" in currentCard ? currentCard.phonetic : undefined
             }
@@ -208,23 +209,23 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
         </div>
 
         {/* Navigation Buttons Container */}
-        <div className="w-full flex items-center justify-center gap-6 order-2 md:contents">
+        <div className="w-full flex items-center justify-center gap-8 order-2 lg:contents mt-2 lg:mt-0">
           {/* Left Arrow Button */}
           <button
             onClick={() => markCard("review")}
-            className="h-14 w-14 md:h-16 md:w-16 rounded-full flex items-center justify-center transition-all bg-orange-500 text-white hover:scale-110 active:scale-95 shadow-lg md:order-1"
+            className="h-16 w-16 lg:h-20 lg:w-20 rounded-full flex items-center justify-center transition-all bg-orange-500 text-white hover:bg-orange-600 hover:scale-110 active:scale-90 shadow-[0_15px_30px_-10px_rgba(249,115,22,0.5)] lg:order-1 group/btn"
             title="Học lại (Phím ←)"
           >
-            <ChevronLeft className="h-7 w-7 md:h-8 md:w-8" />
+            <ChevronLeft className="h-8 w-8 lg:h-10 lg:w-10 transition-transform group-hover/btn:-translate-x-1" />
           </button>
 
           {/* Right Arrow Button */}
           <button
             onClick={() => markCard("known")}
-            className="h-14 w-14 md:h-16 md:w-16 rounded-full flex items-center justify-center transition-all bg-emerald-500 text-white hover:scale-110 active:scale-95 shadow-lg md:order-3"
+            className="h-16 w-16 lg:h-20 lg:w-20 rounded-full flex items-center justify-center transition-all bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-110 active:scale-90 shadow-[0_15px_30px_-10px_rgba(16,185,129,0.5)] lg:order-3 group/btn"
             title="Đã thuộc (Phím →)"
           >
-            <ChevronRight className="h-7 w-7 md:h-8 md:w-8" />
+            <ChevronRight className="h-8 w-8 lg:h-10 lg:w-10 transition-transform group-hover/btn:translate-x-1" />
           </button>
         </div>
       </div>

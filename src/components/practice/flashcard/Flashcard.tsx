@@ -1,10 +1,11 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Volume2, Keyboard } from "lucide-react";
+import { Volume2 } from "lucide-react";
 
 interface FlashcardProps {
   front: string;
   back: string;
+  unitId?: number;
   phonetic?: string;
   example?: string;
   context?: string;
@@ -16,6 +17,7 @@ interface FlashcardProps {
 export const Flashcard: React.FC<FlashcardProps> = ({
   front,
   back,
+  unitId,
   phonetic,
   example,
   context,
@@ -25,102 +27,133 @@ export const Flashcard: React.FC<FlashcardProps> = ({
 }) => {
   return (
     <div
-      className="w-full max-w-3xl aspect-4/5 md:aspect-16/10 relative group cursor-pointer perspective-1000"
+      className="w-full max-w-2xl mx-auto aspect-4/5 md:aspect-16/10 min-h-[450px] md:min-h-[400px] relative group cursor-pointer perspective-2000"
       onClick={onFlip}
     >
+      {/* Decorative Glow Effect */}
+      <div className="absolute -inset-4 bg-primary/20 rounded-[32px] blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 -z-10" />
+
       <div
-        className={`relative w-full h-full transition-all duration-500 preserve-3d ${isFlipped ? "rotate-y-180" : ""}`}
+        className={`relative w-full h-full transition-all duration-700 preserve-3d ${isFlipped ? "rotate-y-180" : ""}`}
       >
         {/* Front Side */}
-        <div className="absolute inset-0 backface-hidden bg-linear-to-br from-[#2e3856] to-[#1a1f35] rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col p-6 md:p-8 overflow-hidden border border-white/10 group-hover:border-white/20 transition-colors">
-          <div className="flex justify-between items-start">
-            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-white/20 bg-white/5 px-2 md:px-3 py-1 rounded-full border border-white/5">
-              POLICE ENGLISH
-            </span>
+        <div className="absolute inset-0 backface-hidden bg-[#1a1f35] rounded-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col p-8 md:p-12 overflow-hidden border border-white/10 group-hover:border-primary/30 transition-all duration-500">
+          {/* Grain Overlay */}
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+
+          <div className="flex justify-between items-start relative z-10">
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/80">
+                Unit {unitId ?? "1"}
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-white/20">
+                Flashcard Practice
+              </span>
+            </div>
             <Button
               variant="ghost"
               size="icon"
-              className="text-white/40 hover:text-white hover:bg-white/10 h-8 w-8 md:h-10 md:w-10 transition-all rounded-full"
+              className="text-white/40 hover:text-white hover:bg-white/10 h-10 w-10 transition-all rounded-full border border-white/5 backdrop-blur-md"
               onClick={(e) => {
                 e.stopPropagation();
                 onPlayAudio(front);
               }}
             >
-              <Volume2 className="h-5 w-5 md:h-6 md:w-6" />
+              <Volume2 className="h-5 w-5" />
             </Button>
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center text-center px-2 md:px-4">
-            <h2 className="text-3xl md:text-6xl font-black tracking-tight text-white mb-4 drop-shadow-2xl">
+          <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 py-8">
+            <h2 className="text-4xl md:text-7xl font-black tracking-tighter text-white mb-6 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
               {front}
             </h2>
             {phonetic && (
-              <div className="bg-white/5 px-3 md:px-4 py-1 md:py-1.5 rounded-full border border-white/5">
-                <p className="text-emerald-400 text-lg md:text-xl font-mono tracking-wider">
+              <div className="bg-primary/10 px-5 py-2 rounded-2xl border border-primary/20 backdrop-blur-xl">
+                <p className="text-emerald-400 text-xl md:text-2xl font-mono tracking-widest">
                   {phonetic}
                 </p>
               </div>
             )}
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 h-14 md:h-16 bg-white/5 border-t border-white/5 flex items-center justify-center gap-2 md:gap-4 text-[10px] font-medium backdrop-blur-sm">
-            <span className="text-white/40 font-black uppercase tracking-widest text-[9px] md:text-[10px]">
-              TRẢI NGHIỆM
-            </span>
-            <div className="flex items-center gap-2">
-              <span className="text-white/60 hidden md:inline">Bấm</span>
-              <span className="px-2 py-0.5 md:px-2.5 md:py-1 bg-white/10 rounded-md border border-white/20 text-[9px] md:text-[10px] font-mono text-white shadow-inner">
-                Tap
-              </span>
-              <span className="text-white/60">để lật xem kết quả</span>
+          <div className="relative z-10 mt-auto pt-6 border-t border-white/5">
+            <div className="flex items-center justify-center gap-3">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-inner">
+                <span className="text-white/40 text-[9px] font-black uppercase tracking-widest">
+                  {isFlipped ? "ĐÁNH GIÁ" : "TRẢI NGHIỆM"}
+                </span>
+                <div className="h-3 w-px bg-white/10" />
+                <span className="text-white/80 text-[10px] font-bold">
+                  <span className="md:hidden">Chạm</span>
+                  <span className="hidden md:inline">Phím Space</span>
+                </span>
+                <span className="text-white/40 text-[10px] font-medium">
+                  để lật
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Back Side */}
-        <div className="absolute inset-0 backface-hidden rotate-y-180 bg-linear-to-br from-[#1a1f35] to-[#0f1225] rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.4)] flex flex-col p-6 md:p-8 overflow-hidden border border-white/10">
-          <div className="flex justify-start">
-            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500/40 bg-emerald-500/5 px-2 md:px-3 py-1 rounded-full border border-emerald-500/10">
+        <div className="absolute inset-0 backface-hidden rotate-y-180 bg-[#0f1225] rounded-3xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] flex flex-col p-8 md:p-12 overflow-hidden border border-emerald-500/20">
+          {/* Gradient Highlight */}
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px]" />
+
+          <div className="flex justify-between items-start relative z-10">
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400/80 bg-emerald-400/5 px-4 py-1.5 rounded-full border border-emerald-400/10">
               KẾT QUẢ
             </span>
           </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center text-center px-2 md:px-4 overflow-y-auto custom-scrollbar py-4">
-            <h3 className="text-2xl md:text-5xl font-black text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-teal-300 mb-4 md:mb-6 py-1">
+          <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 py-6 overflow-y-auto custom-scrollbar">
+            <h3 className="text-3xl md:text-6xl font-black text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-teal-300 mb-6 py-2 drop-shadow-sm">
               {back}
             </h3>
 
             {(example || context) && (
-              <div className="space-y-3 md:space-y-4 max-w-xl">
-                <div className="h-px w-8 md:w-12 bg-white/10 mx-auto" />
+              <div className="space-y-4 max-w-xl">
+                <div className="h-px w-12 bg-emerald-500/20 mx-auto" />
                 {example && (
-                  <p className="text-white/80 text-base md:text-xl italic font-medium leading-relaxed">
-                    "{example}"
-                  </p>
+                  <div className="relative px-6">
+                    <span className="absolute top-0 left-0 text-emerald-500/30 text-4xl font-serif">
+                      “
+                    </span>
+                    <p className="text-white/90 text-lg md:text-2xl italic font-medium leading-relaxed py-2">
+                      {example}
+                    </p>
+                    <span className="absolute bottom-0 right-0 text-emerald-500/30 text-4xl font-serif">
+                      ”
+                    </span>
+                  </div>
                 )}
                 {context && (
-                  <p className="text-white/50 text-sm md:text-base italic leading-relaxed">
-                    Context: {context}
-                  </p>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-white/5 border border-white/5">
+                    <span className="text-[10px] font-black text-emerald-400/40 uppercase">
+                      Context
+                    </span>
+                    <p className="text-white/40 text-xs md:text-sm font-medium">
+                      {context}
+                    </p>
+                  </div>
                 )}
               </div>
             )}
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 h-14 md:h-16 bg-white/5 border-t border-white/5 flex items-center justify-center gap-2 md:gap-4 text-[10px] font-medium backdrop-blur-sm">
-            <span className="text-white/40 font-black uppercase tracking-widest text-[9px] md:text-[10px]">
-              ĐÁNH GIÁ
-            </span>
-            <div className="flex items-center gap-1 md:gap-2">
-              <div className="flex items-center gap-1 bg-orange-500/10 px-1.5 md:px-2 py-0.5 md:py-1 rounded border border-orange-500/20">
-                <span className="text-orange-400/80 text-[8px] md:text-[9px] font-bold">
-                  CẦN ÔN TẬP
+          <div className="relative z-10 mt-auto pt-6 border-t border-white/5">
+            <div className="flex items-center justify-center gap-4">
+              <div className="flex items-center gap-2 bg-orange-500/10 px-4 py-1.5 rounded-full border border-orange-500/20 shadow-sm">
+                <div className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+                <span className="text-orange-400 text-[10px] font-black uppercase tracking-widest">
+                  Cần ôn tập
                 </span>
               </div>
-              <span className="text-white/20">|</span>
-              <div className="flex items-center gap-1 bg-emerald-500/10 px-1.5 md:px-2 py-0.5 md:py-1 rounded border border-emerald-500/20">
-                <span className="text-emerald-400/80 text-[8px] md:text-[9px] font-bold">
-                  ĐÃ THUỘC
+              <div className="h-4 w-px bg-white/10" />
+              <div className="flex items-center gap-2 bg-emerald-500/10 px-4 py-1.5 rounded-full border border-emerald-500/20 shadow-sm">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="text-emerald-400 text-[10px] font-black uppercase tracking-widest">
+                  Đã thuộc
                 </span>
               </div>
             </div>
