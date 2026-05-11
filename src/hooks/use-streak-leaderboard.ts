@@ -32,9 +32,9 @@ export function useStreakLeaderboard() {
         return [];
       }
       const message =
-        apiError.message || "Khong the tai bang xep hang chuoi hoc tap.";
+        apiError.message || "Không thể tải bảng xếp hạng chuỗi học tập.";
       setError(message);
-      notifyError("Tai bang xep hang that bai", message);
+      notifyError("Tải bảng xếp hạng thất bại", message);
       throw err;
     } finally {
       setIsLoading(false);
