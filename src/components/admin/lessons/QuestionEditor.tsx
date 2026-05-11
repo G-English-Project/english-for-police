@@ -2,20 +2,32 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import type { Question, LessonTestLane } from "@/types";
 import { QUESTION_TYPES } from "@/pages/admin/LessonEditorUtils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Trash2,
+  HelpCircle,
+  MessageSquare,
+  ListTodo,
+  Settings2,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
-const selectClass =
-  "flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm md:text-base ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
-
-const TEST_LANE_OPTIONS: { label: string; value: LessonTestLane | "" }[] = [
-  { label: "(Tự suy dạng)", value: "" },
-  { label: "Trắc nghiệm vựng (VOCAB_MCQ)", value: "VOCAB_MCQ" },
-  { label: "Ghép cặp (MATCHING)", value: "MATCHING" },
-  { label: "Tình huống (PHRASE_SCENARIO)", value: "PHRASE_SCENARIO" },
-  { label: "Sắp xếp/Điền từ (FILL_ARRANGE)", value: "FILL_ARRANGE" },
-];
+const TEST_LANE_OPTIONS: { label: string; value: LessonTestLane | "UNSET" }[] =
+  [
+    { label: "Tự động phân loại", value: "UNSET" },
+    { label: "Trắc nghiệm từ vựng", value: "VOCAB_MCQ" },
+    { label: "Ghép cặp từ/câu", value: "MATCHING" },
+    { label: "Tình huống giao tiếp", value: "PHRASE_SCENARIO" },
+    { label: "Sắp xếp & Điền từ", value: "FILL_ARRANGE" },
+  ];
 
 export function QuestionEditor({
   q,
@@ -27,199 +39,251 @@ export function QuestionEditor({
   onDelete: () => void;
 }) {
   return (
-    <div className="border border-border rounded-lg p-3 space-y-2 bg-muted/30">
-      <div className="flex flex-wrap gap-2 items-end">
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">Loại</Label>
-          <select
-            className={cn(selectClass, "min-w-35")}
-            value={q.type}
-            onChange={(e) => {
-              onUpdate({ ...q, type: e.target.value as Question["type"] });
-            }}
-          >
-            {QUESTION_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">
-            Làn kiểm tra (UI luyện tập)
-          </Label>
-          <select
-            className={cn(selectClass, "min-w-55")}
-            value={q.testLane ?? ""}
-            onChange={(e) => {
-              const v = e.target.value;
-              onUpdate({
-                ...q,
-                testLane: v === "" ? undefined : (v as LessonTestLane),
-              });
-            }}
-          >
-            {TEST_LANE_OPTIONS.map((opt) => (
-              <option key={opt.value || "unset"} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+    <Card className="border border-border/60 shadow-none bg-background/50 overflow-hidden group/q">
+      <div className="bg-muted/30 px-3 py-2 border-b border-border/40 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="space-y-0.5">
+            <Label className="text-[9px] font-black uppercase text-muted-foreground/60 block px-1">
+              Dạng câu hỏi
+            </Label>
+            <Select
+              value={q.type}
+              onValueChange={(val) => {
+                onUpdate({ ...q, type: val as Question["type"] });
+              }}
+            >
+              <SelectTrigger className="h-7 min-w-32 text-[10px] font-bold uppercase bg-background">
+                <SelectValue placeholder="Loại" />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                {QUESTION_TYPES.map((t) => (
+                  <SelectItem
+                    key={t}
+                    value={t}
+                    className="text-[10px] uppercase font-bold"
+                  >
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-0.5">
+            <Label className="text-[9px] font-black uppercase text-muted-foreground/60 block px-1">
+              Nhóm bài tập
+            </Label>
+            <Select
+              value={q.testLane ?? "UNSET"}
+              onValueChange={(val) => {
+                onUpdate({
+                  ...q,
+                  testLane:
+                    val === "UNSET" ? undefined : (val as LessonTestLane),
+                });
+              }}
+            >
+              <SelectTrigger className="h-7 min-w-44 text-[10px] font-bold uppercase bg-background">
+                <SelectValue placeholder="Làn" />
+              </SelectTrigger>
+              <SelectContent position="popper">
+                {TEST_LANE_OPTIONS.map((opt) => (
+                  <SelectItem
+                    key={opt.value}
+                    value={opt.value}
+                    className="text-[10px] uppercase font-bold"
+                  >
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <Button
           type="button"
           variant="ghost"
-          size="sm"
-          className="ml-auto"
+          size="icon"
+          className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           onClick={onDelete}
         >
-          Xóa câu
+          <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
-      <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">Đề bài</Label>
-        <Textarea
-          rows={2}
-          value={q.prompt}
-          onChange={(e) => onUpdate({ ...q, prompt: e.target.value })}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">
-            Ngữ cảnh (circumstance)
-          </Label>
+
+      <CardContent className="p-4 space-y-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5 ml-1">
+            <HelpCircle className="h-3 w-3 text-primary/60" />
+            <Label className="text-[10px] font-bold uppercase text-muted-foreground/60">
+              Đề bài / Nội dung hiển thị
+            </Label>
+          </div>
           <Textarea
             rows={2}
-            value={q.circumstance ?? ""}
-            onChange={(e) => onUpdate({ ...q, circumstance: e.target.value })}
+            placeholder="Nhập câu hỏi hoặc nội dung chính..."
+            value={q.prompt}
+            onChange={(e) => onUpdate({ ...q, prompt: e.target.value })}
+            className="text-xs bg-background/50 focus:bg-background"
           />
         </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">
-            Gợi ý tiếng Việt (vnPrompt)
-          </Label>
-          <Textarea
-            rows={2}
-            value={q.vnPrompt ?? ""}
-            onChange={(e) => onUpdate({ ...q, vnPrompt: e.target.value })}
-          />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold uppercase text-muted-foreground/60 ml-1">
+              Ngữ cảnh (Context)
+            </Label>
+            <Textarea
+              rows={2}
+              placeholder="Giải thích bối cảnh câu hỏi..."
+              value={q.circumstance ?? ""}
+              onChange={(e) => onUpdate({ ...q, circumstance: e.target.value })}
+              className="text-xs bg-background/50 focus:bg-background"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold uppercase text-muted-foreground/60 ml-1">
+              Gợi ý tiếng Việt
+            </Label>
+            <Textarea
+              rows={2}
+              placeholder="Dịch nghĩa hoặc gợi ý cho học viên..."
+              value={q.vnPrompt ?? ""}
+              onChange={(e) => onUpdate({ ...q, vnPrompt: e.target.value })}
+              className="text-xs bg-background/50 focus:bg-background"
+            />
+          </div>
         </div>
-      </div>
-      <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">
-          Mô tả tình huống (Scenario / Speaking)
-        </Label>
-        <Textarea
-          rows={2}
-          value={q.scenarioDescription ?? ""}
-          onChange={(e) =>
-            onUpdate({ ...q, scenarioDescription: e.target.value })
-          }
-        />
-      </div>
-      {(q.type === "MCQ" || q.type === "Scenario") && (
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">
-            Lựa chọn (mỗi dòng một)
-          </Label>
-          <Textarea
-            rows={3}
-            value={(q.options ?? []).join("\n")}
-            onChange={(e) => {
-              const opts = e.target.value
-                .split("\n")
-                .map((s) => s.trim())
-                .filter(Boolean);
-              onUpdate({ ...q, options: opts });
-            }}
-          />
-        </div>
-      )}
-      {q.type === "Matching" && (
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">
-            Cặp (mỗi dòng: trái | phải)
-          </Label>
-          <Textarea
-            rows={3}
-            value={(q.pairs ?? [])
-              .map((pair) => `${pair.left} | ${pair.right}`)
-              .join("\n")}
-            onChange={(e) => {
-              const lines = e.target.value.split("\n");
-              const pairs = lines
-                .map((line) => {
-                  const [l, r] = line.split("|").map((s) => s.trim());
-                  if (!l || !r) return null;
-                  return { left: l, right: r };
-                })
-                .filter(Boolean) as { left: string; right: string }[];
-              onUpdate({ ...q, pairs });
-            }}
-          />
-        </div>
-      )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">
-            Đáp án (chuỗi hoặc JSON)
-          </Label>
-          <Input
-            value={
-              typeof q.answer === "string"
-                ? q.answer
-                : JSON.stringify(q.answer ?? "")
-            }
-            onChange={(e) => {
-              const raw = e.target.value;
-              let answer: string | string[] = raw;
-              if (raw.trim().startsWith("[")) {
-                try {
-                  answer = JSON.parse(raw) as string[];
-                } catch {
-                  answer = raw;
-                }
+
+        {q.type === "Scenario" && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 ml-1">
+              <MessageSquare className="h-3 w-3 text-primary/60" />
+              <Label className="text-[10px] font-bold uppercase text-muted-foreground/60">
+                Mô tả tình huống hội thoại
+              </Label>
+            </div>
+            <Textarea
+              rows={2}
+              placeholder="Dùng cho bài luyện Speaking hoặc Scenario..."
+              value={q.scenarioDescription ?? ""}
+              onChange={(e) =>
+                onUpdate({ ...q, scenarioDescription: e.target.value })
               }
-              onUpdate({ ...q, answer });
-            }}
+              className="text-xs bg-background/50 focus:bg-background italic"
+            />
+          </div>
+        )}
+
+        {(q.type === "MCQ" || q.type === "Scenario") && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 ml-1">
+              <ListTodo className="h-3 w-3 text-primary/60" />
+              <Label className="text-[10px] font-bold uppercase text-muted-foreground/60">
+                Các lựa chọn đáp án (Mỗi dòng một ý)
+              </Label>
+            </div>
+            <Textarea
+              rows={4}
+              placeholder="Option A\nOption B\nOption C..."
+              value={(q.options ?? []).join("\n")}
+              onChange={(e) => {
+                const opts = e.target.value
+                  .split("\n")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+                onUpdate({ ...q, options: opts });
+              }}
+              className="text-xs bg-background/50 focus:bg-background font-medium"
+            />
+          </div>
+        )}
+
+        {q.type === "Matching" && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 ml-1">
+              <ListTodo className="h-3 w-3 text-primary/60" />
+              <Label className="text-[10px] font-bold uppercase text-muted-foreground/60">
+                Các cặp ghép (Vế trái | Vế phải)
+              </Label>
+            </div>
+            <Textarea
+              rows={4}
+              placeholder="Apple | Quả táo\nOrange | Quả cam..."
+              value={(q.pairs ?? [])
+                .map((pair) => `${pair.left} | ${pair.right}`)
+                .join("\n")}
+              onChange={(e) => {
+                const lines = e.target.value.split("\n");
+                const pairs = lines
+                  .map((line) => {
+                    const [l, r] = line.split("|").map((s) => s.trim());
+                    if (!l || !r) return null;
+                    return { left: l, right: r };
+                  })
+                  .filter(Boolean) as { left: string; right: string }[];
+                onUpdate({ ...q, pairs });
+              }}
+              className="text-xs bg-background/50 focus:bg-background font-medium"
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-border/40">
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold uppercase text-primary/70 ml-1">
+              Đáp án đúng
+            </Label>
+            <Input
+              placeholder="Chính xác 100%"
+              value={
+                typeof q.answer === "string"
+                  ? q.answer
+                  : JSON.stringify(q.answer ?? "")
+              }
+              onChange={(e) => {
+                const raw = e.target.value;
+                let answer: string | string[] = raw;
+                if (raw.trim().startsWith("[")) {
+                  try {
+                    answer = JSON.parse(raw) as string[];
+                  } catch {
+                    answer = raw;
+                  }
+                }
+                onUpdate({ ...q, answer });
+              }}
+              className="h-9 text-xs font-bold border-primary/20"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-[10px] font-bold uppercase text-muted-foreground/60 ml-1">
+              Đáp án mẫu (Gợi ý tốt nhất)
+            </Label>
+            <Input
+              placeholder="Best sample answer..."
+              value={q.bestAnswer ?? ""}
+              onChange={(e) => onUpdate({ ...q, bestAnswer: e.target.value })}
+              className="h-9 text-xs"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-1.5 ml-1">
+            <Settings2 className="h-3 w-3 text-muted-foreground/60" />
+            <Label className="text-[10px] font-bold uppercase text-muted-foreground/60">
+              Giải thích chi tiết
+            </Label>
+          </div>
+          <Textarea
+            rows={2}
+            placeholder="Lý do vì sao đáp án này đúng..."
+            value={q.explanation ?? ""}
+            onChange={(e) => onUpdate({ ...q, explanation: e.target.value })}
+            className="text-xs bg-background/50 focus:bg-background italic"
           />
         </div>
-        <div className="space-y-1">
-          <Label className="text-xs text-muted-foreground">
-            Đáp án mẫu (bestAnswer)
-          </Label>
-          <Input
-            value={q.bestAnswer ?? ""}
-            onChange={(e) => onUpdate({ ...q, bestAnswer: e.target.value })}
-          />
-        </div>
-      </div>
-      <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">
-          Đáp án chấp nhận được (mỗi dòng một, FillInBlank / Dictation)
-        </Label>
-        <Textarea
-          rows={3}
-          value={(q.acceptableAnswers ?? []).join("\n")}
-          onChange={(e) => {
-            const list = e.target.value
-              .split("\n")
-              .map((s) => s.trim())
-              .filter(Boolean);
-            onUpdate({ ...q, acceptableAnswers: list });
-          }}
-        />
-      </div>
-      <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">Giải thích</Label>
-        <Textarea
-          rows={2}
-          value={q.explanation ?? ""}
-          onChange={(e) => onUpdate({ ...q, explanation: e.target.value })}
-        />
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

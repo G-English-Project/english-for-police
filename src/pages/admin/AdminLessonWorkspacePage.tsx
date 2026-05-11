@@ -8,17 +8,10 @@ import {
   HelpCircle,
   BookOpenCheck,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
-import type {
-  GrammarStructure,
-  LessonTestLane,
-  Question,
-  Unit,
-} from "@/types";
+import type { GrammarStructure, LessonTestLane, Question, Unit } from "@/types";
 import { lessonService } from "@/services/lesson.service";
 import { useSonner } from "@/hooks/use-sonner";
-import { cn } from "@/lib/utils";
 import { resolvedLane } from "@/components/practice/utils/testUtils";
 import { LessonEditorForm } from "@/components/admin/lessons/LessonEditorForm";
 import { emptyUnit, type LessonEditorScope } from "./LessonEditorUtils";
@@ -26,10 +19,10 @@ import { WorkspaceHeader } from "./lessons-workspace-components/WorkspaceHeader"
 import { WorkspaceOverview } from "./lessons-workspace-components/WorkspaceOverview";
 import { WorkspacePracticeLanes } from "./lessons-workspace-components/WorkspacePracticeLanes";
 
-type ViewKey = "overview" | LessonEditorScope;
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const VIEW_LIST: {
-  key: Exclude<ViewKey, "overview" | "full">;
+  key: Exclude<LessonEditorScope, "full">;
   label: string;
   Icon: typeof BookMarked;
 }[] = [
@@ -50,17 +43,9 @@ export default function AdminLessonWorkspacePage({
   const { notifyError, notifySuccess } = useSonner();
   const id = Number(unitId);
 
-  const viewParam = searchParams.get("view") ?? "overview";
-  const activeView: ViewKey =
-    viewParam === "overview" ||
-    viewParam === "meta" ||
-    viewParam === "vocabulary" ||
-    viewParam === "phrases" ||
-    viewParam === "practice"
-      ? (viewParam as ViewKey)
-      : "overview";
+  const activeView = searchParams.get("view") ?? "overview";
 
-  const setView = (v: ViewKey) => {
+  const setView = (v: string) => {
     if (v === "overview") {
       setSearchParams({}, { replace: true });
     } else {
@@ -71,7 +56,6 @@ export default function AdminLessonWorkspacePage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<Unit>(() => emptyUnit(1));
-
   const [grammarStructures, setGrammarStructures] = useState<
     GrammarStructure[]
   >([]);
@@ -152,9 +136,6 @@ export default function AdminLessonWorkspacePage({
     }
   };
 
-  const editorScope: LessonEditorScope | null =
-    activeView === "overview" ? null : (activeView as LessonEditorScope);
-
   if (loading) {
     return (
       <AdminPageLayout title="Đang tải…" description="">
@@ -167,87 +148,66 @@ export default function AdminLessonWorkspacePage({
 
   return (
     <AdminPageLayout
-      title="Không gian soạn chương"
-      description="Chọn mục bên dưới để soạn từng phần; chỉ có một nút Lưu trên header."
-      actions={null}
-    >
-      <div className="mx-auto w-full max-w-350 space-y-8">
+      title="Soạn thảo chương"
+      description={`Đang chỉnh sửa: ${draft.title}. Các thay đổi sẽ được lưu khi nhấn nút Lưu trên Header.`}
+      actions={
         <WorkspaceHeader draft={draft} saving={saving} persist={persist} />
+      }
+    >
+      <div className="w-full space-y-6">
+        <Tabs
+          value={activeView}
+          onValueChange={setView}
+          className="w-full space-y-6"
+        >
+          <TabsList className="bg-muted/50 border border-border/50 p-1">
+            <TabsTrigger value="overview" className="gap-2">
+              <LayoutDashboard className="h-3.5 w-3.5" />
+              Tổng quan
+            </TabsTrigger>
+            {VIEW_LIST.map(({ key, label, Icon }) => (
+              <TabsTrigger key={key} value={key} className="gap-2">
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        <div className="flex flex-wrap gap-2 rounded-xl border border-border/80 bg-card p-2">
-          <button
-            type="button"
-            onClick={() => setView("overview")}
-            aria-current={activeView === "overview" ? "page" : undefined}
-            className={cn(
-              "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-              activeView === "overview"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
+          <TabsContent
+            value="overview"
+            className="animate-in fade-in duration-300"
           >
-            <LayoutDashboard className="h-4 w-4" />
-            Tổng quan
-          </button>
-          {VIEW_LIST.map(({ key, label, Icon }) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setView(key)}
-              aria-current={activeView === key ? "page" : undefined}
-              className={cn(
-                "inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                activeView === key
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              <Icon className="h-4 w-4" />
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {activeView === "overview" && (
-          <div className="space-y-6 animate-in fade-in duration-200">
-            <WorkspaceOverview draft={draft} setView={setView} />
-            <WorkspacePracticeLanes practiceByLane={practiceByLane} />
-
-            <div className="flex flex-wrap gap-2 justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setView("meta")}
-              >
-                Thông tin chương
-              </Button>
-              <Button type="button" onClick={() => setView("vocabulary")}>
-                Bắt đầu soạn từ vựng
-              </Button>
+            <div className="space-y-6">
+              <WorkspaceOverview
+                draft={draft}
+                setView={(v) => setView(v as string)}
+              />
+              <WorkspacePracticeLanes practiceByLane={practiceByLane} />
             </div>
-          </div>
-        )}
+          </TabsContent>
 
-        {editorScope != null && editorScope !== "full" && (
-          <div className="animate-in fade-in duration-200 overflow-hidden rounded-xl border border-border bg-card police-shadow">
-            <div className="max-h-[min(85vh,1200px)] overflow-y-auto overscroll-contain p-5 md:p-7">
+          {VIEW_LIST.map(({ key }) => (
+            <TabsContent
+              key={key}
+              value={key}
+              className="animate-in fade-in duration-300"
+            >
               <LessonEditorForm
-                key={`${draft.id}-${editorScope}`}
+                key={`${draft.id}-${key}`}
                 mode="edit"
                 draft={draft}
                 setDraft={setDraft}
-
                 grammarStructures={grammarStructures}
                 setGrammarStructures={setGrammarStructures}
                 idPrefix={`workspace-${draft.id}`}
                 saving={saving}
                 onCancel={() => navigate("/admin/lessons")}
                 onSave={() => void persist()}
-                scope={editorScope}
+                scope={key}
               />
-            </div>
-          </div>
-        )}
+            </TabsContent>
+          ))}
+        </Tabs>
       </div>
     </AdminPageLayout>
   );

@@ -1,24 +1,22 @@
 import React, { useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Unit, LessonTestLane, Question } from "@/types";
 import { SECTION_META } from "@/components/practice/utils/testUtils";
-import { LANES_ORDER, defaultQuestionForLane } from "@/pages/admin/LessonEditorUtils";
+import {
+  LANES_ORDER,
+  defaultQuestionForLane,
+} from "@/pages/admin/LessonEditorUtils";
 import { QuestionEditor } from "../QuestionEditor";
+import { Badge } from "@/components/ui/badge";
+import { Plus } from "lucide-react";
 
 export function PracticeSection({
   draft,
   setDraft,
-  isScopedEditor,
 }: {
   draft: Unit;
   setDraft: React.Dispatch<React.SetStateAction<Unit>>;
-  isScopedEditor: boolean;
 }) {
   const practiceIndicesByLane = useMemo(() => {
     const map: Record<LessonTestLane, number[]> = {
@@ -37,76 +35,83 @@ export function PracticeSection({
   }, [draft.practice]);
 
   return (
-    <AccordionItem value="practice" className="px-1 border-b-0">
-      <AccordionTrigger
-        className={cn(
-          "py-4 text-base font-semibold hover:no-underline",
-          isScopedEditor && "pointer-events-none cursor-default [&>svg]:hidden",
-        )}
-      >
-        Bài kiểm tra & câu hỏi ({draft.practice.length})
-      </AccordionTrigger>
-      <AccordionContent className="space-y-6 px-1 pb-5 pt-1">
+    <Card className="border border-border/60 bg-card/30 shadow-none overflow-hidden">
+      <CardContent className="space-y-6 p-4">
         {LANES_ORDER.map((lane) => {
           const laneIndices = practiceIndicesByLane[lane];
           const meta = SECTION_META[lane];
           return (
             <div
               key={lane}
-              className="rounded-xl border border-border bg-muted/20 p-4 space-y-4"
+              className="rounded-lg border border-border/50 bg-background/50 overflow-hidden shadow-sm"
             >
-              <div className="space-y-1 border-b border-border/60 pb-3">
-                <p className="text-sm font-bold text-primary">
-                  {meta.title}
-                </p>
-                <p className="text-xs text-muted-foreground leading-snug">
-                  {meta.description}
-                </p>
-                <p className="text-[11px] font-mono text-muted-foreground">
-                  {laneIndices.length} câu · lane{" "}
-                  <span className="text-foreground">{lane}</span>
-                </p>
+              <div className="bg-muted/30 px-4 py-3 border-b border-border/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="space-y-0.5">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-foreground/80 flex items-center gap-2">
+                    {meta.title}
+                    <Badge
+                      variant="outline"
+                      className="font-mono text-[9px] px-1 py-0 h-4 bg-background"
+                    >
+                      {laneIndices.length}
+                    </Badge>
+                  </h4>
+                  <p className="text-[10px] text-muted-foreground leading-snug">
+                    {meta.description}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[10px] font-bold uppercase tracking-widest bg-background hover:bg-primary hover:text-primary-foreground transition-all"
+                  onClick={() =>
+                    setDraft((d) => ({
+                      ...d,
+                      practice: [
+                        ...d.practice,
+                        defaultQuestionForLane(d.id || 1, lane),
+                      ],
+                    }))
+                  }
+                >
+                  <Plus className="h-3 w-3 mr-1.5" />
+                  Thêm câu hỏi
+                </Button>
               </div>
-              <div className="space-y-4">
-                {laneIndices.map((idx) => (
-                  <QuestionEditor
-                    key={draft.practice[idx].id}
-                    q={draft.practice[idx] as Question}
-                    onUpdate={(updated) => {
-                      const newList = [...draft.practice];
-                      newList[idx] = updated;
-                      setDraft((d) => ({ ...d, practice: newList }));
-                    }}
-                    onDelete={() => {
-                      const newList = draft.practice.filter(
-                        (_, i) => i !== idx,
-                      );
-                      setDraft((d) => ({ ...d, practice: newList }));
-                    }}
-                  />
-                ))}
+              <div className="p-4 space-y-4">
+                {laneIndices.length === 0 ? (
+                  <div className="py-6 text-center">
+                    <p className="text-[10px] text-muted-foreground/60 uppercase tracking-widest italic">
+                      Chưa có câu hỏi cho phần này
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {laneIndices.map((idx) => (
+                      <QuestionEditor
+                        key={draft.practice[idx].id}
+                        q={draft.practice[idx] as Question}
+                        onUpdate={(updated) => {
+                          const newList = [...draft.practice];
+                          newList[idx] = updated;
+                          setDraft((d) => ({ ...d, practice: newList }));
+                        }}
+                        onDelete={() => {
+                          const newList = draft.practice.filter(
+                            (_, i) => i !== idx,
+                          );
+                          setDraft((d) => ({ ...d, practice: newList }));
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                className="w-full sm:w-auto"
-                onClick={() =>
-                  setDraft((d) => ({
-                    ...d,
-                    practice: [
-                      ...d.practice,
-                      defaultQuestionForLane(d.id || 1, lane),
-                    ],
-                  }))
-                }
-              >
-                + Thêm câu — {meta.title}
-              </Button>
             </div>
           );
         })}
-      </AccordionContent>
-    </AccordionItem>
+      </CardContent>
+    </Card>
   );
 }

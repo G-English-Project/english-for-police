@@ -1,12 +1,12 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Accordion } from "@/components/ui/accordion";
 import type { GrammarStructure, Unit } from "@/types";
 import { type LessonEditorScope } from "@/pages/admin/LessonEditorUtils";
+import { Card, CardContent } from "@/components/ui/card";
 import { VocabSection } from "./editor-sections/VocabSection";
 import { PhrasesSection } from "./editor-sections/PhrasesSection";
 import { GrammarSection } from "./editor-sections/GrammarSection";
@@ -45,16 +45,6 @@ export function LessonEditorForm({
   const showPhrases = eff === "full" || eff === "phrases";
   const showPractice = eff === "full" || eff === "practice";
   const showMemoryTemplatesGrammar = eff === "full";
-  const isScopedEditor = eff !== "full";
-
-  const lockedOpenSections = useMemo(() => {
-    if (!isScopedEditor) return undefined;
-    const sections: string[] = [];
-    if (showVocab) sections.push("vocab");
-    if (showPhrases) sections.push("phrases");
-    if (showPractice) sections.push("practice");
-    return sections;
-  }, [isScopedEditor, showPhrases, showPractice, showVocab]);
 
   const scopedTitle =
     eff === "meta"
@@ -69,15 +59,17 @@ export function LessonEditorForm({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-card px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-        <h3 className="text-lg font-bold text-primary tracking-tight">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="text-xl font-black text-foreground tracking-tight uppercase">
           {scopedTitle ??
-            (mode === "create" ? "Thêm chương mới" : `Sửa chương ${draft.id}`)}
+            (mode === "create"
+              ? "Tạo chương mới"
+              : `Cấu trúc chương ${draft.id}`)}
         </h3>
         <div className="flex flex-wrap gap-2 justify-end">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={onCancel}
             disabled={saving}
@@ -89,6 +81,7 @@ export function LessonEditorForm({
             size="sm"
             onClick={() => void onSave()}
             disabled={saving}
+            className="px-6"
           >
             {saving ? (
               <>
@@ -96,79 +89,103 @@ export function LessonEditorForm({
                 Đang lưu…
               </>
             ) : (
-              "Lưu"
+              "Lưu thay đổi"
             )}
           </Button>
         </div>
       </div>
 
       {showMeta ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="shadow-none border-border/40 bg-muted/10">
+          <CardContent className="pt-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label
+                  htmlFor={`${idPrefix}-unit-id`}
+                  className="text-xs font-bold uppercase text-muted-foreground/80"
+                >
+                  Mã chương (Số thứ tự)
+                </Label>
+                <Input
+                  id={`${idPrefix}-unit-id`}
+                  type="number"
+                  disabled={mode === "edit"}
+                  value={draft.id}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      id: Number(e.target.value) || 0,
+                    }))
+                  }
+                  className="bg-background"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor={`${idPrefix}-video`}
+                  className="text-xs font-bold uppercase text-muted-foreground/80"
+                >
+                  Video URL (YouTube)
+                </Label>
+                <Input
+                  id={`${idPrefix}-video`}
+                  placeholder="https://..."
+                  value={draft.videoUrl ?? ""}
+                  onChange={(e) =>
+                    setDraft((d) => ({ ...d, videoUrl: e.target.value }))
+                  }
+                  className="bg-background"
+                />
+              </div>
+            </div>
             <div className="space-y-2">
-              <Label htmlFor={`${idPrefix}-unit-id`}>Mã chương (số)</Label>
+              <Label
+                htmlFor={`${idPrefix}-title`}
+                className="text-xs font-bold uppercase text-muted-foreground/80"
+              >
+                Tiêu đề chương
+              </Label>
               <Input
-                id={`${idPrefix}-unit-id`}
-                type="number"
-                disabled={mode === "edit"}
-                value={draft.id}
+                id={`${idPrefix}-title`}
+                placeholder="Nhập tiêu đề học phần..."
+                value={draft.title}
                 onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    id: Number(e.target.value) || 0,
-                  }))
+                  setDraft((d) => ({ ...d, title: e.target.value }))
                 }
+                className="bg-background font-medium"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor={`${idPrefix}-video`}>Video URL</Label>
-              <Input
-                id={`${idPrefix}-video`}
-                value={draft.videoUrl ?? ""}
+              <Label
+                htmlFor={`${idPrefix}-desc`}
+                className="text-xs font-bold uppercase text-muted-foreground/80"
+              >
+                Mô tả tóm tắt
+              </Label>
+              <Textarea
+                id={`${idPrefix}-desc`}
+                rows={3}
+                placeholder="Nội dung chính của chương này..."
+                value={draft.description}
                 onChange={(e) =>
-                  setDraft((d) => ({ ...d, videoUrl: e.target.value }))
+                  setDraft((d) => ({ ...d, description: e.target.value }))
                 }
+                className="bg-background resize-none"
               />
             </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${idPrefix}-title`}>Tiêu đề</Label>
-            <Input
-              id={`${idPrefix}-title`}
-              value={draft.title}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, title: e.target.value }))
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${idPrefix}-desc`}>Mô tả</Label>
-            <Textarea
-              id={`${idPrefix}-desc`}
-              rows={3}
-              value={draft.description}
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, description: e.target.value }))
-              }
-            />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       ) : null}
 
       {showVocab ||
       showPhrases ||
       showMemoryTemplatesGrammar ||
       showPractice ? (
-        <Accordion
-          type="multiple"
-          value={lockedOpenSections}
-          className="w-full rounded-xl border border-border/80 bg-background px-2 md:px-3"
-        >
+        <div className="w-full space-y-6">
           {showVocab && (
             <VocabSection
               draft={draft}
               setDraft={setDraft}
-              isScopedEditor={isScopedEditor}
             />
           )}
 
@@ -176,7 +193,6 @@ export function LessonEditorForm({
             <PhrasesSection
               draft={draft}
               setDraft={setDraft}
-              isScopedEditor={isScopedEditor}
             />
           )}
 
@@ -195,10 +211,9 @@ export function LessonEditorForm({
             <PracticeSection
               draft={draft}
               setDraft={setDraft}
-              isScopedEditor={isScopedEditor}
             />
           )}
-        </Accordion>
+        </div>
       ) : null}
     </div>
   );

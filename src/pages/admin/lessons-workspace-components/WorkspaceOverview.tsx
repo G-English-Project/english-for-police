@@ -17,70 +17,60 @@ export function WorkspaceOverview({
   setView: (v: LessonEditorScope | "overview") => void;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 md:gap-5">
-      <button
-        type="button"
-        onClick={() => setView("vocabulary")}
-        className="rounded-lg text-left transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      >
-        <Card className="police-shadow border-border/80 h-full hover:border-primary/40">
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
-              <BookMarked className="h-4 w-4 text-primary" />
-              Từ vựng
-            </CardDescription>
-            <CardTitle className="text-4xl tabular-nums">
-              {draft.vocabulary.length}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground leading-relaxed">
-            <span className="text-primary font-semibold">Soạn →</span> chỉnh sửa
-            danh sách từ trong chương.
-          </CardContent>
-        </Card>
-      </button>
-      <button
-        type="button"
-        onClick={() => setView("phrases")}
-        className="rounded-lg text-left transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      >
-        <Card className="police-shadow border-border/80 h-full hover:border-primary/40">
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
-              <Layers className="h-4 w-4 text-primary" />
-              Mẫu câu
-            </CardDescription>
-            <CardTitle className="text-4xl tabular-nums">
-              {draft.phrases.length}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground leading-relaxed">
-            <span className="text-primary font-semibold">Soạn →</span> câu mẫu
-            và bản dịch.
-          </CardContent>
-        </Card>
-      </button>
-      <button
-        type="button"
-        onClick={() => setView("practice")}
-        className="rounded-lg text-left transition hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      >
-        <Card className="police-shadow border-border/80 h-full hover:border-primary/40">
-          <CardHeader className="pb-3">
-            <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
-              <PencilLine className="h-4 w-4 text-primary" />
-              Bài kiểm tra (DB)
-            </CardDescription>
-            <CardTitle className="text-4xl tabular-nums">
-              {draft.practice.length}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground leading-relaxed">
-            <span className="text-primary font-semibold">Soạn →</span> câu luyện
-            theo từng dạng.
-          </CardContent>
-        </Card>
-      </button>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {[
+        {
+          key: "vocabulary",
+          label: "Từ vựng",
+          icon: BookMarked,
+          count: draft.vocabulary.length,
+          desc: "Chỉnh sửa danh sách từ, nghĩa và phát âm.",
+        },
+        {
+          key: "phrases",
+          label: "Mẫu câu",
+          icon: Layers,
+          count: draft.phrases.length,
+          desc: "Quản lý các mẫu câu giao tiếp và dịch thuật.",
+        },
+        {
+          key: "practice",
+          label: "Luyện tập",
+          icon: PencilLine,
+          count: draft.practice.length,
+          desc: "Soạn câu hỏi trắc nghiệm và các dạng bài tập.",
+        },
+      ].map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          onClick={() => setView(item.key as LessonEditorScope)}
+          className="group rounded-lg text-left transition-all hover:scale-[1.02] active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <Card className="shadow-sm border-border/60 h-full group-hover:border-primary/50 group-hover:shadow-md transition-all">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardDescription className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+                  <item.icon className="h-3.5 w-3.5 text-primary/80" />
+                  {item.label}
+                </CardDescription>
+                <div className="h-1.5 w-1.5 rounded-full bg-primary/20 group-hover:bg-primary transition-colors" />
+              </div>
+              <CardTitle className="text-3xl font-black tracking-tight pt-1">
+                {item.count}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {item.desc}
+              </p>
+              <div className="pt-4 flex items-center gap-1.5 text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                CHỈNH SỬA <span className="text-xs">→</span>
+              </div>
+            </CardContent>
+          </Card>
+        </button>
+      ))}
     </div>
   );
 }

@@ -1,4 +1,3 @@
-import { ClipboardList } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -9,6 +8,7 @@ import {
 import { SECTION_META } from "@/components/practice/utils/testUtils";
 import type { Question, LessonTestLane } from "@/types";
 import { LANES_ORDER } from "@/pages/admin/LessonEditorUtils";
+import { Badge } from "@/components/ui/badge";
 
 export function WorkspacePracticeLanes({
   practiceByLane,
@@ -16,11 +16,13 @@ export function WorkspacePracticeLanes({
   practiceByLane: Record<LessonTestLane, Question[]>;
 }) {
   return (
-    <div>
-      <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
-        <ClipboardList className="h-5 w-5 text-primary" />
-        Phân bổ theo dạng luyện tập (UI học viên)
-      </h2>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 px-1">
+        <div className="h-4 w-1 rounded-full bg-primary" />
+        <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground/80">
+          Phân bổ theo dạng luyện tập
+        </h2>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {LANES_ORDER.map((lane) => {
           const meta = SECTION_META[lane];
@@ -28,41 +30,56 @@ export function WorkspacePracticeLanes({
           return (
             <Card
               key={lane}
-              className="border-border/90 overflow-hidden police-shadow"
+              className="border-border/60 shadow-sm overflow-hidden"
             >
-              <CardHeader className="bg-muted/40 pb-3">
-                <CardTitle className="text-base flex items-center justify-between gap-2">
-                  <span>{meta.title}</span>
-                  <span className="text-sm font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+              <CardHeader className="bg-muted/30 pb-3 border-b border-border/40">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <CardTitle className="text-sm font-bold tracking-tight">
+                      {meta.title}
+                    </CardTitle>
+                    <CardDescription className="text-[10px] leading-snug uppercase tracking-tight">
+                      {meta.description}
+                    </CardDescription>
+                  </div>
+                  <Badge
+                    variant="secondary"
+                    className="font-mono text-[10px] px-1.5 py-0 rounded-sm shrink-0"
+                  >
                     {items.length}
-                  </span>
-                </CardTitle>
-                <CardDescription className="text-xs leading-snug">
-                  {meta.description}
-                </CardDescription>
+                  </Badge>
+                </div>
               </CardHeader>
-              <CardContent className="pt-4 space-y-2 max-h-55 overflow-y-auto">
+              <CardContent className="p-0 max-h-64 overflow-y-auto">
                 {items.length === 0 ? (
-                  <p className="text-sm text-muted-foreground italic">
-                    Chưa có câu trong nhóm này.
-                  </p>
+                  <div className="p-4 text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest italic">
+                      Trống
+                    </p>
+                  </div>
                 ) : (
-                  <ul className="space-y-2 text-sm">
+                  <div className="divide-y divide-border/40">
                     {items.map((q) => (
-                      <li
+                      <div
                         key={q.id}
-                        className="rounded-md border border-border/60 bg-background px-3 py-2"
+                        className="p-3 bg-background hover:bg-muted/20 transition-colors"
                       >
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                          {q.type}
-                          {q.testLane ? ` · ${q.testLane}` : ""}
-                        </span>
-                        <p className="mt-1 line-clamp-2 text-foreground/90">
-                          {q.prompt || "(Không có đề)"}
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className="text-[9px] font-bold text-primary/70 uppercase px-1 border border-primary/20 rounded-sm">
+                            {q.type}
+                          </span>
+                          {q.testLane && (
+                            <span className="text-[9px] font-bold text-muted-foreground/60 uppercase">
+                              {q.testLane}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs line-clamp-2 text-foreground/80 leading-relaxed">
+                          {q.prompt || "(Không có nội dung câu hỏi)"}
                         </p>
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </CardContent>
             </Card>

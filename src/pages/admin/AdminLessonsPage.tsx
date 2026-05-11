@@ -128,11 +128,11 @@ export default function AdminLessonsPage({
   return (
     <AdminPageLayout
       title="Quản lý bài học"
-      description="Thêm chương mới tại đây; soạn thảo chi tiết (từ vựng, mẫu câu, bài kiểm tra) mở trang không gian riêng cho từng chương."
+      description="Quản lý các chương trình học, từ vựng và bài kiểm tra. Nhấn 'Thêm chương' để bắt đầu một học phần mới."
       actions={
         <Button
           onClick={toggleCreatePanel}
-          variant={expanded === "create" ? "secondary" : "default"}
+          variant={expanded === "create" ? "outline" : "default"}
           className="gap-2"
         >
           {expanded === "create" ? (
@@ -140,7 +140,7 @@ export default function AdminLessonsPage({
           ) : (
             <Plus className="h-4 w-4" />
           )}
-          {expanded === "create" ? "Đóng form thêm" : "Thêm chương"}
+          {expanded === "create" ? "Đóng form" : "Thêm chương mới"}
         </Button>
       }
     >

@@ -1,118 +1,136 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Unit, Vocabulary } from "@/types";
-import { cn } from "@/lib/utils";
-import { VOCAB_TYPES, defaultVocabulary } from "@/pages/admin/LessonEditorUtils";
+import {
+  VOCAB_TYPES,
+  defaultVocabulary,
+} from "@/pages/admin/LessonEditorUtils";
 
-const selectClass =
-  "flex h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm md:text-base ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Trash2, Plus } from "lucide-react";
 
 export function VocabSection({
   draft,
   setDraft,
-  isScopedEditor,
 }: {
   draft: Unit;
   setDraft: React.Dispatch<React.SetStateAction<Unit>>;
-  isScopedEditor: boolean;
 }) {
   return (
-    <AccordionItem value="vocab" className="border-b border-border/80 px-1">
-      <AccordionTrigger
-        className={cn(
-          "py-4 text-base font-semibold hover:no-underline",
-          isScopedEditor && "pointer-events-none cursor-default [&>svg]:hidden",
-        )}
-      >
-        Từ vựng ({draft.vocabulary.length})
-      </AccordionTrigger>
-      <AccordionContent className="space-y-4 px-1 pb-5 pt-1">
-        {draft.vocabulary.map((row, idx) => (
-          <div
-            key={idx}
-            className="grid grid-cols-1 md:grid-cols-6 gap-2 border-b border-border/50 pb-3 last:border-0"
-          >
-            <Input
-              placeholder="Từ"
-              value={row.word}
-              onChange={(e) => {
-                const v = [...draft.vocabulary];
-                v[idx] = { ...v[idx], word: e.target.value };
-                setDraft((d) => ({ ...d, vocabulary: v }));
-              }}
-            />
-            <Input
-              placeholder="Phiên âm"
-              value={row.phonetic}
-              onChange={(e) => {
-                const v = [...draft.vocabulary];
-                v[idx] = { ...v[idx], phonetic: e.target.value };
-                setDraft((d) => ({ ...d, vocabulary: v }));
-              }}
-            />
-            <Input
-              placeholder="Nghĩa"
-              className="md:col-span-2"
-              value={row.meaning}
-              onChange={(e) => {
-                const v = [...draft.vocabulary];
-                v[idx] = { ...v[idx], meaning: e.target.value };
-                setDraft((d) => ({ ...d, vocabulary: v }));
-              }}
-            />
-            <select
-              className={selectClass}
-              value={row.type}
-              onChange={(e) => {
-                const v = [...draft.vocabulary];
-                v[idx] = {
-                  ...v[idx],
-                  type: e.target.value as Vocabulary["type"],
-                };
-                setDraft((d) => ({ ...d, vocabulary: v }));
-              }}
+    <Card className="border border-border/60 bg-card/30 shadow-none overflow-hidden">
+      <CardContent className="space-y-4 p-4">
+        <div className="space-y-4">
+          {draft.vocabulary.map((row, idx) => (
+            <div
+              key={idx}
+              className="group relative grid grid-cols-1 md:grid-cols-12 gap-3 p-4 rounded-md border border-border/40 bg-background/50 transition-colors hover:border-primary/20"
             >
-              {VOCAB_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-2 md:col-span-6">
-              <Input
-                placeholder="Ví dụ"
-                className="flex-1"
-                value={row.example}
-                onChange={(e) => {
-                  const v = [...draft.vocabulary];
-                  v[idx] = { ...v[idx], example: e.target.value };
-                  setDraft((d) => ({ ...d, vocabulary: v }));
-                }}
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  const v = draft.vocabulary.filter((_, i) => i !== idx);
-                  setDraft((d) => ({ ...d, vocabulary: v }));
-                }}
-              >
-                Xóa
-              </Button>
+              <div className="md:col-span-3 space-y-1.5">
+                <Input
+                  placeholder="Từ mới"
+                  value={row.word}
+                  onChange={(e) => {
+                    const v = [...draft.vocabulary];
+                    v[idx] = { ...v[idx], word: e.target.value };
+                    setDraft((d) => ({ ...d, vocabulary: v }));
+                  }}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="md:col-span-3 space-y-1.5">
+                <Input
+                  placeholder="Phiên âm (/.../)"
+                  value={row.phonetic}
+                  onChange={(e) => {
+                    const v = [...draft.vocabulary];
+                    v[idx] = { ...v[idx], phonetic: e.target.value };
+                    setDraft((d) => ({ ...d, vocabulary: v }));
+                  }}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="md:col-span-4 space-y-1.5">
+                <Input
+                  placeholder="Nghĩa của từ"
+                  value={row.meaning}
+                  onChange={(e) => {
+                    const v = [...draft.vocabulary];
+                    v[idx] = { ...v[idx], meaning: e.target.value };
+                    setDraft((d) => ({ ...d, vocabulary: v }));
+                  }}
+                  className="h-8 text-sm font-medium"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <Select
+                  value={row.type}
+                  onValueChange={(val) => {
+                    const v = [...draft.vocabulary];
+                    v[idx] = {
+                      ...v[idx],
+                      type: val as Vocabulary["type"],
+                    };
+                    setDraft((d) => ({ ...d, vocabulary: v }));
+                  }}
+                >
+                  <SelectTrigger className="h-8 text-[11px] uppercase tracking-wider font-bold">
+                    <SelectValue placeholder="Loại từ" />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    {VOCAB_TYPES.map((t) => (
+                      <SelectItem
+                        key={t}
+                        value={t}
+                        className="text-xs uppercase tracking-wider"
+                      >
+                        {t}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="md:col-span-11">
+                <Input
+                  placeholder="Ví dụ minh họa cho từ..."
+                  value={row.example}
+                  onChange={(e) => {
+                    const v = [...draft.vocabulary];
+                    v[idx] = { ...v[idx], example: e.target.value };
+                    setDraft((d) => ({ ...d, vocabulary: v }));
+                  }}
+                  className="h-8 text-xs italic"
+                />
+              </div>
+              <div className="md:col-span-1 flex justify-end items-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => {
+                    const v = draft.vocabulary.filter((_, i) => i !== idx);
+                    setDraft((d) => ({ ...d, vocabulary: v }));
+                  }}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
         <Button
           type="button"
-          variant="secondary"
+          variant="outline"
           size="sm"
+          className="w-full h-9 border-dashed border-2 hover:border-primary/50 hover:bg-primary/5 transition-all text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-primary"
           onClick={() =>
             setDraft((d) => ({
               ...d,
@@ -120,9 +138,10 @@ export function VocabSection({
             }))
           }
         >
-          + Thêm từ
+          <Plus className="h-3 w-3 mr-2" />
+          Thêm từ vựng mới
         </Button>
-      </AccordionContent>
-    </AccordionItem>
+      </CardContent>
+    </Card>
   );
 }
