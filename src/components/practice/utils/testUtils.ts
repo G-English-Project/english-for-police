@@ -1,5 +1,22 @@
 import type { LessonTestLane, Unit, Question } from "@/types";
 
+/** Sidebar / route labels → API lane (must match SECTION_META titles). */
+export const PRACTICE_MENU_LABEL_TO_LANE: Record<string, LessonTestLane> = {
+  "Trắc nghiệm từ vựng": "VOCAB_MCQ",
+  "Ghép từ - nghĩa": "MATCHING",
+  "Mẫu câu & tình huống": "PHRASE_SCENARIO",
+  "Điền từ & sắp xếp câu": "FILL_ARRANGE",
+};
+
+export function isLessonTestLane(value: string | null): value is LessonTestLane {
+  return (
+    value === "VOCAB_MCQ" ||
+    value === "MATCHING" ||
+    value === "PHRASE_SCENARIO" ||
+    value === "FILL_ARRANGE"
+  );
+}
+
 const LANE_ORDER: LessonTestLane[] = [
   "VOCAB_MCQ",
   "PHRASE_SCENARIO",
@@ -7,7 +24,7 @@ const LANE_ORDER: LessonTestLane[] = [
   "FILL_ARRANGE",
 ];
 
-const SECTION_META: Record<
+export const SECTION_META: Record<
   LessonTestLane,
   { title: string; description: string }
 > = {
@@ -57,11 +74,72 @@ function legacyLane(q: Question): LessonTestLane {
   return "PHRASE_SCENARIO";
 }
 
-function resolvedLane(q: Question): LessonTestLane {
+export function resolvedLane(q: Question): LessonTestLane {
   if (isKnownLane(q.testLane)) {
     return q.testLane;
   }
   return legacyLane(q);
+}
+
+/** When a single practice mode is open (?lane=), only keep questions for that lane. */
+export function filterQuestionsByLane(
+  questions: Question[],
+  lane: LessonTestLane | null,
+): Question[] {
+  if (!lane) return questions;
+  return questions.filter((q) => resolvedLane(q) === lane);
+}
+
+/**
+ * TrainingGround: round-robin pick across lanes so Dictation/Arrangement are not
+ * crowded out by random MCQ when the API returns a mixed bank.
+ */
+export function pickBalancedPracticeSet(
+  questions: Question[],
+  limit: number,
+): Question[] {
+  if (questions.length === 0 || limit <= 0) return [];
+  if (questions.length <= limit) return shuffleArray(questions);
+
+  const buckets: Record<LessonTestLane, Question[]> = {
+    VOCAB_MCQ: [],
+    PHRASE_SCENARIO: [],
+    MATCHING: [],
+    FILL_ARRANGE: [],
+  };
+  for (const q of questions) {
+    buckets[resolvedLane(q)].push(q);
+  }
+  for (const lane of LANE_ORDER) {
+    buckets[lane] = shuffleArray(buckets[lane]);
+  }
+
+  const out: Question[] = [];
+  let round = 0;
+  while (out.length < limit) {
+    let anyAdded = false;
+    for (const lane of LANE_ORDER) {
+      if (out.length >= limit) break;
+      const q = buckets[lane][round];
+      if (q) {
+        out.push(q);
+        anyAdded = true;
+      }
+    }
+    if (!anyAdded) break;
+    round += 1;
+  }
+
+  if (out.length < limit) {
+    const taken = new Set(out.map((q) => q.id));
+    const rest = shuffleArray(questions.filter((q) => !taken.has(q.id)));
+    for (const q of rest) {
+      if (out.length >= limit) break;
+      out.push(q);
+    }
+  }
+
+  return out.slice(0, limit);
 }
 
 export type MatchingPair = NonNullable<Question["pairs"]>[number];

@@ -9,8 +9,8 @@ import { QuestionRenderer } from "./components/QuestionRenderer";
 import { useQuestionAnswers } from "./hooks/useQuestionAnswers";
 import {
   mapAnswersToBackendPayload,
+  pickBalancedPracticeSet,
   preparePracticeQuestions,
-  shuffleArray,
 } from "./utils/testUtils";
 import { PracticeSidebar } from "./layout/PracticeSidebar";
 import { PracticeResults } from "./results/PracticeResults";
@@ -66,7 +66,7 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
           limitPerUnit: 20,
         });
         setQuestions(
-          preparePracticeQuestions(shuffleArray(fetched).slice(0, 15)),
+          preparePracticeQuestions(pickBalancedPracticeSet(fetched, 15)),
         );
       } catch (error) {
         console.error("Failed to load training questions", error);

@@ -8,6 +8,7 @@ import { LessonShortcutButtons } from "./lesson/LessonShortcutButtons";
 import { LessonVocabularySection } from "./lesson/LessonVocabularySection";
 import { LessonPhrasesSection } from "./lesson/LessonPhrasesSection";
 import { LessonMemoryBoostSection } from "./lesson/LessonMemoryBoostSection";
+import { PRACTICE_MENU_LABEL_TO_LANE } from "@/components/practice/utils/testUtils";
 
 interface LessonViewProps {
   unit: Unit;
@@ -31,7 +32,18 @@ export const LessonView: React.FC<LessonViewProps> = ({
   const startPractice = () => navigate(`/practice/${unit.id}`);
   const startFlashcards = () => navigate(`/flashcards/${unit.id}`);
   const startGeneralTest = (mode?: "type" | "bank", sectionTitle?: string) => {
-    navigate(`/generaltest/${unit.id}`, { state: { mode, sectionTitle } });
+    if (mode === "bank") {
+      navigate(`/generaltest/${unit.id}?mode=bank`);
+      return;
+    }
+    if (mode === "type" && sectionTitle) {
+      const lane = PRACTICE_MENU_LABEL_TO_LANE[sectionTitle];
+      if (lane) {
+        navigate(`/generaltest/${unit.id}?lane=${encodeURIComponent(lane)}`);
+        return;
+      }
+    }
+    navigate(`/generaltest/${unit.id}`);
   };
   const startQuickTest = () => navigate(`/quicktest`);
 

@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import type { Unit, Question } from "@/types";
+import { useLocation, useSearchParams } from "react-router-dom";
+import type { LessonTestLane, Unit, Question } from "@/types";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
@@ -22,7 +22,11 @@ import {
   type Section,
   type TestMode,
   QUESTIONS_PER_PAGE,
+  SECTION_META,
+  PRACTICE_MENU_LABEL_TO_LANE,
   buildSections,
+  filterQuestionsByLane,
+  isLessonTestLane,
   mapAnswersToBackendPayload,
   preparePracticeQuestionsForSections,
   shuffleArray,
@@ -48,12 +52,35 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const locationState = location.state as {
     mode?: TestMode;
     sectionTitle?: string;
   } | null;
+
   const testMode: TestMode =
-    locationState?.mode || (mode === "unit" ? "type" : "type");
+    searchParams.get("mode") === "bank" || locationState?.mode === "bank"
+      ? "bank"
+      : "type";
+
+  /** Single practice lane from URL (?lane=VOCAB_MCQ) or legacy navigation state. */
+  const focusedLane: LessonTestLane | null = useMemo(() => {
+    const param = searchParams.get("lane");
+    if (param && isLessonTestLane(param)) return param;
+    const st = locationState?.sectionTitle;
+    if (st && PRACTICE_MENU_LABEL_TO_LANE[st]) {
+      return PRACTICE_MENU_LABEL_TO_LANE[st];
+    }
+    return null;
+  }, [searchParams, locationState?.sectionTitle]);
+
+  const effectiveLane =
+    testMode === "type" ? focusedLane : null;
+
+  const scopedQuestions = useMemo(
+    () => filterQuestionsByLane(questions, effectiveLane),
+    [questions, effectiveLane],
+  );
   const [bankLimit, setBankLimit] = useState<number>(40);
   const [shuffleTrigger, setShuffleTrigger] = useState<number>(0);
 
@@ -87,7 +114,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     calculateScore,
     getCombinedAnswers,
     resetBaseState,
-  } = useGeneralTestState(questions);
+  } = useGeneralTestState(scopedQuestions);
 
   const { submitAttempt, isLoading: isSubmitting } = useProgress();
   const { notifyError } = useSonner();
@@ -125,31 +152,26 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
   }, [lessons, notifyError, testMode, bankLimit, mode]);
 
   const sections: Section[] = useMemo(
-    () => buildSections(questions, testMode, bankLimit),
+    () => buildSections(scopedQuestions, testMode, bankLimit),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [questions, testMode, bankLimit, shuffleTrigger],
+    [scopedQuestions, testMode, bankLimit, shuffleTrigger],
   );
 
   useEffect(() => {
-    if (locationState?.sectionTitle && sections.length > 0) {
-      const idx = sections.findIndex(
-        (s) => s.title === locationState.sectionTitle,
-      );
-      if (idx !== -1) {
-        setTimeout(() => {
-          setCurrentSectionIndex(idx);
-          setExpandedSectionIndex(idx);
-        }, 0);
-      }
-    }
-  }, [locationState?.sectionTitle, sections]);
+    setCurrentSectionIndex(0);
+    setExpandedSectionIndex(0);
+    setCurrentPageIndex(0);
+    setCurrentIndexInSection(0);
+  }, [effectiveLane, testMode]);
 
   const currentSection = sections[currentSectionIndex];
 
   const sectionQuestions = useMemo(() => {
     if (!currentSection) return [];
-    return questions.filter((q) => currentSection.questionIds.includes(q.id));
-  }, [currentSection, questions]);
+    return scopedQuestions.filter((q) =>
+      currentSection.questionIds.includes(q.id),
+    );
+  }, [currentSection, scopedQuestions]);
 
   const pagedSectionQuestions = useMemo(() => {
     const start = currentPageIndex * QUESTIONS_PER_PAGE;
@@ -159,7 +181,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
   const sectionProgress = useMemo(
     () =>
       sections.map((section) => {
-        const sectionQs = questions.filter((q) =>
+        const sectionQs = scopedQuestions.filter((q) =>
           section.questionIds.includes(q.id),
         );
         const answered = sectionQs.filter((q) => isQuestionAnswered(q)).length;
@@ -169,7 +191,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
           isComplete: sectionQs.length > 0 && answered === sectionQs.length,
         };
       }),
-    [sections, questions, isQuestionAnswered],
+    [sections, scopedQuestions, isQuestionAnswered],
   );
 
   const currentQuestion = pagedSectionQuestions[currentIndexInSection];
@@ -198,8 +220,8 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
       0,
     );
     const calculatedOverallScore =
-      questions.length > 0
-        ? Math.round((overallCorrect / questions.length) * 100)
+      scopedQuestions.length > 0
+        ? Math.round((overallCorrect / scopedQuestions.length) * 100)
         : 0;
 
     if (
@@ -212,7 +234,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
         try {
           const combinedAnswers = getCombinedAnswers();
           const backendAnswers = mapAnswersToBackendPayload(
-            questions,
+            scopedQuestions,
             combinedAnswers,
           );
 
@@ -275,7 +297,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     expandedSectionIndex,
     sectionProgress,
     sectionResults,
-    questions,
+    questions: scopedQuestions,
     currentIndexInSection,
     currentPageIndex,
     questionsPerPage: QUESTIONS_PER_PAGE,
@@ -391,6 +413,26 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     );
   }
 
+  if (!isLoadingQuestions && effectiveLane && scopedQuestions.length === 0) {
+    const title = SECTION_META[effectiveLane].title;
+    return (
+      <div className="max-w-2xl mx-auto py-20 text-center px-4">
+        <Card className="police-shadow border-none p-10">
+          <CardTitle className="text-xl mb-3">
+            Chưa có câu hỏi cho: {title}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground mb-6">
+            Ngân hàng bài học chưa có dữ liệu cho dạng này. Thử luyện các phần
+            khác hoặc liên hệ quản trị viên.
+          </p>
+          <Button onClick={onBack}>
+            <ChevronLeft className="mr-2 h-4 w-4" /> QUAY LẠI
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   if (questions.length === 0) {
     return (
       <div className="max-w-2xl mx-auto py-20 text-center px-4">
@@ -410,8 +452,8 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     return (
       <PracticeResults
         score={overallScore}
-        totalQuestions={questions.length}
-        questions={questions}
+        totalQuestions={scopedQuestions.length}
+        questions={scopedQuestions}
         userAnswers={getCombinedAnswers()}
         onBack={handleBack}
         onReview={() => setIsReviewMode(true)}
@@ -448,12 +490,30 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
       />
 
       <div className="flex flex-col lg:flex-row gap-8 items-start px-4">
-        <GeneralTestSectionSidebar
-          vm={sectionSidebarVm}
-          actions={sectionSidebarActions}
-        />
+        {!effectiveLane ? (
+          <GeneralTestSectionSidebar
+            vm={sectionSidebarVm}
+            actions={sectionSidebarActions}
+          />
+        ) : null}
 
-        <div className="flex-1 w-full space-y-6">
+        <div
+          className={
+            effectiveLane
+              ? "flex-1 w-full max-w-3xl mx-auto space-y-6"
+              : "flex-1 w-full space-y-6"
+          }
+        >
+          {effectiveLane ? (
+            <div className="rounded-lg border border-primary/15 bg-primary/5 px-4 py-3">
+              <p className="text-sm font-semibold text-foreground">
+                {SECTION_META[effectiveLane].title}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 leading-snug">
+                {SECTION_META[effectiveLane].description}
+              </p>
+            </div>
+          ) : null}
           <GeneralTestQuestionPanel vm={questionPanelVm} actions={questionPanelActions} />
         </div>
       </div>
