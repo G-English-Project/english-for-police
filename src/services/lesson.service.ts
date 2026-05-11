@@ -1,5 +1,5 @@
 import { API_ROUTES } from "@/api/routes";
-import type { Unit } from "@/types";
+import type { GrammarStructure, PhraseTemplate, Unit } from "@/types";
 import { api } from "@/utils/api-client";
 import { normalizeLessonFromApi, unitToLessonApiBody } from "@/services/lesson-payload";
 
@@ -56,5 +56,97 @@ export const lessonService = {
       lessons,
     );
     return response.data;
+  },
+
+  listPhraseTemplates: async (unitNumber: number): Promise<PhraseTemplate[]> => {
+    const response = await api.get<ApiResponse<PhraseTemplate[]>>(
+      API_ROUTES.LESSONS.PHRASE_TEMPLATES(unitNumber),
+    );
+    return response.data;
+  },
+
+  createPhraseTemplate: async (
+    unitNumber: number,
+    body: {
+      patternEn: string;
+      patternVi: string;
+      contextNote?: string | null;
+      audioUrl?: string | null;
+      sortOrder?: number;
+    },
+  ): Promise<PhraseTemplate> => {
+    const response = await api.post<ApiResponse<PhraseTemplate>>(
+      API_ROUTES.LESSONS.PHRASE_TEMPLATES(unitNumber),
+      body,
+    );
+    return response.data;
+  },
+
+  updatePhraseTemplate: async (
+    unitNumber: number,
+    id: number,
+    body: {
+      patternEn: string;
+      patternVi: string;
+      contextNote?: string | null;
+      audioUrl?: string | null;
+      sortOrder?: number;
+    },
+  ): Promise<PhraseTemplate> => {
+    const response = await api.put<ApiResponse<PhraseTemplate>>(
+      API_ROUTES.LESSONS.PHRASE_TEMPLATE(unitNumber, id),
+      body,
+    );
+    return response.data;
+  },
+
+  deletePhraseTemplate: async (unitNumber: number, id: number): Promise<void> => {
+    await api.delete(API_ROUTES.LESSONS.PHRASE_TEMPLATE(unitNumber, id));
+  },
+
+  listGrammarStructures: async (unitNumber: number): Promise<GrammarStructure[]> => {
+    const response = await api.get<ApiResponse<GrammarStructure[]>>(
+      API_ROUTES.LESSONS.GRAMMAR_STRUCTURES(unitNumber),
+    );
+    return response.data;
+  },
+
+  createGrammarStructure: async (
+    unitNumber: number,
+    body: {
+      title: string;
+      summary: string;
+      exampleEn?: string | null;
+      exampleVi?: string | null;
+      sortOrder?: number;
+    },
+  ): Promise<GrammarStructure> => {
+    const response = await api.post<ApiResponse<GrammarStructure>>(
+      API_ROUTES.LESSONS.GRAMMAR_STRUCTURES(unitNumber),
+      body,
+    );
+    return response.data;
+  },
+
+  updateGrammarStructure: async (
+    unitNumber: number,
+    id: number,
+    body: {
+      title: string;
+      summary: string;
+      exampleEn?: string | null;
+      exampleVi?: string | null;
+      sortOrder?: number;
+    },
+  ): Promise<GrammarStructure> => {
+    const response = await api.put<ApiResponse<GrammarStructure>>(
+      API_ROUTES.LESSONS.GRAMMAR_STRUCTURE(unitNumber, id),
+      body,
+    );
+    return response.data;
+  },
+
+  deleteGrammarStructure: async (unitNumber: number, id: number): Promise<void> => {
+    await api.delete(API_ROUTES.LESSONS.GRAMMAR_STRUCTURE(unitNumber, id));
   },
 };

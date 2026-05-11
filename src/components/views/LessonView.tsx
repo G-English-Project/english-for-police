@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { speak } from "@/lib/speech";
 import { useNavigate } from "react-router-dom";
 import type { Unit, FlaggedItem } from "../../types";
+import { useAuth } from "@/hooks/use-auth";
 import { LessonTableOfContents } from "./lesson/LessonTableOfContents";
 import { LessonShortcutButtons } from "./lesson/LessonShortcutButtons";
 import { LessonVocabularySection } from "./lesson/LessonVocabularySection";
@@ -24,6 +25,8 @@ export const LessonView: React.FC<LessonViewProps> = ({
   onPhraseAction,
 }) => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const testsLocked = !isAuthenticated;
 
   const startPractice = () => navigate(`/practice/${unit.id}`);
   const startFlashcards = () => navigate(`/flashcards/${unit.id}`);
@@ -114,6 +117,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
         <div className="bg-card rounded-md border police-shadow overflow-hidden">
           <div className="p-4">
             <LessonShortcutButtons
+              testsLocked={testsLocked}
               onStartPractice={startPractice}
               onStartFlashcards={startFlashcards}
               onStartGeneralTest={startGeneralTest}

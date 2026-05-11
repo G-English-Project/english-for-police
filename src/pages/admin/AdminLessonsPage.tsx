@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,13 +16,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,9 +25,19 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import type { Collocation, Phrase, Question, Unit, Vocabulary } from "@/types";
+import type {
+  Collocation,
+  GrammarStructure,
+  LessonTestLane,
+  Phrase,
+  PhraseTemplate,
+  Question,
+  Unit,
+  Vocabulary,
+} from "@/types";
 import { lessonService } from "@/services/lesson.service";
 import { useSonner } from "@/hooks/use-sonner";
+import { cn } from "@/lib/utils";
 
 const QUESTION_TYPES: Question["type"][] = [
   "MCQ",
@@ -73,6 +83,10 @@ function defaultQuestion(unitId: number): Question {
     options: ["", ""],
     acceptableAnswers: [],
     pairs: [],
+    circumstance: "",
+    scenarioDescription: "",
+    vnPrompt: "",
+    bestAnswer: "",
   };
 }
 
@@ -98,6 +112,1094 @@ function defaultCollocation(): Collocation {
   return { verb: "", noun: "" };
 }
 
+const selectClass =
+  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+
+const TEST_LANE_OPTIONS: { value: string; label: string }[] = [
+  { value: "", label: "Chưa phân loại (tự suy)" },
+  { value: "VOCAB_MCQ", label: "Trắc nghiệm từ vựng" },
+  { value: "MATCHING", label: "Ghép từ – nghĩa" },
+  { value: "PHRASE_SCENARIO", label: "Mẫu câu & tình huống" },
+  { value: "FILL_ARRANGE", label: "Điền từ & sắp xếp câu" },
+];
+
+type EditorMode = "create" | "edit";
+
+function LessonEditorForm({
+  mode,
+  draft,
+  setDraft,
+  idPrefix,
+  saving,
+  onCancel,
+  onSave,
+  phraseTemplates,
+  setPhraseTemplates,
+  grammarStructures,
+  setGrammarStructures,
+}: {
+  mode: EditorMode;
+  draft: Unit;
+  setDraft: React.Dispatch<React.SetStateAction<Unit>>;
+  idPrefix: string;
+  saving: boolean;
+  onCancel: () => void;
+  onSave: () => void;
+  phraseTemplates: PhraseTemplate[];
+  setPhraseTemplates: React.Dispatch<React.SetStateAction<PhraseTemplate[]>>;
+  grammarStructures: GrammarStructure[];
+  setGrammarStructures: React.Dispatch<React.SetStateAction<GrammarStructure[]>>;
+}) {
+  const { notifyError, notifySuccess } = useSonner();
+  const [newPhrase, setNewPhrase] = useState({
+    patternEn: "",
+    patternVi: "",
+    contextNote: "",
+    audioUrl: "",
+  });
+  const [newStructure, setNewStructure] = useState({
+    title: "",
+    summary: "",
+    exampleEn: "",
+    exampleVi: "",
+  });
+
+  useEffect(() => {
+    setNewPhrase({ patternEn: "", patternVi: "", contextNote: "", audioUrl: "" });
+    setNewStructure({ title: "", summary: "", exampleEn: "", exampleVi: "" });
+  }, [draft.id]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border pb-3">
+        <h3 className="text-base font-bold text-primary tracking-tight">
+          {mode === "create" ? "Thêm chương mới" : `Sửa chương ${draft.id}`}
+        </h3>
+        <div className="flex flex-wrap gap-2 justify-end">
+          <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving}>
+            Hủy
+          </Button>
+          <Button type="button" size="sm" onClick={() => void onSave()} disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Đang lưu…
+              </>
+            ) : (
+              "Lưu"
+            )}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-unit-id`}>Mã chương (số)</Label>
+          <Input
+            id={`${idPrefix}-unit-id`}
+            type="number"
+            disabled={mode === "edit"}
+            value={draft.id}
+            onChange={(e) =>
+              setDraft((d) => ({
+                ...d,
+                id: Number(e.target.value) || 0,
+              }))
+            }
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`${idPrefix}-video`}>Video URL</Label>
+          <Input
+            id={`${idPrefix}-video`}
+            value={draft.videoUrl ?? ""}
+            onChange={(e) => setDraft((d) => ({ ...d, videoUrl: e.target.value }))}
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor={`${idPrefix}-title`}>Tiêu đề</Label>
+        <Input
+          id={`${idPrefix}-title`}
+          value={draft.title}
+          onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor={`${idPrefix}-desc`}>Mô tả</Label>
+        <Textarea
+          id={`${idPrefix}-desc`}
+          rows={3}
+          value={draft.description}
+          onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
+        />
+      </div>
+
+      <Accordion type="multiple" className="w-full border rounded-lg bg-background">
+        <AccordionItem value="vocab" className="border-b px-1">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline py-3">
+            Từ vựng ({draft.vocabulary.length})
+          </AccordionTrigger>
+          <AccordionContent className="space-y-3 px-1 pb-3">
+            {draft.vocabulary.map((row, idx) => (
+              <div
+                key={idx}
+                className="grid grid-cols-1 md:grid-cols-6 gap-2 border-b border-border/50 pb-3 last:border-0"
+              >
+                <Input
+                  placeholder="Từ"
+                  value={row.word}
+                  onChange={(e) => {
+                    const v = [...draft.vocabulary];
+                    v[idx] = { ...v[idx], word: e.target.value };
+                    setDraft((d) => ({ ...d, vocabulary: v }));
+                  }}
+                />
+                <Input
+                  placeholder="Phiên âm"
+                  value={row.phonetic}
+                  onChange={(e) => {
+                    const v = [...draft.vocabulary];
+                    v[idx] = { ...v[idx], phonetic: e.target.value };
+                    setDraft((d) => ({ ...d, vocabulary: v }));
+                  }}
+                />
+                <Input
+                  placeholder="Nghĩa"
+                  className="md:col-span-2"
+                  value={row.meaning}
+                  onChange={(e) => {
+                    const v = [...draft.vocabulary];
+                    v[idx] = { ...v[idx], meaning: e.target.value };
+                    setDraft((d) => ({ ...d, vocabulary: v }));
+                  }}
+                />
+                <select
+                  className={selectClass}
+                  value={row.type}
+                  onChange={(e) => {
+                    const v = [...draft.vocabulary];
+                    v[idx] = {
+                      ...v[idx],
+                      type: e.target.value as Vocabulary["type"],
+                    };
+                    setDraft((d) => ({ ...d, vocabulary: v }));
+                  }}
+                >
+                  {VOCAB_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2 md:col-span-6">
+                  <Input
+                    placeholder="Ví dụ"
+                    className="flex-1"
+                    value={row.example}
+                    onChange={(e) => {
+                      const v = [...draft.vocabulary];
+                      v[idx] = { ...v[idx], example: e.target.value };
+                      setDraft((d) => ({ ...d, vocabulary: v }));
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const v = draft.vocabulary.filter((_, i) => i !== idx);
+                      setDraft((d) => ({ ...d, vocabulary: v }));
+                    }}
+                  >
+                    Xóa
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                setDraft((d) => ({
+                  ...d,
+                  vocabulary: [...d.vocabulary, defaultVocabulary()],
+                }))
+              }
+            >
+              + Thêm từ
+            </Button>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="phrases" className="border-b px-1">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline py-3">
+            Mẫu câu ({draft.phrases.length})
+          </AccordionTrigger>
+          <AccordionContent className="space-y-3 px-1 pb-3">
+            {draft.phrases.map((row, idx) => (
+              <div
+                key={idx}
+                className="grid grid-cols-1 md:grid-cols-3 gap-2 border-b border-border/50 pb-3 last:border-0"
+              >
+                <Input
+                  placeholder="Câu"
+                  value={row.text}
+                  onChange={(e) => {
+                    const p = [...draft.phrases];
+                    p[idx] = { ...p[idx], text: e.target.value };
+                    setDraft((d) => ({ ...d, phrases: p }));
+                  }}
+                />
+                <Input
+                  placeholder="Dịch"
+                  value={row.translation}
+                  onChange={(e) => {
+                    const p = [...draft.phrases];
+                    p[idx] = { ...p[idx], translation: e.target.value };
+                    setDraft((d) => ({ ...d, phrases: p }));
+                  }}
+                />
+                <div className="flex gap-2 md:col-span-3">
+                  <Input
+                    placeholder="Ngữ cảnh"
+                    className="flex-1"
+                    value={row.context}
+                    onChange={(e) => {
+                      const p = [...draft.phrases];
+                      p[idx] = { ...p[idx], context: e.target.value };
+                      setDraft((d) => ({ ...d, phrases: p }));
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const p = draft.phrases.filter((_, i) => i !== idx);
+                      setDraft((d) => ({ ...d, phrases: p }));
+                    }}
+                  >
+                    Xóa
+                  </Button>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                setDraft((d) => ({
+                  ...d,
+                  phrases: [...d.phrases, defaultPhrase()],
+                }))
+              }
+            >
+              + Thêm mẫu câu
+            </Button>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="memory" className="border-b px-1">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline py-3">
+            Cố định (memory boost)
+          </AccordionTrigger>
+          <AccordionContent className="space-y-3 px-1 pb-3">
+            <div className="space-y-2">
+              <Label>Tóm tắt</Label>
+              <Textarea
+                rows={2}
+                value={draft.memoryBoost.summary}
+                onChange={(e) =>
+                  setDraft((d) => ({
+                    ...d,
+                    memoryBoost: {
+                      ...d.memoryBoost,
+                      summary: e.target.value,
+                    },
+                  }))
+                }
+              />
+            </div>
+            {draft.memoryBoost.collocations.map((row, idx) => (
+              <div key={idx} className="flex gap-2 flex-wrap">
+                <Input
+                  placeholder="Động từ"
+                  value={row.verb}
+                  onChange={(e) => {
+                    const c = [...draft.memoryBoost.collocations];
+                    c[idx] = { ...c[idx], verb: e.target.value };
+                    setDraft((d) => ({
+                      ...d,
+                      memoryBoost: { ...d.memoryBoost, collocations: c },
+                    }));
+                  }}
+                />
+                <Input
+                  placeholder="Danh từ"
+                  value={row.noun}
+                  onChange={(e) => {
+                    const c = [...draft.memoryBoost.collocations];
+                    c[idx] = { ...c[idx], noun: e.target.value };
+                    setDraft((d) => ({
+                      ...d,
+                      memoryBoost: { ...d.memoryBoost, collocations: c },
+                    }));
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const c = draft.memoryBoost.collocations.filter(
+                      (_, i) => i !== idx,
+                    );
+                    setDraft((d) => ({
+                      ...d,
+                      memoryBoost: { ...d.memoryBoost, collocations: c },
+                    }));
+                  }}
+                >
+                  Xóa
+                </Button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                setDraft((d) => ({
+                  ...d,
+                  memoryBoost: {
+                    ...d.memoryBoost,
+                    collocations: [
+                      ...d.memoryBoost.collocations,
+                      defaultCollocation(),
+                    ],
+                  },
+                }))
+              }
+            >
+              + Thêm cố định
+            </Button>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="phrase-templates" className="px-1">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline py-3">
+            Mẫu câu (template) ({phraseTemplates.length})
+          </AccordionTrigger>
+          <AccordionContent className="space-y-3 px-1 pb-3 text-sm">
+            <p className="text-muted-foreground text-xs">
+              Lớp soạn riêng với mục &quot;Mẫu câu&quot; trong bài học; dùng cho tài liệu / ngân hàng mở rộng sau này.
+            </p>
+            {mode === "create" ? (
+              <p className="text-muted-foreground">
+                Lưu chương mới trước, rồi mở &quot;Sửa&quot; để thêm mẫu câu qua API.
+              </p>
+            ) : (
+              <>
+                {phraseTemplates.map((row) => (
+                  <div
+                    key={row.id}
+                    className="border border-border rounded-lg p-3 space-y-2 bg-muted/20"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">patternEn</Label>
+                        <Textarea
+                          rows={2}
+                          value={row.patternEn}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setPhraseTemplates((prev) =>
+                              prev.map((r) =>
+                                r.id === row.id ? { ...r, patternEn: v } : r,
+                              ),
+                            );
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">patternVi</Label>
+                        <Textarea
+                          rows={2}
+                          value={row.patternVi}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setPhraseTemplates((prev) =>
+                              prev.map((r) =>
+                                r.id === row.id ? { ...r, patternVi: v } : r,
+                              ),
+                            );
+                          }}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <Input
+                        placeholder="contextNote"
+                        value={row.contextNote ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setPhraseTemplates((prev) =>
+                            prev.map((r) =>
+                              r.id === row.id ? { ...r, contextNote: v } : r,
+                            ),
+                          );
+                        }}
+                      />
+                      <Input
+                        placeholder="audioUrl"
+                        value={row.audioUrl ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setPhraseTemplates((prev) =>
+                            prev.map((r) =>
+                              r.id === row.id ? { ...r, audioUrl: v } : r,
+                            ),
+                          );
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          void (async () => {
+                            try {
+                              await lessonService.updatePhraseTemplate(
+                                draft.id,
+                                row.id,
+                                {
+                                  patternEn: row.patternEn.trim(),
+                                  patternVi: row.patternVi.trim(),
+                                  contextNote: row.contextNote?.trim() || null,
+                                  audioUrl: row.audioUrl?.trim() || null,
+                                  sortOrder: row.sortOrder,
+                                },
+                              );
+                              notifySuccess("Đã lưu mẫu câu", `#${row.id}`);
+                            } catch (e) {
+                              notifyError(
+                                "Không lưu được mẫu câu",
+                                String((e as Error).message ?? e),
+                              );
+                            }
+                          })();
+                        }}
+                      >
+                        Lưu dòng
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive"
+                        onClick={() => {
+                          void (async () => {
+                            try {
+                              await lessonService.deletePhraseTemplate(
+                                draft.id,
+                                row.id,
+                              );
+                              setPhraseTemplates((prev) =>
+                                prev.filter((r) => r.id !== row.id),
+                              );
+                              notifySuccess("Đã xóa mẫu câu", `#${row.id}`);
+                            } catch (e) {
+                              notifyError(
+                                "Không xóa được",
+                                String((e as Error).message ?? e),
+                              );
+                            }
+                          })();
+                        }}
+                      >
+                        Xóa
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <div className="border border-dashed rounded-lg p-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Thêm mẫu câu mới
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <Textarea
+                      rows={2}
+                      placeholder="patternEn"
+                      value={newPhrase.patternEn}
+                      onChange={(e) =>
+                        setNewPhrase((n) => ({ ...n, patternEn: e.target.value }))
+                      }
+                    />
+                    <Textarea
+                      rows={2}
+                      placeholder="patternVi"
+                      value={newPhrase.patternVi}
+                      onChange={(e) =>
+                        setNewPhrase((n) => ({ ...n, patternVi: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <Input
+                      placeholder="contextNote"
+                      value={newPhrase.contextNote}
+                      onChange={(e) =>
+                        setNewPhrase((n) => ({ ...n, contextNote: e.target.value }))
+                      }
+                    />
+                    <Input
+                      placeholder="audioUrl"
+                      value={newPhrase.audioUrl}
+                      onChange={(e) =>
+                        setNewPhrase((n) => ({ ...n, audioUrl: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="default"
+                    onClick={() => {
+                      void (async () => {
+                        if (
+                          !newPhrase.patternEn.trim() ||
+                          !newPhrase.patternVi.trim()
+                        ) {
+                          notifyError("Thiếu nội dung", "Nhập patternEn và patternVi.");
+                          return;
+                        }
+                        try {
+                          const created = await lessonService.createPhraseTemplate(
+                            draft.id,
+                            {
+                              patternEn: newPhrase.patternEn.trim(),
+                              patternVi: newPhrase.patternVi.trim(),
+                              contextNote: newPhrase.contextNote.trim() || null,
+                              audioUrl: newPhrase.audioUrl.trim() || null,
+                              sortOrder: phraseTemplates.length + 1,
+                            },
+                          );
+                          setPhraseTemplates((prev) => [...prev, created]);
+                          setNewPhrase({
+                            patternEn: "",
+                            patternVi: "",
+                            contextNote: "",
+                            audioUrl: "",
+                          });
+                          notifySuccess("Đã thêm mẫu câu", "");
+                        } catch (e) {
+                          notifyError(
+                            "Không tạo được",
+                            String((e as Error).message ?? e),
+                          );
+                        }
+                      })();
+                    }}
+                  >
+                    + Thêm mẫu câu
+                  </Button>
+                </div>
+              </>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="grammar-structures" className="px-1">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline py-3">
+            Cấu trúc ngữ pháp ({grammarStructures.length})
+          </AccordionTrigger>
+          <AccordionContent className="space-y-3 px-1 pb-3 text-sm">
+            {mode === "create" ? (
+              <p className="text-muted-foreground">
+                Lưu chương mới trước, rồi mở &quot;Sửa&quot; để thêm cấu trúc qua API.
+              </p>
+            ) : (
+              <>
+                {grammarStructures.map((row) => (
+                  <div
+                    key={row.id}
+                    className="border border-border rounded-lg p-3 space-y-2 bg-muted/20"
+                  >
+                    <Input
+                      placeholder="title"
+                      value={row.title}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setGrammarStructures((prev) =>
+                          prev.map((r) =>
+                            r.id === row.id ? { ...r, title: v } : r,
+                          ),
+                        );
+                      }}
+                    />
+                    <Textarea
+                      rows={2}
+                      placeholder="summary"
+                      value={row.summary}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setGrammarStructures((prev) =>
+                          prev.map((r) =>
+                            r.id === row.id ? { ...r, summary: v } : r,
+                          ),
+                        );
+                      }}
+                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <Textarea
+                        rows={2}
+                        placeholder="exampleEn"
+                        value={row.exampleEn ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setGrammarStructures((prev) =>
+                            prev.map((r) =>
+                              r.id === row.id ? { ...r, exampleEn: v } : r,
+                            ),
+                          );
+                        }}
+                      />
+                      <Textarea
+                        rows={2}
+                        placeholder="exampleVi"
+                        value={row.exampleVi ?? ""}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setGrammarStructures((prev) =>
+                            prev.map((r) =>
+                              r.id === row.id ? { ...r, exampleVi: v } : r,
+                            ),
+                          );
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          void (async () => {
+                            try {
+                              await lessonService.updateGrammarStructure(
+                                draft.id,
+                                row.id,
+                                {
+                                  title: row.title.trim(),
+                                  summary: row.summary.trim(),
+                                  exampleEn: row.exampleEn?.trim() || null,
+                                  exampleVi: row.exampleVi?.trim() || null,
+                                  sortOrder: row.sortOrder,
+                                },
+                              );
+                              notifySuccess("Đã lưu cấu trúc", `#${row.id}`);
+                            } catch (e) {
+                              notifyError(
+                                "Không lưu được",
+                                String((e as Error).message ?? e),
+                              );
+                            }
+                          })();
+                        }}
+                      >
+                        Lưu dòng
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive"
+                        onClick={() => {
+                          void (async () => {
+                            try {
+                              await lessonService.deleteGrammarStructure(
+                                draft.id,
+                                row.id,
+                              );
+                              setGrammarStructures((prev) =>
+                                prev.filter((r) => r.id !== row.id),
+                              );
+                              notifySuccess("Đã xóa cấu trúc", `#${row.id}`);
+                            } catch (e) {
+                              notifyError(
+                                "Không xóa được",
+                                String((e as Error).message ?? e),
+                              );
+                            }
+                          })();
+                        }}
+                      >
+                        Xóa
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                <div className="border border-dashed rounded-lg p-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    Thêm cấu trúc mới
+                  </p>
+                  <Input
+                    placeholder="title"
+                    value={newStructure.title}
+                    onChange={(e) =>
+                      setNewStructure((n) => ({ ...n, title: e.target.value }))
+                    }
+                  />
+                  <Textarea
+                    rows={2}
+                    placeholder="summary"
+                    value={newStructure.summary}
+                    onChange={(e) =>
+                      setNewStructure((n) => ({ ...n, summary: e.target.value }))
+                    }
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <Textarea
+                      rows={2}
+                      placeholder="exampleEn"
+                      value={newStructure.exampleEn}
+                      onChange={(e) =>
+                        setNewStructure((n) => ({
+                          ...n,
+                          exampleEn: e.target.value,
+                        }))
+                      }
+                    />
+                    <Textarea
+                      rows={2}
+                      placeholder="exampleVi"
+                      value={newStructure.exampleVi}
+                      onChange={(e) =>
+                        setNewStructure((n) => ({
+                          ...n,
+                          exampleVi: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                      void (async () => {
+                        if (
+                          !newStructure.title.trim() ||
+                          !newStructure.summary.trim()
+                        ) {
+                          notifyError("Thiếu nội dung", "Nhập title và summary.");
+                          return;
+                        }
+                        try {
+                          const created =
+                            await lessonService.createGrammarStructure(draft.id, {
+                              title: newStructure.title.trim(),
+                              summary: newStructure.summary.trim(),
+                              exampleEn: newStructure.exampleEn.trim() || null,
+                              exampleVi: newStructure.exampleVi.trim() || null,
+                              sortOrder: grammarStructures.length + 1,
+                            });
+                          setGrammarStructures((prev) => [...prev, created]);
+                          setNewStructure({
+                            title: "",
+                            summary: "",
+                            exampleEn: "",
+                            exampleVi: "",
+                          });
+                          notifySuccess("Đã thêm cấu trúc", "");
+                        } catch (e) {
+                          notifyError(
+                            "Không tạo được",
+                            String((e as Error).message ?? e),
+                          );
+                        }
+                      })();
+                    }}
+                  >
+                    + Thêm cấu trúc
+                  </Button>
+                </div>
+              </>
+            )}
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="practice" className="px-1">
+          <AccordionTrigger className="text-sm font-semibold hover:no-underline py-3">
+            Bài kiểm tra & câu hỏi luyện tập ({draft.practice.length})
+          </AccordionTrigger>
+          <AccordionContent className="space-y-4 px-1 pb-3">
+            {draft.practice.map((q, idx) => (
+              <div
+                key={q.id}
+                className="border border-border rounded-lg p-3 space-y-2 bg-muted/30"
+              >
+                <div className="flex flex-wrap gap-2 items-end">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Loại</Label>
+                    <select
+                      className={cn(selectClass, "min-w-[140px]")}
+                      value={q.type}
+                      onChange={(e) => {
+                        const p = [...draft.practice];
+                        p[idx] = {
+                          ...p[idx],
+                          type: e.target.value as Question["type"],
+                        };
+                        setDraft((d) => ({ ...d, practice: p }));
+                      }}
+                    >
+                      {QUESTION_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Lành kiểm tra (UI Luyện tập)
+                    </Label>
+                    <select
+                      className={cn(selectClass, "min-w-[220px]")}
+                      value={q.testLane ?? ""}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        const p = [...draft.practice];
+                        p[idx] = {
+                          ...p[idx],
+                          testLane:
+                            v === ""
+                              ? undefined
+                              : (v as LessonTestLane),
+                        };
+                        setDraft((d) => ({ ...d, practice: p }));
+                      }}
+                    >
+                      {TEST_LANE_OPTIONS.map((opt) => (
+                        <option key={opt.value || "unset"} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto"
+                    onClick={() => {
+                      const p = draft.practice.filter((_, i) => i !== idx);
+                      setDraft((d) => ({ ...d, practice: p }));
+                    }}
+                  >
+                    Xóa câu
+                  </Button>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Đề bài</Label>
+                  <Textarea
+                    rows={2}
+                    value={q.prompt}
+                    onChange={(e) => {
+                      const p = [...draft.practice];
+                      p[idx] = { ...p[idx], prompt: e.target.value };
+                      setDraft((d) => ({ ...d, practice: p }));
+                    }}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Ngữ cảnh (circumstance)
+                    </Label>
+                    <Textarea
+                      rows={2}
+                      value={q.circumstance ?? ""}
+                      onChange={(e) => {
+                        const p = [...draft.practice];
+                        p[idx] = { ...p[idx], circumstance: e.target.value };
+                        setDraft((d) => ({ ...d, practice: p }));
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Gợi ý tiếng Việt (vnPrompt)
+                    </Label>
+                    <Textarea
+                      rows={2}
+                      value={q.vnPrompt ?? ""}
+                      onChange={(e) => {
+                        const p = [...draft.practice];
+                        p[idx] = { ...p[idx], vnPrompt: e.target.value };
+                        setDraft((d) => ({ ...d, practice: p }));
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">
+                    Mô tả tình huống (Scenario / Speaking)
+                  </Label>
+                  <Textarea
+                    rows={2}
+                    value={q.scenarioDescription ?? ""}
+                    onChange={(e) => {
+                      const p = [...draft.practice];
+                      p[idx] = { ...p[idx], scenarioDescription: e.target.value };
+                      setDraft((d) => ({ ...d, practice: p }));
+                    }}
+                  />
+                </div>
+                {(q.type === "MCQ" || q.type === "Scenario") && (
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Lựa chọn (mỗi dòng một)
+                    </Label>
+                    <Textarea
+                      rows={3}
+                      value={(q.options ?? []).join("\n")}
+                      onChange={(e) => {
+                        const opts = e.target.value
+                          .split("\n")
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        const p = [...draft.practice];
+                        p[idx] = { ...p[idx], options: opts };
+                        setDraft((d) => ({ ...d, practice: p }));
+                      }}
+                    />
+                  </div>
+                )}
+                {q.type === "Matching" && (
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Cặp (mỗi dòng: trái | phải)
+                    </Label>
+                    <Textarea
+                      rows={3}
+                      value={(q.pairs ?? [])
+                        .map((pair) => `${pair.left} | ${pair.right}`)
+                        .join("\n")}
+                      onChange={(e) => {
+                        const lines = e.target.value.split("\n");
+                        const pairs = lines
+                          .map((line) => {
+                            const [l, r] = line.split("|").map((s) => s.trim());
+                            if (!l || !r) return null;
+                            return { left: l, right: r };
+                          })
+                          .filter(Boolean) as { left: string; right: string }[];
+                        const p = [...draft.practice];
+                        p[idx] = { ...p[idx], pairs };
+                        setDraft((d) => ({ ...d, practice: p }));
+                      }}
+                    />
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Đáp án (chuỗi hoặc JSON)
+                    </Label>
+                    <Input
+                      value={
+                        typeof q.answer === "string"
+                          ? q.answer
+                          : JSON.stringify(q.answer ?? "")
+                      }
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        let answer: string | string[] = raw;
+                        if (raw.trim().startsWith("[")) {
+                          try {
+                            answer = JSON.parse(raw) as string[];
+                          } catch {
+                            answer = raw;
+                          }
+                        }
+                        const p = [...draft.practice];
+                        p[idx] = { ...p[idx], answer };
+                        setDraft((d) => ({ ...d, practice: p }));
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">
+                      Đáp án mẫu (bestAnswer)
+                    </Label>
+                    <Input
+                      value={q.bestAnswer ?? ""}
+                      onChange={(e) => {
+                        const p = [...draft.practice];
+                        p[idx] = { ...p[idx], bestAnswer: e.target.value };
+                        setDraft((d) => ({ ...d, practice: p }));
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">
+                    Đáp án chấp nhận được (mỗi dòng một, FillInBlank / Dictation)
+                  </Label>
+                  <Textarea
+                    rows={3}
+                    value={(q.acceptableAnswers ?? []).join("\n")}
+                    onChange={(e) => {
+                      const list = e.target.value
+                        .split("\n")
+                        .map((s) => s.trim())
+                        .filter(Boolean);
+                      const p = [...draft.practice];
+                      p[idx] = { ...p[idx], acceptableAnswers: list };
+                      setDraft((d) => ({ ...d, practice: p }));
+                    }}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Giải thích</Label>
+                  <Textarea
+                    rows={2}
+                    value={q.explanation ?? ""}
+                    onChange={(e) => {
+                      const p = [...draft.practice];
+                      p[idx] = { ...p[idx], explanation: e.target.value };
+                      setDraft((d) => ({ ...d, practice: p }));
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() =>
+                setDraft((d) => ({
+                  ...d,
+                  practice: [...d.practice, defaultQuestion(d.id || 1)],
+                }))
+              }
+            >
+              + Thêm câu hỏi
+            </Button>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    </div>
+  );
+}
+
 interface AdminLessonsPageProps {
   onLessonsUpdated: () => Promise<void>;
 }
@@ -109,9 +1211,14 @@ export default function AdminLessonsPage({
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [mode, setMode] = useState<"create" | "edit">("create");
+  /** null = closed; "create" = add panel above rows; number = unit id expanded for edit */
+  const [expanded, setExpanded] = useState<null | "create" | number>(null);
+  const [loadingEditId, setLoadingEditId] = useState<number | null>(null);
   const [draft, setDraft] = useState<Unit>(emptyUnit(1));
+  const [phraseTemplates, setPhraseTemplates] = useState<PhraseTemplate[]>([]);
+  const [grammarStructures, setGrammarStructures] = useState<GrammarStructure[]>(
+    [],
+  );
 
   const suggestedNextId = useMemo(() => {
     if (!units.length) return 1;
@@ -135,39 +1242,60 @@ export default function AdminLessonsPage({
     void loadUnits();
   }, [loadUnits]);
 
-  const openCreate = () => {
-    setMode("create");
-    setDraft(emptyUnit(suggestedNextId));
-    setDialogOpen(true);
+  const closePanel = () => {
+    setExpanded(null);
+    setLoadingEditId(null);
+    setPhraseTemplates([]);
+    setGrammarStructures([]);
   };
 
-  const openEdit = async (unitNumber: number) => {
-    setMode("edit");
-    setDialogOpen(true);
-    setSaving(true);
+  const toggleCreatePanel = () => {
+    if (expanded === "create") {
+      closePanel();
+      return;
+    }
+    setExpanded("create");
+    setPhraseTemplates([]);
+    setGrammarStructures([]);
+    setDraft(emptyUnit(suggestedNextId));
+  };
+
+  const toggleEditRow = async (unitNumber: number) => {
+    if (expanded === unitNumber) {
+      closePanel();
+      return;
+    }
+    setExpanded(unitNumber);
+    setLoadingEditId(unitNumber);
     try {
-      const full = await lessonService.getLessonForAdmin(unitNumber);
+      const [full, templates, structures] = await Promise.all([
+        lessonService.getLessonForAdmin(unitNumber),
+        lessonService.listPhraseTemplates(unitNumber),
+        lessonService.listGrammarStructures(unitNumber),
+      ]);
       setDraft(full);
+      setPhraseTemplates(templates);
+      setGrammarStructures(structures);
     } catch (e) {
       console.error(e);
       notifyError("Không tải được chương", String((e as Error).message ?? e));
-      setDialogOpen(false);
+      closePanel();
     } finally {
-      setSaving(false);
+      setLoadingEditId(null);
     }
   };
 
   const persist = async () => {
     setSaving(true);
     try {
-      if (mode === "create") {
+      if (expanded === "create") {
         await lessonService.createLesson(draft);
         notifySuccess("Đã tạo chương", `Chương ${draft.id}`);
-      } else {
+      } else if (typeof expanded === "number") {
         await lessonService.updateLesson(draft.id, draft);
         notifySuccess("Đã cập nhật chương", `Chương ${draft.id}`);
       }
-      setDialogOpen(false);
+      closePanel();
       await loadUnits();
       await onLessonsUpdated();
     } catch (e) {
@@ -182,6 +1310,9 @@ export default function AdminLessonsPage({
     if (!window.confirm(`Xóa chương ${unitNumber}? Thao tác không hoàn tác.`)) {
       return;
     }
+    if (expanded === unitNumber) {
+      closePanel();
+    }
     try {
       await lessonService.deleteLesson(unitNumber);
       notifySuccess("Đã xóa chương", String(unitNumber));
@@ -193,21 +1324,50 @@ export default function AdminLessonsPage({
     }
   };
 
-  const selectClass =
-    "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  const expandedRowEditor = (unitId: number) => (
+    <tr key={`${unitId}-editor`} className="bg-muted/20 animate-in fade-in duration-200">
+      <td colSpan={3} className="p-0 align-top">
+        <div className="border-t-2 border-primary/40 bg-gradient-to-b from-muted/40 to-background shadow-inner">
+          <div className="max-h-[min(75vh,900px)] overflow-y-auto overscroll-contain p-4 md:p-6">
+            <LessonEditorForm
+              mode="edit"
+              draft={draft}
+              setDraft={setDraft}
+              phraseTemplates={phraseTemplates}
+              setPhraseTemplates={setPhraseTemplates}
+              grammarStructures={grammarStructures}
+              setGrammarStructures={setGrammarStructures}
+              idPrefix={`edit-${unitId}`}
+              saving={saving}
+              onCancel={closePanel}
+              onSave={persist}
+            />
+          </div>
+        </div>
+      </td>
+    </tr>
+  );
 
   return (
     <AdminPageLayout
       title="Quản lý bài học"
       description="Tạo, sửa và xóa chương (đơn vị bài học), gồm từ vựng, mẫu câu, cố định và câu hỏi luyện tập. Chỉnh sửa đáp án cần đăng nhập quản trị."
       actions={
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Thêm chương
+        <Button
+          onClick={toggleCreatePanel}
+          variant={expanded === "create" ? "secondary" : "default"}
+          className="gap-2"
+        >
+          {expanded === "create" ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <Plus className="h-4 w-4" />
+          )}
+          {expanded === "create" ? "Đóng form thêm" : "Thêm chương"}
         </Button>
       }
     >
-      <Card className="border-border police-shadow">
+      <Card className="border-border police-shadow overflow-hidden">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <BookOpen className="h-5 w-5 text-primary" />
@@ -217,529 +1377,90 @@ export default function AdminLessonsPage({
             {loading ? "Đang tải…" : `${units.length} chương`}
           </CardDescription>
         </CardHeader>
-        <CardContent className="overflow-x-auto">
+        <CardContent className="overflow-x-auto px-0 sm:px-6">
           <table className="w-full text-sm border-collapse">
             <thead>
-              <tr className="border-b border-border text-left text-muted-foreground">
-                <th className="py-2 pr-4 font-semibold">Mã</th>
-                <th className="py-2 pr-4 font-semibold">Tiêu đề</th>
-                <th className="py-2 pr-4 font-semibold text-right">Thao tác</th>
+              <tr className="border-b border-border bg-muted/30 text-left text-muted-foreground">
+                <th className="py-3 pl-4 sm:pl-6 pr-4 font-semibold w-[72px]">Mã</th>
+                <th className="py-3 pr-4 font-semibold">Tiêu đề</th>
+                <th className="py-3 pr-4 sm:pr-6 font-semibold text-right min-w-[200px]">
+                  Thao tác
+                </th>
               </tr>
             </thead>
             <tbody>
-              {units.map((u) => (
-                <tr key={u.id} className="border-b border-border/60">
-                  <td className="py-3 pr-4 font-mono font-medium">{u.id}</td>
-                  <td className="py-3 pr-4">{u.title}</td>
-                  <td className="py-3 pr-0 text-right space-x-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1"
-                      onClick={() => void openEdit(u.id)}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                      Sửa
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="gap-1"
-                      onClick={() => void removeUnit(u.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Xóa
-                    </Button>
+              {expanded === "create" && (
+                <tr className="bg-primary/5">
+                  <td colSpan={3} className="p-0 align-top">
+                    <div className="border-b border-primary/30 bg-gradient-to-b from-primary/10 to-muted/20">
+                      <div className="max-h-[min(75vh,900px)] overflow-y-auto overscroll-contain p-4 md:p-6">
+                        <LessonEditorForm
+                          mode="create"
+                          draft={draft}
+                          setDraft={setDraft}
+                          phraseTemplates={phraseTemplates}
+                          setPhraseTemplates={setPhraseTemplates}
+                          grammarStructures={grammarStructures}
+                          setGrammarStructures={setGrammarStructures}
+                          idPrefix="create"
+                          saving={saving}
+                          onCancel={closePanel}
+                          onSave={persist}
+                        />
+                      </div>
+                    </div>
                   </td>
                 </tr>
+              )}
+              {units.map((u) => (
+                <Fragment key={u.id}>
+                  <tr
+                    className={cn(
+                      "border-b border-border/60 transition-colors",
+                      expanded === u.id && "bg-primary/5 ring-inset ring-1 ring-primary/15",
+                    )}
+                  >
+                    <td className="py-3 pl-4 sm:pl-6 pr-4 font-mono font-semibold text-primary">
+                      {u.id}
+                    </td>
+                    <td className="py-3 pr-4 font-medium">{u.title}</td>
+                    <td className="py-3 pr-4 sm:pr-6 text-right whitespace-nowrap space-x-2">
+                      <Button
+                        type="button"
+                        variant={expanded === u.id ? "secondary" : "outline"}
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => void toggleEditRow(u.id)}
+                        disabled={loadingEditId === u.id}
+                      >
+                        {loadingEditId === u.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : expanded === u.id ? (
+                          <ChevronUp className="h-3.5 w-3.5" />
+                        ) : (
+                          <ChevronDown className="h-3.5 w-3.5" />
+                        )}
+                        {expanded === u.id ? "Thu gọn" : "Sửa"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => void removeUnit(u.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Xóa
+                      </Button>
+                    </td>
+                  </tr>
+                  {expanded === u.id && expandedRowEditor(u.id)}
+                </Fragment>
               ))}
             </tbody>
           </table>
         </CardContent>
       </Card>
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {mode === "create" ? "Thêm chương mới" : `Sửa chương ${draft.id}`}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="unit-id">Mã chương (số)</Label>
-                <Input
-                  id="unit-id"
-                  type="number"
-                  disabled={mode === "edit"}
-                  value={draft.id}
-                  onChange={(e) =>
-                    setDraft((d) => ({
-                      ...d,
-                      id: Number(e.target.value) || 0,
-                    }))
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="video">Video URL</Label>
-                <Input
-                  id="video"
-                  value={draft.videoUrl ?? ""}
-                  onChange={(e) =>
-                    setDraft((d) => ({ ...d, videoUrl: e.target.value }))
-                  }
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="title">Tiêu đề</Label>
-              <Input
-                id="title"
-                value={draft.title}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, title: e.target.value }))
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="desc">Mô tả</Label>
-              <Textarea
-                id="desc"
-                rows={3}
-                value={draft.description}
-                onChange={(e) =>
-                  setDraft((d) => ({ ...d, description: e.target.value }))
-                }
-              />
-            </div>
-
-            <Accordion type="multiple" className="w-full border rounded-md">
-              <AccordionItem value="vocab">
-                <AccordionTrigger>Từ vựng ({draft.vocabulary.length})</AccordionTrigger>
-                <AccordionContent className="space-y-3 px-1">
-                  {draft.vocabulary.map((row, idx) => (
-                    <div
-                      key={idx}
-                      className="grid grid-cols-1 md:grid-cols-6 gap-2 border-b pb-3"
-                    >
-                      <Input
-                        placeholder="Từ"
-                        value={row.word}
-                        onChange={(e) => {
-                          const v = [...draft.vocabulary];
-                          v[idx] = { ...v[idx], word: e.target.value };
-                          setDraft((d) => ({ ...d, vocabulary: v }));
-                        }}
-                      />
-                      <Input
-                        placeholder="Phiên âm"
-                        value={row.phonetic}
-                        onChange={(e) => {
-                          const v = [...draft.vocabulary];
-                          v[idx] = { ...v[idx], phonetic: e.target.value };
-                          setDraft((d) => ({ ...d, vocabulary: v }));
-                        }}
-                      />
-                      <Input
-                        placeholder="Nghĩa"
-                        className="md:col-span-2"
-                        value={row.meaning}
-                        onChange={(e) => {
-                          const v = [...draft.vocabulary];
-                          v[idx] = { ...v[idx], meaning: e.target.value };
-                          setDraft((d) => ({ ...d, vocabulary: v }));
-                        }}
-                      />
-                      <select
-                        className={selectClass}
-                        value={row.type}
-                        onChange={(e) => {
-                          const v = [...draft.vocabulary];
-                          v[idx] = {
-                            ...v[idx],
-                            type: e.target.value as Vocabulary["type"],
-                          };
-                          setDraft((d) => ({ ...d, vocabulary: v }));
-                        }}
-                      >
-                        {VOCAB_TYPES.map((t) => (
-                          <option key={t} value={t}>
-                            {t}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="flex gap-2 md:col-span-6">
-                        <Input
-                          placeholder="Ví dụ"
-                          className="flex-1"
-                          value={row.example}
-                          onChange={(e) => {
-                            const v = [...draft.vocabulary];
-                            v[idx] = { ...v[idx], example: e.target.value };
-                            setDraft((d) => ({ ...d, vocabulary: v }));
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const v = draft.vocabulary.filter((_, i) => i !== idx);
-                            setDraft((d) => ({ ...d, vocabulary: v }));
-                          }}
-                        >
-                          Xóa
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() =>
-                      setDraft((d) => ({
-                        ...d,
-                        vocabulary: [...d.vocabulary, defaultVocabulary()],
-                      }))
-                    }
-                  >
-                    + Thêm từ
-                  </Button>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="phrases">
-                <AccordionTrigger>Mẫu câu ({draft.phrases.length})</AccordionTrigger>
-                <AccordionContent className="space-y-3 px-1">
-                  {draft.phrases.map((row, idx) => (
-                    <div
-                      key={idx}
-                      className="grid grid-cols-1 md:grid-cols-3 gap-2 border-b pb-3"
-                    >
-                      <Input
-                        placeholder="Câu"
-                        value={row.text}
-                        onChange={(e) => {
-                          const p = [...draft.phrases];
-                          p[idx] = { ...p[idx], text: e.target.value };
-                          setDraft((d) => ({ ...d, phrases: p }));
-                        }}
-                      />
-                      <Input
-                        placeholder="Dịch"
-                        value={row.translation}
-                        onChange={(e) => {
-                          const p = [...draft.phrases];
-                          p[idx] = { ...p[idx], translation: e.target.value };
-                          setDraft((d) => ({ ...d, phrases: p }));
-                        }}
-                      />
-                      <div className="flex gap-2 md:col-span-3">
-                        <Input
-                          placeholder="Ngữ cảnh"
-                          className="flex-1"
-                          value={row.context}
-                          onChange={(e) => {
-                            const p = [...draft.phrases];
-                            p[idx] = { ...p[idx], context: e.target.value };
-                            setDraft((d) => ({ ...d, phrases: p }));
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            const p = draft.phrases.filter((_, i) => i !== idx);
-                            setDraft((d) => ({ ...d, phrases: p }));
-                          }}
-                        >
-                          Xóa
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() =>
-                      setDraft((d) => ({
-                        ...d,
-                        phrases: [...d.phrases, defaultPhrase()],
-                      }))
-                    }
-                  >
-                    + Thêm mẫu câu
-                  </Button>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="memory">
-                <AccordionTrigger>Cố định (memory boost)</AccordionTrigger>
-                <AccordionContent className="space-y-3 px-1">
-                  <div className="space-y-2">
-                    <Label>Tóm tắt</Label>
-                    <Textarea
-                      rows={2}
-                      value={draft.memoryBoost.summary}
-                      onChange={(e) =>
-                        setDraft((d) => ({
-                          ...d,
-                          memoryBoost: {
-                            ...d.memoryBoost,
-                            summary: e.target.value,
-                          },
-                        }))
-                      }
-                    />
-                  </div>
-                  {draft.memoryBoost.collocations.map((row, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <Input
-                        placeholder="Động từ"
-                        value={row.verb}
-                        onChange={(e) => {
-                          const c = [...draft.memoryBoost.collocations];
-                          c[idx] = { ...c[idx], verb: e.target.value };
-                          setDraft((d) => ({
-                            ...d,
-                            memoryBoost: { ...d.memoryBoost, collocations: c },
-                          }));
-                        }}
-                      />
-                      <Input
-                        placeholder="Danh từ"
-                        value={row.noun}
-                        onChange={(e) => {
-                          const c = [...draft.memoryBoost.collocations];
-                          c[idx] = { ...c[idx], noun: e.target.value };
-                          setDraft((d) => ({
-                            ...d,
-                            memoryBoost: { ...d.memoryBoost, collocations: c },
-                          }));
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          const c = draft.memoryBoost.collocations.filter(
-                            (_, i) => i !== idx,
-                          );
-                          setDraft((d) => ({
-                            ...d,
-                            memoryBoost: { ...d.memoryBoost, collocations: c },
-                          }));
-                        }}
-                      >
-                        Xóa
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() =>
-                      setDraft((d) => ({
-                        ...d,
-                        memoryBoost: {
-                          ...d.memoryBoost,
-                          collocations: [
-                            ...d.memoryBoost.collocations,
-                            defaultCollocation(),
-                          ],
-                        },
-                      }))
-                    }
-                  >
-                    + Thêm cố định
-                  </Button>
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="practice">
-                <AccordionTrigger>Câu hỏi ({draft.practice.length})</AccordionTrigger>
-                <AccordionContent className="space-y-4 px-1">
-                  {draft.practice.map((q, idx) => (
-                    <div
-                      key={q.id}
-                      className="border rounded-md p-3 space-y-2 bg-muted/20"
-                    >
-                      <div className="flex flex-wrap gap-2 items-end">
-                        <div className="space-y-1">
-                          <Label className="text-xs">Loại</Label>
-                          <select
-                            className={selectClass + " min-w-[140px]"}
-                            value={q.type}
-                            onChange={(e) => {
-                              const p = [...draft.practice];
-                              p[idx] = {
-                                ...p[idx],
-                                type: e.target.value as Question["type"],
-                              };
-                              setDraft((d) => ({ ...d, practice: p }));
-                            }}
-                          >
-                            {QUESTION_TYPES.map((t) => (
-                              <option key={t} value={t}>
-                                {t}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          className="ml-auto"
-                          onClick={() => {
-                            const p = draft.practice.filter((_, i) => i !== idx);
-                            setDraft((d) => ({ ...d, practice: p }));
-                          }}
-                        >
-                          Xóa câu
-                        </Button>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs">Đề bài</Label>
-                        <Textarea
-                          rows={2}
-                          value={q.prompt}
-                          onChange={(e) => {
-                            const p = [...draft.practice];
-                            p[idx] = { ...p[idx], prompt: e.target.value };
-                            setDraft((d) => ({ ...d, practice: p }));
-                          }}
-                        />
-                      </div>
-                      {(q.type === "MCQ" || q.type === "Scenario") && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">Lựa chọn (mỗi dòng một)</Label>
-                          <Textarea
-                            rows={3}
-                            value={(q.options ?? []).join("\n")}
-                            onChange={(e) => {
-                              const opts = e.target.value
-                                .split("\n")
-                                .map((s) => s.trim())
-                                .filter(Boolean);
-                              const p = [...draft.practice];
-                              p[idx] = { ...p[idx], options: opts };
-                              setDraft((d) => ({ ...d, practice: p }));
-                            }}
-                          />
-                        </div>
-                      )}
-                      {q.type === "Matching" && (
-                        <div className="space-y-1">
-                          <Label className="text-xs">
-                            Cặp (mỗi dòng: trái | phải)
-                          </Label>
-                          <Textarea
-                            rows={3}
-                            value={(q.pairs ?? [])
-                              .map((pair) => `${pair.left} | ${pair.right}`)
-                              .join("\n")}
-                            onChange={(e) => {
-                              const lines = e.target.value.split("\n");
-                              const pairs = lines
-                                .map((line) => {
-                                  const [l, r] = line.split("|").map((s) => s.trim());
-                                  if (!l || !r) return null;
-                                  return { left: l, right: r };
-                                })
-                                .filter(Boolean) as { left: string; right: string }[];
-                              const p = [...draft.practice];
-                              p[idx] = { ...p[idx], pairs };
-                              setDraft((d) => ({ ...d, practice: p }));
-                            }}
-                          />
-                        </div>
-                      )}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <div className="space-y-1">
-                          <Label className="text-xs">Đáp án (chuỗi hoặc JSON)</Label>
-                          <Input
-                            value={
-                              typeof q.answer === "string"
-                                ? q.answer
-                                : JSON.stringify(q.answer ?? "")
-                            }
-                            onChange={(e) => {
-                              const raw = e.target.value;
-                              let answer: string | string[] = raw;
-                              if (raw.trim().startsWith("[")) {
-                                try {
-                                  answer = JSON.parse(raw) as string[];
-                                } catch {
-                                  answer = raw;
-                                }
-                              }
-                              const p = [...draft.practice];
-                              p[idx] = { ...p[idx], answer };
-                              setDraft((d) => ({ ...d, practice: p }));
-                            }}
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-xs">Giải thích</Label>
-                          <Input
-                            value={q.explanation ?? ""}
-                            onChange={(e) => {
-                              const p = [...draft.practice];
-                              p[idx] = { ...p[idx], explanation: e.target.value };
-                              setDraft((d) => ({ ...d, practice: p }));
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={() =>
-                      setDraft((d) => ({
-                        ...d,
-                        practice: [
-                          ...d.practice,
-                          defaultQuestion(d.id || 1),
-                        ],
-                      }))
-                    }
-                  >
-                    + Thêm câu hỏi
-                  </Button>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </div>
-
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDialogOpen(false)}
-              disabled={saving}
-            >
-              Hủy
-            </Button>
-            <Button type="button" onClick={() => void persist()} disabled={saving}>
-              {saving ? "Đang lưu…" : "Lưu"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </AdminPageLayout>
   );
 }

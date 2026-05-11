@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { AuthDialogs } from "@/components/auth/AuthDialogs";
 import { useAuth } from "@/hooks/use-auth";
 import { UserRole } from "@/models/user.model";
+import { OPEN_AUTH_LOGIN_EVENT } from "@/lib/auth-ui-events";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,6 +62,16 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const openLoginFromLesson = () => {
+      setAuthView("login");
+      setAuthOpen(true);
+    };
+    window.addEventListener(OPEN_AUTH_LOGIN_EVENT, openLoginFromLesson);
+    return () =>
+      window.removeEventListener(OPEN_AUTH_LOGIN_EVENT, openLoginFromLesson);
   }, []);
 
   const scrollToTop = () => {

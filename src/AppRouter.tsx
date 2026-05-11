@@ -5,6 +5,7 @@ import {
   Routes,
   useLocation,
   useNavigate,
+  useParams,
 } from "react-router-dom";
 import { initSpeech, unlockSpeech } from "@/lib/speech";
 import type { Unit } from "@/types";
@@ -45,6 +46,24 @@ const QuickTest = lazy(() =>
 function parseUnitIdFromPath(path: string) {
   const parts = path.split("/");
   return { unitId: parts[2] };
+}
+
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
+
+/** Guest attempting scored tests from URL → back to same lesson. */
+function RequireAuthForLessonTests({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  const { unitId } = useParams<{ unitId: string }>();
+  if (!isAuthenticated) {
+    return <Navigate to={`/lesson/${unitId}`} replace />;
+  }
+  return <>{children}</>;
 }
 
 export function AppRouter() {
@@ -176,13 +195,15 @@ export function AppRouter() {
             <Route
               path="/practice/:unitId"
               element={
-                <TrainingGroundPage
-                  lessons={lessons}
-                  progress={progress}
-                  setProgress={setProgress}
-                  onBack={navigateToLesson}
-                  onComplete={navigateToHome}
-                />
+                <RequireAuthForLessonTests>
+                  <TrainingGroundPage
+                    lessons={lessons}
+                    progress={progress}
+                    setProgress={setProgress}
+                    onBack={navigateToLesson}
+                    onComplete={navigateToHome}
+                  />
+                </RequireAuthForLessonTests>
               }
             />
             <Route
@@ -233,32 +254,38 @@ export function AppRouter() {
             <Route
               path="/quicktest"
               element={
-                <QuickTest
-                  lessons={lessons}
-                  completedUnitIds={progress.completedUnits}
-                  onBack={navigateToHome}
-                  onComplete={() => updateDailyTask("test", 1)}
-                />
+                <RequireAuth>
+                  <QuickTest
+                    lessons={lessons}
+                    completedUnitIds={progress.completedUnits}
+                    onBack={navigateToHome}
+                    onComplete={() => updateDailyTask("test", 1)}
+                  />
+                </RequireAuth>
               }
             />
             <Route
               path="/generaltest"
               element={
-                <GeneralTestPage
-                  lessons={lessons}
-                  onBack={navigateToHome}
-                  onComplete={() => updateDailyTask("test", 1)}
-                />
+                <RequireAuth>
+                  <GeneralTestPage
+                    lessons={lessons}
+                    onBack={navigateToHome}
+                    onComplete={() => updateDailyTask("test", 1)}
+                  />
+                </RequireAuth>
               }
             />
             <Route
               path="/generaltest/:unitId"
               element={
-                <GeneralTestPage
-                  lessons={lessons}
-                  onBack={(u) => (u ? navigateToLesson(u) : navigateToHome())}
-                  onComplete={() => updateDailyTask("test", 1)}
-                />
+                <RequireAuthForLessonTests>
+                  <GeneralTestPage
+                    lessons={lessons}
+                    onBack={(u) => (u ? navigateToLesson(u) : navigateToHome())}
+                    onComplete={() => updateDailyTask("test", 1)}
+                  />
+                </RequireAuthForLessonTests>
               }
             />
             <Route

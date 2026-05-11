@@ -20,11 +20,40 @@ export interface Collocation {
   noun: string;
 }
 
+/** Matches backend `LessonTestLane` — used for admin practice grouping and test sections. */
+export type LessonTestLane =
+  | "VOCAB_MCQ"
+  | "MATCHING"
+  | "PHRASE_SCENARIO"
+  | "FILL_ARRANGE";
+
+export interface PhraseTemplate {
+  id: number;
+  unitNumber: number;
+  patternEn: string;
+  patternVi: string;
+  contextNote?: string | null;
+  audioUrl?: string | null;
+  sortOrder: number;
+}
+
+export interface GrammarStructure {
+  id: number;
+  unitNumber: number;
+  title: string;
+  summary: string;
+  exampleEn?: string | null;
+  exampleVi?: string | null;
+  sortOrder: number;
+}
+
 export interface Question {
   id: string;
   backendQuestionId?: string;
   backendUnitNumber?: number;
   sourceCategory?: "vocab" | "phrase" | "practice";
+  /** When set, drives "Luyện tập" section grouping on the client. */
+  testLane?: LessonTestLane | null;
   type:
     | "MCQ"
     | "Matching"

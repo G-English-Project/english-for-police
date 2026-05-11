@@ -1,4 +1,68 @@
-import type { Unit, Question } from "@/types";
+import type { LessonTestLane, Unit, Question } from "@/types";
+
+const LANE_ORDER: LessonTestLane[] = [
+  "VOCAB_MCQ",
+  "PHRASE_SCENARIO",
+  "MATCHING",
+  "FILL_ARRANGE",
+];
+
+const SECTION_META: Record<
+  LessonTestLane,
+  { title: string; description: string }
+> = {
+  VOCAB_MCQ: {
+    title: "Trắc nghiệm từ vựng",
+    description:
+      "Kiểm tra khả năng nhận diện và ghi nhớ từ vựng cảnh sát chuyên ngành.",
+  },
+  PHRASE_SCENARIO: {
+    title: "Mẫu câu & tình huống",
+    description:
+      "Ứng dụng các mẫu câu vào các tình huống thực tế của chiến sĩ cảnh sát.",
+  },
+  MATCHING: {
+    title: "Ghép từ - nghĩa",
+    description:
+      "Kết nối chính xác giữa thuật ngữ và ý nghĩa tiếng Việt tương ứng.",
+  },
+  FILL_ARRANGE: {
+    title: "Điền từ & sắp xếp câu",
+    description:
+      "Thực hành viết lại và sắp xếp các câu tiếng Anh hoàn chỉnh.",
+  },
+};
+
+function isKnownLane(lane: Question["testLane"]): lane is LessonTestLane {
+  return (
+    lane === "VOCAB_MCQ" ||
+    lane === "MATCHING" ||
+    lane === "PHRASE_SCENARIO" ||
+    lane === "FILL_ARRANGE"
+  );
+}
+
+function legacyLane(q: Question): LessonTestLane {
+  if (q.sourceCategory === "vocab") return "VOCAB_MCQ";
+  if (q.type === "Matching") return "MATCHING";
+  if (q.type === "Dictation" || q.type === "Arrangement") return "FILL_ARRANGE";
+  if (
+    q.sourceCategory === "phrase" ||
+    q.type === "Scenario" ||
+    (q.sourceCategory === "practice" &&
+      !["Matching", "Dictation", "Arrangement", "Scenario"].includes(q.type))
+  ) {
+    return "PHRASE_SCENARIO";
+  }
+  return "PHRASE_SCENARIO";
+}
+
+function resolvedLane(q: Question): LessonTestLane {
+  if (isKnownLane(q.testLane)) {
+    return q.testLane;
+  }
+  return legacyLane(q);
+}
 
 export type MatchingPair = NonNullable<Question["pairs"]>[number];
 
@@ -207,61 +271,26 @@ export function buildSections(
     ];
   }
 
+  const buckets: Record<LessonTestLane, string[]> = {
+    VOCAB_MCQ: [],
+    PHRASE_SCENARIO: [],
+    MATCHING: [],
+    FILL_ARRANGE: [],
+  };
+
+  for (const q of questions) {
+    buckets[resolvedLane(q)].push(q.id);
+  }
+
   const sections: Section[] = [];
-
-  const vocabIds = questions
-    .filter((q) => q.sourceCategory === "vocab")
-    .map((q) => q.id);
-  if (vocabIds.length > 0) {
+  for (const lane of LANE_ORDER) {
+    const ids = buckets[lane];
+    if (ids.length === 0) continue;
+    const meta = SECTION_META[lane];
     sections.push({
-      title: "Trắc nghiệm từ vựng",
-      description:
-        "Kiểm tra khả năng nhận diện và ghi nhớ từ vựng cảnh sát chuyên ngành.",
-      questionIds: shuffleArray([...vocabIds]),
-    });
-  }
-
-  const patternIds = questions
-    .filter(
-      (q) =>
-        q.sourceCategory === "phrase" ||
-        q.type === "Scenario" ||
-        (q.sourceCategory === "practice" &&
-          !["Matching", "Dictation", "Arrangement", "Scenario"].includes(
-            q.type,
-          )),
-    )
-    .map((q) => q.id);
-  if (patternIds.length > 0) {
-    sections.push({
-      title: "Mẫu câu & tình huống",
-      description:
-        "Ứng dụng các mẫu câu vào các tình huống thực tế của chiến sĩ cảnh sát.",
-      questionIds: shuffleArray([...patternIds]),
-    });
-  }
-
-  const matchingIds = questions
-    .filter((q) => q.type === "Matching")
-    .map((q) => q.id);
-  if (matchingIds.length > 0) {
-    sections.push({
-      title: "Ghép từ - nghĩa",
-      description:
-        "Kết nối chính xác giữa thuật ngữ và ý nghĩa tiếng Việt tương ứng.",
-      questionIds: shuffleArray([...matchingIds]),
-    });
-  }
-
-  const writingIds = questions
-    .filter((q) => q.type === "Dictation" || q.type === "Arrangement")
-    .map((q) => q.id);
-  if (writingIds.length > 0) {
-    sections.push({
-      title: "Điền từ & sắp xếp câu",
-      description:
-        "Thực hành viết lại và sắp xếp các câu tiếng Anh hoàn chỉnh.",
-      questionIds: shuffleArray([...writingIds]),
+      title: meta.title,
+      description: meta.description,
+      questionIds: shuffleArray([...ids]),
     });
   }
 

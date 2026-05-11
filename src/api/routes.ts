@@ -18,6 +18,16 @@ export const API_ROUTES = {
     DETAIL: (unitNumber: number) => `/api/v1/lessons/${unitNumber}`,
     DETAIL_INCLUDE_ANSWERS: (unitNumber: number) =>
       `/api/v1/lessons/${unitNumber}?includeAnswers=true`,
+    PHRASE_TEMPLATES: (unitNumber: number) =>
+      `/api/v1/lessons/${unitNumber}/phrase-templates`,
+    PHRASE_TEMPLATE: (unitNumber: number, id: number) =>
+      `/api/v1/lessons/${unitNumber}/phrase-templates/${id}`,
+    GRAMMAR_STRUCTURES: (unitNumber: number) =>
+      `/api/v1/lessons/${unitNumber}/structures`,
+    GRAMMAR_STRUCTURE: (unitNumber: number, id: number) =>
+      `/api/v1/lessons/${unitNumber}/structures/${id}`,
+    TEST_BANK: (unitNumber: number) =>
+      `/api/v1/lessons/${unitNumber}/tests/bank`,
   },
   PROGRESS: {
     SUBMIT_ATTEMPT: "/api/v1/progress/attempts",

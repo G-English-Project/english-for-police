@@ -96,11 +96,18 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     const loadQuestions = async () => {
       setIsLoadingQuestions(true);
       try {
-        const fetched = await practiceQuestionService.getQuestions({
-          unitNumbers: lessons.map((l) => l.id),
-          sources: ["vocab", "phrase", "practice"],
-          limitPerUnit: 20,
-        });
+        const fetched =
+          mode === "unit" && lessons.length === 1
+            ? await practiceQuestionService.getTestBank(
+                lessons[0].id,
+                "general",
+                bankLimit,
+              )
+            : await practiceQuestionService.getQuestions({
+                unitNumbers: lessons.map((l) => l.id),
+                sources: ["vocab", "phrase", "practice"],
+                limitPerUnit: 20,
+              });
         const shuffled = shuffleArray(fetched);
         const draftSections = buildSections(shuffled, testMode, bankLimit);
         setQuestions(
@@ -115,7 +122,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
       }
     };
     void loadQuestions();
-  }, [lessons, notifyError, testMode, bankLimit]);
+  }, [lessons, notifyError, testMode, bankLimit, mode]);
 
   const sections: Section[] = useMemo(
     () => buildSections(questions, testMode, bankLimit),

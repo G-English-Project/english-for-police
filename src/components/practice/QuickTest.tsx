@@ -70,14 +70,13 @@ export const QuickTest: React.FC<QuickTestProps> = ({
       }
       setIsLoadingQuestions(true);
       try {
-        const fetched = await practiceQuestionService.getQuestions({
-          unitNumbers: completedUnitIds,
-          sources: ["vocab", "phrase", "practice"],
-          limitPerUnit: 8,
-        });
-        setQuestions(
-          preparePracticeQuestions(shuffleArray(fetched).slice(0, 10)),
+        const banks = await Promise.all(
+          completedUnitIds.map((unitId) =>
+            practiceQuestionService.getTestBank(unitId, "quick", 8),
+          ),
         );
+        const merged = shuffleArray(banks.flat()).slice(0, 10);
+        setQuestions(preparePracticeQuestions(merged));
       } catch (error) {
         console.error("Failed to load quick test questions", error);
         notifyError(
