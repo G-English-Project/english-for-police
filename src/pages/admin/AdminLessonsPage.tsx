@@ -38,6 +38,10 @@ import type {
 import { lessonService } from "@/services/lesson.service";
 import { useSonner } from "@/hooks/use-sonner";
 import { cn } from "@/lib/utils";
+import {
+  SECTION_META,
+  resolvedLane,
+} from "@/components/practice/utils/testUtils";
 
 const QUESTION_TYPES: Question["type"][] = [
   "MCQ",
@@ -123,6 +127,42 @@ const TEST_LANE_OPTIONS: { value: string; label: string }[] = [
   { value: "FILL_ARRANGE", label: "Điền từ & sắp xếp câu" },
 ];
 
+const LANES_ORDER: LessonTestLane[] = [
+  "VOCAB_MCQ",
+  "MATCHING",
+  "PHRASE_SCENARIO",
+  "FILL_ARRANGE",
+];
+
+export type LessonEditorScope =
+  | "full"
+  | "meta"
+  | "vocabulary"
+  | "phrases"
+  | "practice";
+
+function defaultQuestionForLane(unitId: number, lane: LessonTestLane): Question {
+  const q = defaultQuestion(unitId);
+  q.testLane = lane;
+  switch (lane) {
+    case "VOCAB_MCQ":
+      q.type = "MCQ";
+      break;
+    case "MATCHING":
+      q.type = "Matching";
+      break;
+    case "PHRASE_SCENARIO":
+      q.type = "Scenario";
+      break;
+    case "FILL_ARRANGE":
+      q.type = "Dictation";
+      break;
+    default:
+      break;
+  }
+  return q;
+}
+
 type EditorMode = "create" | "edit";
 
 export function LessonEditorForm({
@@ -137,6 +177,7 @@ export function LessonEditorForm({
   setPhraseTemplates,
   grammarStructures,
   setGrammarStructures,
+  scope = "full",
 }: {
   mode: EditorMode;
   draft: Unit;
@@ -149,6 +190,8 @@ export function LessonEditorForm({
   setPhraseTemplates: React.Dispatch<React.SetStateAction<PhraseTemplate[]>>;
   grammarStructures: GrammarStructure[];
   setGrammarStructures: React.Dispatch<React.SetStateAction<GrammarStructure[]>>;
+  /** Không gian soạn chương: tách trang; `full` = form đầy đủ (thêm chương). */
+  scope?: LessonEditorScope;
 }) {
   const { notifyError, notifySuccess } = useSonner();
   const [newPhrase, setNewPhrase] = useState({
@@ -169,11 +212,43 @@ export function LessonEditorForm({
     setNewStructure({ title: "", summary: "", exampleEn: "", exampleVi: "" });
   }, [draft.id]);
 
+  const eff = scope;
+  const showMeta = eff === "full" || eff === "meta";
+  const showVocab = eff === "full" || eff === "vocabulary";
+  const showPhrases = eff === "full" || eff === "phrases";
+  const showPractice = eff === "full" || eff === "practice";
+  const showMemoryTemplatesGrammar = eff === "full";
+
+  const scopedTitle =
+    eff === "meta"
+      ? "Thông tin chương"
+      : eff === "vocabulary"
+        ? "Từ vựng"
+        : eff === "phrases"
+          ? "Mẫu câu"
+          : eff === "practice"
+            ? "Bài kiểm tra & câu hỏi luyện tập"
+            : null;
+
+  const practiceIndicesByLane = useMemo(() => {
+    const m: Record<LessonTestLane, number[]> = {
+      VOCAB_MCQ: [],
+      MATCHING: [],
+      PHRASE_SCENARIO: [],
+      FILL_ARRANGE: [],
+    };
+    draft.practice.forEach((q, i) => {
+      m[resolvedLane(q)].push(i);
+    });
+    return m;
+  }, [draft.practice]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-border pb-3">
         <h3 className="text-base font-bold text-primary tracking-tight">
-          {mode === "create" ? "Thêm chương mới" : `Sửa chương ${draft.id}`}
+          {scopedTitle ??
+            (mode === "create" ? "Thêm chương mới" : `Sửa chương ${draft.id}`)}
         </h3>
         <div className="flex flex-wrap gap-2 justify-end">
           <Button type="button" variant="outline" size="sm" onClick={onCancel} disabled={saving}>
@@ -192,6 +267,7 @@ export function LessonEditorForm({
         </div>
       </div>
 
+      {showMeta ? (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor={`${idPrefix}-unit-id`}>Mã chương (số)</Label>
@@ -234,8 +310,14 @@ export function LessonEditorForm({
           onChange={(e) => setDraft((d) => ({ ...d, description: e.target.value }))}
         />
       </div>
+      ) : null}
 
+      {(showVocab ||
+        showPhrases ||
+        showMemoryTemplatesGrammar ||
+        showPractice) ? (
       <Accordion type="multiple" className="w-full border rounded-lg bg-background">
+        {showVocab ? (
         <AccordionItem value="vocab" className="border-b px-1">
           <AccordionTrigger className="text-sm font-semibold hover:no-underline py-3">
             Từ vựng ({draft.vocabulary.length})
@@ -332,7 +414,9 @@ export function LessonEditorForm({
             </Button>
           </AccordionContent>
         </AccordionItem>
+        ) : null}
 
+        {showPhrases ? (
         <AccordionItem value="phrases" className="border-b px-1">
           <AccordionTrigger className="text-sm font-semibold hover:no-underline py-3">
             Mẫu câu ({draft.phrases.length})
@@ -401,7 +485,9 @@ export function LessonEditorForm({
             </Button>
           </AccordionContent>
         </AccordionItem>
+        ) : null}
 
+        {showMemoryTemplatesGrammar ? (
         <AccordionItem value="memory" className="border-b px-1">
           <AccordionTrigger className="text-sm font-semibold hover:no-underline py-3">
             Cố định (memory boost)
@@ -932,13 +1018,36 @@ export function LessonEditorForm({
             )}
           </AccordionContent>
         </AccordionItem>
+        ) : null}
 
+        {showPractice ? (
         <AccordionItem value="practice" className="px-1">
           <AccordionTrigger className="text-sm font-semibold hover:no-underline py-3">
             Bài kiểm tra & câu hỏi luyện tập ({draft.practice.length})
           </AccordionTrigger>
-          <AccordionContent className="space-y-4 px-1 pb-3">
-            {draft.practice.map((q, idx) => (
+          <AccordionContent className="space-y-6 px-1 pb-3">
+            {LANES_ORDER.map((lane) => {
+              const laneIndices = practiceIndicesByLane[lane];
+              const meta = SECTION_META[lane];
+              return (
+                <div
+                  key={lane}
+                  className="rounded-xl border border-border bg-muted/20 p-4 space-y-4"
+                >
+                  <div className="space-y-1 border-b border-border/60 pb-3">
+                    <p className="text-sm font-bold text-primary">{meta.title}</p>
+                    <p className="text-xs text-muted-foreground leading-snug">
+                      {meta.description}
+                    </p>
+                    <p className="text-[11px] font-mono text-muted-foreground">
+                      {laneIndices.length} câu · lane{" "}
+                      <span className="text-foreground">{lane}</span>
+                    </p>
+                  </div>
+                  <div className="space-y-4">
+                    {laneIndices.map((idx) => {
+                      const q = draft.practice[idx];
+                      return (
               <div
                 key={q.id}
                 className="border border-border rounded-lg p-3 space-y-2 bg-muted/30"
@@ -1179,23 +1288,34 @@ export function LessonEditorForm({
                   />
                 </div>
               </div>
-            ))}
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={() =>
-                setDraft((d) => ({
-                  ...d,
-                  practice: [...d.practice, defaultQuestion(d.id || 1)],
-                }))
-              }
-            >
-              + Thêm câu hỏi
-            </Button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    onClick={() =>
+                      setDraft((d) => ({
+                        ...d,
+                        practice: [
+                          ...d.practice,
+                          defaultQuestionForLane(d.id || 1, lane),
+                        ],
+                      }))
+                    }
+                  >
+                    + Thêm câu — {meta.title}
+                  </Button>
+                </div>
+              );
+            })}
           </AccordionContent>
         </AccordionItem>
+        ) : null}
       </Accordion>
+      ) : null}
     </div>
   );
 }

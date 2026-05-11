@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import {
   ArrowLeft,
   BookMarked,
@@ -11,10 +16,13 @@ import {
   Loader2,
   PencilLine,
   Save,
+  HelpCircle,
+  BookOpenCheck,
 } from "lucide-react";
 import {
   LessonEditorForm,
   emptyUnit,
+  type LessonEditorScope,
 } from "@/pages/admin/AdminLessonsPage";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import { Button } from "@/components/ui/button";
@@ -47,7 +55,18 @@ const LANES: LessonTestLane[] = [
   "FILL_ARRANGE",
 ];
 
-type WorkspaceTab = "overview" | "editor";
+type ViewKey = "overview" | LessonEditorScope;
+
+const VIEW_LIST: {
+  key: Exclude<ViewKey, "overview" | "full">;
+  label: string;
+  Icon: typeof BookMarked;
+}[] = [
+  { key: "meta", label: "Thông tin chương", Icon: HelpCircle },
+  { key: "vocabulary", label: "Từ vựng", Icon: BookMarked },
+  { key: "phrases", label: "Mẫu câu", Icon: Layers },
+  { key: "practice", label: "Bài kiểm tra", Icon: BookOpenCheck },
+];
 
 export default function AdminLessonWorkspacePage({
   onLessonsUpdated,
@@ -56,10 +75,28 @@ export default function AdminLessonWorkspacePage({
 }) {
   const { unitId } = useParams<{ unitId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { notifyError, notifySuccess } = useSonner();
   const id = Number(unitId);
 
-  const [tab, setTab] = useState<WorkspaceTab>("overview");
+  const viewParam = searchParams.get("view") ?? "overview";
+  const activeView: ViewKey =
+    viewParam === "overview" ||
+    viewParam === "meta" ||
+    viewParam === "vocabulary" ||
+    viewParam === "phrases" ||
+    viewParam === "practice"
+      ? (viewParam as ViewKey)
+      : "overview";
+
+  const setView = (v: ViewKey) => {
+    if (v === "overview") {
+      setSearchParams({}, { replace: true });
+    } else {
+      setSearchParams({ view: v }, { replace: true });
+    }
+  };
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<Unit>(() => emptyUnit(1));
@@ -125,7 +162,10 @@ export default function AdminLessonWorkspacePage({
     }
   };
 
-  if (loading && !draft.title) {
+  const editorScope: LessonEditorScope | null =
+    activeView === "overview" ? null : (activeView as LessonEditorScope);
+
+  if (loading) {
     return (
       <AdminPageLayout title="Đang tải…" description="">
         <div className="flex justify-center py-24">
@@ -138,7 +178,7 @@ export default function AdminLessonWorkspacePage({
   return (
     <AdminPageLayout
       title="Không gian soạn chương"
-      description="Tổng quan từ vựng, mẫu câu, câu hỏi theo từng dạng thi; soạn thảo đầy đủ ở tab bên dưới."
+      description="Chọn mục bên dưới để soạn từng phần; chỉ có một nút Lưu trên header."
       actions={null}
     >
       <div className="space-y-6 max-w-[1400px] mx-auto w-full">
@@ -161,7 +201,7 @@ export default function AdminLessonWorkspacePage({
               {draft.title || `Chương ${draft.id}`}
             </h1>
             <p className="text-muted-foreground text-sm md:text-base max-w-3xl leading-relaxed">
-              {draft.description || "Chưa có mô tả — chỉnh trong tab Soạn thảo."}
+              {draft.description || "Chưa có mô tả."}
             </p>
           </div>
           <div className="flex flex-wrap gap-2 shrink-0">
@@ -191,20 +231,28 @@ export default function AdminLessonWorkspacePage({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2 border-b border-border pb-1">
-          {(
-            [
-              ["overview", "Tổng quan", LayoutDashboard],
-              ["editor", "Soạn thảo chi tiết", PencilLine],
-            ] as const
-          ).map(([key, label, Icon]) => (
+        <div className="flex flex-wrap gap-2 border-b border-border pb-2">
+          <button
+            type="button"
+            onClick={() => setView("overview")}
+            className={cn(
+              "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors",
+              activeView === "overview"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground",
+            )}
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            Tổng quan
+          </button>
+          {VIEW_LIST.map(({ key, label, Icon }) => (
             <button
               key={key}
               type="button"
-              onClick={() => setTab(key)}
+              onClick={() => setView(key)}
               className={cn(
                 "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-colors",
-                tab === key
+                activeView === key
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
@@ -215,90 +263,79 @@ export default function AdminLessonWorkspacePage({
           ))}
         </div>
 
-        {tab === "overview" && (
+        {activeView === "overview" && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              <Card className="police-shadow border-border/80">
-                <CardHeader className="pb-2">
-                  <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
-                    <BookMarked className="h-4 w-4 text-primary" />
-                    Từ vựng
-                  </CardDescription>
-                  <CardTitle className="text-3xl tabular-nums">
-                    {draft.vocabulary.length}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-xs text-muted-foreground leading-snug">
-                  Các mục trong bài học; hệ thống có thể sinh thêm trắc nghiệm từ
-                  ngân hàng này.
-                </CardContent>
-              </Card>
-              <Card className="police-shadow border-border/80">
-                <CardHeader className="pb-2">
-                  <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
-                    <Layers className="h-4 w-4 text-primary" />
-                    Mẫu câu
-                  </CardDescription>
-                  <CardTitle className="text-3xl tabular-nums">
-                    {draft.phrases.length}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-xs text-muted-foreground leading-snug">
-                  Câu mẫu theo ngữ cảnh; dùng cho luyện mẫu câu / tình huống.
-                </CardContent>
-              </Card>
-              <Card className="police-shadow border-border/80">
-                <CardHeader className="pb-2">
-                  <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
-                    <ClipboardList className="h-4 w-4 text-primary" />
-                    Cấu trúc / grammar
-                  </CardDescription>
-                  <CardTitle className="text-3xl tabular-nums">
-                    {grammarStructures.length}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-xs text-muted-foreground leading-snug">
-                  Tiểu mục ngữ pháp (API riêng), không gộp vào mẫu câu chính.
-                </CardContent>
-              </Card>
-              <Card className="police-shadow border-border/80">
-                <CardHeader className="pb-2">
-                  <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
-                    <PencilLine className="h-4 w-4 text-primary" />
-                    Câu luyện (DB)
-                  </CardDescription>
-                  <CardTitle className="text-3xl tabular-nums">
-                    {draft.practice.length}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-xs text-muted-foreground leading-snug">
-                  Câu lưu trong{" "}
-                  <span className="font-mono text-foreground/90">
-                    practice_questions
-                  </span>
-                  ; bổ sung cho MCQ/ghép tự sinh.
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+              <button
+                type="button"
+                onClick={() => setView("vocabulary")}
+                className="text-left rounded-lg transition hover:opacity-95"
+              >
+                <Card className="police-shadow border-border/80 h-full hover:border-primary/40">
+                  <CardHeader className="pb-2">
+                    <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
+                      <BookMarked className="h-4 w-4 text-primary" />
+                      Từ vựng
+                    </CardDescription>
+                    <CardTitle className="text-3xl tabular-nums">
+                      {draft.vocabulary.length}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-muted-foreground leading-snug">
+                    <span className="text-primary font-semibold">Soạn →</span>{" "}
+                    chỉnh sửa danh sách từ trong chương.
+                  </CardContent>
+                </Card>
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("phrases")}
+                className="text-left rounded-lg transition hover:opacity-95"
+              >
+                <Card className="police-shadow border-border/80 h-full hover:border-primary/40">
+                  <CardHeader className="pb-2">
+                    <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
+                      <Layers className="h-4 w-4 text-primary" />
+                      Mẫu câu
+                    </CardDescription>
+                    <CardTitle className="text-3xl tabular-nums">
+                      {draft.phrases.length}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-muted-foreground leading-snug">
+                    <span className="text-primary font-semibold">Soạn →</span>{" "}
+                    câu mẫu và bản dịch.
+                  </CardContent>
+                </Card>
+              </button>
+              <button
+                type="button"
+                onClick={() => setView("practice")}
+                className="text-left rounded-lg transition hover:opacity-95"
+              >
+                <Card className="police-shadow border-border/80 h-full hover:border-primary/40">
+                  <CardHeader className="pb-2">
+                    <CardDescription className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
+                      <PencilLine className="h-4 w-4 text-primary" />
+                      Bài kiểm tra (DB)
+                    </CardDescription>
+                    <CardTitle className="text-3xl tabular-nums">
+                      {draft.practice.length}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs text-muted-foreground leading-snug">
+                    <span className="text-primary font-semibold">Soạn →</span>{" "}
+                    câu luyện theo từng dạng.
+                  </CardContent>
+                </Card>
+              </button>
             </div>
 
             <div>
               <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
                 <ClipboardList className="h-5 w-5 text-primary" />
-                Bài kiểm tra theo từng dạng (UI &quot;Luyện tập&quot;)
+                Phân bổ theo dạng luyện tập (UI học viên)
               </h2>
-              <p className="text-sm text-muted-foreground mb-4 max-w-3xl">
-                Mỗi ô là nhóm câu trong chương sau khi gán{" "}
-                <strong className="text-foreground">Lành kiểm tra</strong> (hoặc
-                hệ thống suy ra từ loại câu). Thêm / sửa trực tiếp ở tab{" "}
-                <button
-                  type="button"
-                  className="text-primary font-semibold underline-offset-2 hover:underline"
-                  onClick={() => setTab("editor")}
-                >
-                  Soạn thảo chi tiết
-                </button>
-                → phần &quot;Bài kiểm tra &amp; câu hỏi luyện tập&quot;.
-              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {LANES.map((lane) => {
                   const meta = SECTION_META[lane];
@@ -319,10 +356,10 @@ export default function AdminLessonWorkspacePage({
                           {meta.description}
                         </CardDescription>
                       </CardHeader>
-                      <CardContent className="pt-4 space-y-2 max-h-[280px] overflow-y-auto">
+                      <CardContent className="pt-4 space-y-2 max-h-[220px] overflow-y-auto">
                         {items.length === 0 ? (
                           <p className="text-sm text-muted-foreground italic">
-                            Chưa có câu thủ công cho lane này.
+                            Chưa có câu trong nhóm này.
                           </p>
                         ) : (
                           <ul className="space-y-2 text-sm">
@@ -335,7 +372,7 @@ export default function AdminLessonWorkspacePage({
                                   {q.type}
                                   {q.testLane ? ` · ${q.testLane}` : ""}
                                 </span>
-                                <p className="mt-1 line-clamp-3 text-foreground/90">
+                                <p className="mt-1 line-clamp-2 text-foreground/90">
                                   {q.prompt || "(Không có đề)"}
                                 </p>
                               </li>
@@ -349,21 +386,18 @@ export default function AdminLessonWorkspacePage({
               </div>
             </div>
 
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                size="lg"
-                className="gap-2"
-                onClick={() => setTab("editor")}
-              >
-                Mở soạn thảo đầy đủ
-                <ChevronRight className="h-4 w-4" />
+            <div className="flex flex-wrap gap-2 justify-end">
+              <Button type="button" variant="outline" onClick={() => setView("meta")}>
+                Thông tin chương
+              </Button>
+              <Button type="button" onClick={() => setView("vocabulary")}>
+                Bắt đầu soạn từ vựng
               </Button>
             </div>
           </div>
         )}
 
-        {tab === "editor" && (
+        {editorScope != null && editorScope !== "full" && (
           <div className="rounded-xl border border-border bg-card police-shadow overflow-hidden animate-in fade-in duration-200">
             <div className="max-h-[min(85vh,1200px)] overflow-y-auto overscroll-contain p-4 md:p-6">
               <LessonEditorForm
@@ -378,6 +412,7 @@ export default function AdminLessonWorkspacePage({
                 saving={saving}
                 onCancel={() => navigate("/admin/lessons")}
                 onSave={() => void persist()}
+                scope={editorScope}
               />
             </div>
           </div>
