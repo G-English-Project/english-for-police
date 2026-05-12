@@ -1,5 +1,5 @@
 import { API_ROUTES } from "@/api/routes";
-import type { GrammarStructure, Unit } from "@/types";
+import type { GrammarStructure, Question, Unit } from "@/types";
 import { api } from "@/utils/api-client";
 import {
   normalizeLessonFromApi,
@@ -112,5 +112,15 @@ export const lessonService = {
     id: number,
   ): Promise<void> => {
     await api.delete(API_ROUTES.LESSONS.GRAMMAR_STRUCTURE(unitNumber, id));
+  },
+  getLessonTests: async (
+    unitNumber: number,
+    type?: string,
+  ): Promise<Question[]> => {
+    const url = API_ROUTES.LESSONS.TESTS(unitNumber);
+    const response = await api.get<ApiResponse<Question[]>>(
+      type ? `${url}?type=${type}` : url,
+    );
+    return response.data;
   },
 };

@@ -7,7 +7,12 @@ import { LessonTableOfContents } from "./lesson/LessonTableOfContents";
 import { LessonShortcutButtons } from "./lesson/LessonShortcutButtons";
 import { LessonVocabularySection } from "./lesson/LessonVocabularySection";
 import { LessonPhrasesSection } from "./lesson/LessonPhrasesSection";
-import { PRACTICE_MENU_LABEL_TO_LANE } from "@/components/practice/utils/testUtils";
+import {
+  PRACTICE_MENU_LABEL_TO_LANE,
+  resolvedLane,
+} from "@/components/practice/utils/testUtils";
+import { lessonService } from "@/services/lesson.service";
+import type { LessonTestLane } from "@/types";
 
 interface LessonViewProps {
   unit: Unit;
@@ -26,6 +31,32 @@ export const LessonView: React.FC<LessonViewProps> = ({
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const [availableLanes, setAvailableLanes] = useState<Set<LessonTestLane>>(
+    new Set(),
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    const checkAvailability = async () => {
+      try {
+        const questions = await lessonService.getLessonTests(unit.id);
+        if (!isMounted) return;
+
+        const lanes = new Set<LessonTestLane>();
+        questions.forEach((q) => {
+          lanes.add(resolvedLane(q));
+        });
+        setAvailableLanes(lanes);
+      } catch (err) {
+        console.error("Failed to fetch unit tests for availability check", err);
+      }
+    };
+    void checkAvailability();
+    return () => {
+      isMounted = false;
+    };
+  }, [unit.id]);
+
   const testsLocked = !isAuthenticated;
 
   const startPractice = () => navigate(`/practice/${unit.id}`);
@@ -107,7 +138,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
     );
 
     Object.values(sectionRefs.current).forEach((ref) => {
-      if (ref) observer.observe(ref);
+      if (ref) observer.observe(ref as Element);
     });
 
     return () => observer.disconnect();
@@ -129,6 +160,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
           <div className="p-4">
             <LessonShortcutButtons
               testsLocked={testsLocked}
+              availableLanes={availableLanes}
               onStartPractice={startPractice}
               onStartFlashcards={startFlashcards}
               onStartGeneralTest={startGeneralTest}
