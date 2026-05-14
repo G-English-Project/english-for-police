@@ -15,9 +15,14 @@ RUN npm run build
 
 FROM nginx:1.27-alpine AS runtime
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+RUN apk add --no-cache gettext iproute2
+
+COPY docker/docker-fe-entrypoint.sh /docker-fe-entrypoint.sh
+RUN chmod +x /docker-fe-entrypoint.sh
+COPY nginx/default.conf.template /templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
+ENTRYPOINT ["/docker-fe-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]
