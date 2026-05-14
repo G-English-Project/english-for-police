@@ -179,3 +179,35 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/30;
 }
+
+/* Flashcard 3D flip — Safari/WebKit needs -webkit-* and translateZ; overflow on the same
+   node as transform breaks preserve-3d (mirrored / upside-down back face). */
+.flashcard-scene {
+  perspective: 2000px;
+  -webkit-perspective: 2000px;
+}
+
+.flashcard-inner {
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transition: transform 0.7s ease;
+  transform: rotateY(0);
+  -webkit-transform: rotateY(0);
+}
+
+.flashcard-inner.is-flipped {
+  transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
+}
+
+.flashcard-face {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0.01px);
+  -webkit-transform: translateZ(0.01px);
+}
+
+.flashcard-face--back {
+  transform: rotateY(180deg) translateZ(0.01px);
+  -webkit-transform: rotateY(180deg) translateZ(0.01px);
+}
