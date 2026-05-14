@@ -4,6 +4,8 @@ services:
     pull_policy: always
     container_name: police-fe
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "3007:80"
     depends_on:
