@@ -1,3 +1,13 @@
+# Included inside `http { }` — map must live outside `server` but may be in this file.
+# Old FE bundles sent encode=false (raw PCM path) → ASR 500; force encode=true upstream.
+map $args $asr_args_fix {
+    default $args;
+    ~*^encode=false&(.*)$ encode=true&$1;
+    ~*^(.+)&encode=false&(.*)$ $1&encode=true&$2;
+    ~*^(.+)&encode=false$ $1&encode=true;
+    ~*^encode=false$ encode=true;
+}
+
 server {
     listen 80;
     server_name _;
@@ -5,10 +15,18 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # SPA shell: avoid stale JS (old encode=false) after deploy.
+    location = /index.html {
+        add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate" always;
+        add_header Pragma "no-cache" always;
+        try_files /index.html =404;
+    }
+
     # Same-origin /api/asr and /api/tts as vite.config.ts — do not fall through to SPA (POST -> 405).
     # NGINX_UPSTREAM_IP is set at container start (Docker default route = host from bridge network).
     location ^~ /api/asr/ {
-        proxy_pass http://${NGINX_UPSTREAM_IP}:9000/;
+        rewrite ^/api/asr/(.*)$ /$1 break;
+        proxy_pass http://${NGINX_UPSTREAM_IP}:9000$uri$is_args$asr_args_fix;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
