@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { speak } from "@/lib/speech";
 import { useNavigate } from "react-router-dom";
 import type { Unit, FlaggedItem } from "../../types";
@@ -10,6 +10,7 @@ import { LessonPhrasesSection } from "./lesson/LessonPhrasesSection";
 import {
   PRACTICE_MENU_LABEL_TO_LANE,
   resolvedLane,
+  getPhraseSubNavItems,
 } from "@/components/practice/utils/testUtils";
 import { lessonService } from "@/services/lesson.service";
 import type { LessonTestLane } from "@/types";
@@ -75,7 +76,6 @@ export const LessonView: React.FC<LessonViewProps> = ({
     }
     navigate(`/generaltest/${unit.id}`);
   };
-  const startQuickTest = () => navigate(`/quicktest`);
 
   const playAudio = (
     text: string,
@@ -103,46 +103,108 @@ export const LessonView: React.FC<LessonViewProps> = ({
 
   const [activeSection, setActiveSection] = useState<string>("vocabulary");
   const sectionRefs = useRef<{ [key: string]: HTMLElement | null }>({});
+  const scrollLockUntilRef = useRef(0);
+
+  const isScrollLocked = () => Date.now() < scrollLockUntilRef.current;
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  const scrollToSection = (id: string) => {
-    const element = sectionRefs.current[id];
-    if (element) {
-      setActiveSection(id);
-      const headerOffset = 120;
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition =
-        elementPosition + window.pageYOffset - headerOffset;
+  const phraseSubNavItems = useMemo(() => getPhraseSubNavItems(unit), [unit]);
 
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth",
-      });
-    }
+  const [selectedPhraseSubId, setSelectedPhraseSubId] = useState("");
+
+  useEffect(() => {
+    const first = phraseSubNavItems[0]?.id;
+    if (!first) return;
+    queueMicrotask(() => {
+      setSelectedPhraseSubId((prev) =>
+        phraseSubNavItems.some((item) => item.id === prev) ? prev : first,
+      );
+    });
+  }, [phraseSubNavItems]);
+
+  useEffect(() => {
+    if (isScrollLocked()) return;
+    if (!activeSection.startsWith("phrases-")) return;
+    const subId = activeSection.slice("phrases-".length);
+    if (!phraseSubNavItems.some((item) => item.id === subId)) return;
+    queueMicrotask(() => {
+      setSelectedPhraseSubId(subId);
+    });
+  }, [activeSection, phraseSubNavItems]);
+
+  const scrollToSection = (id: string) => {
+    scrollLockUntilRef.current = Date.now() + 1500;
+
+    const element =
+      document.getElementById(id) ??
+      document.querySelector<HTMLElement>(`[data-section="${id}"]`) ??
+      sectionRefs.current[id] ??
+      null;
+
+    if (!element) return;
+
+    setActiveSection(id);
+    const headerOffset = 100;
+    const elementPosition = element.getBoundingClientRect().top;
+    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+    window.scrollTo({
+      top: offsetPosition,
+      behavior: "smooth",
+    });
+  };
+
+  const handlePhraseSubSelect = (id: string) => {
+    scrollLockUntilRef.current = Date.now() + 1500;
+    setSelectedPhraseSubId(id);
+    setActiveSection(`phrases-${id}`);
   };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const id = entry.target.getAttribute("data-section");
-            if (id) setActiveSection(id);
+        if (isScrollLocked()) return;
+
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+        const topEntry = visible[0];
+        if (!topEntry) return;
+
+        const id =
+          topEntry.target.getAttribute("data-section") ||
+          topEntry.target.id ||
+          topEntry.target.getAttribute("data-phrase-anchor");
+        if (id) {
+          if (id === "vocabulary" || id === "phrases") {
+            setActiveSection(id);
+          } else if (id.startsWith("phrases-")) {
+            setActiveSection(id);
+          } else {
+            setActiveSection(`phrases-${id}`);
           }
-        });
+        }
       },
-      { rootMargin: "-100px 0px -70% 0px" },
+      { rootMargin: "-96px 0px -55% 0px", threshold: 0 },
     );
 
-    Object.values(sectionRefs.current).forEach((ref) => {
-      if (ref) observer.observe(ref as Element);
-    });
+    const observeElements = () => {
+      Object.values(sectionRefs.current).forEach((ref) => {
+        if (ref) observer.observe(ref as Element);
+      });
 
+      document.querySelectorAll(".phrase-section-anchor").forEach((el) => {
+        observer.observe(el);
+      });
+    };
+
+    observeElements();
     return () => observer.disconnect();
-  }, []);
+  }, [unit.id]);
 
   return (
     <div className="flex flex-col lg:flex-row gap-8 items-start">
@@ -153,6 +215,9 @@ export const LessonView: React.FC<LessonViewProps> = ({
           activeSection={activeSection}
           onBack={onBack}
           onScrollToSection={scrollToSection}
+          phraseSubNavItems={phraseSubNavItems}
+          selectedPhraseSubId={selectedPhraseSubId}
+          onPhraseSubSelect={handlePhraseSubSelect}
         />
 
         {/* Shortcuts */}
@@ -164,7 +229,12 @@ export const LessonView: React.FC<LessonViewProps> = ({
               onStartPractice={startPractice}
               onStartFlashcards={startFlashcards}
               onStartGeneralTest={startGeneralTest}
-              onStartQuickTest={startQuickTest}
+              onStartVocabDrill={(drill) => {
+                const lane = drill === "matching" ? "MATCHING" : "VOCAB_MCQ";
+                navigate(
+                  `/generaltest/${unit.id}?lane=${encodeURIComponent(lane)}&vocabDrill=${drill}`,
+                );
+              }}
             />
           </div>
         </div>
@@ -187,8 +257,17 @@ export const LessonView: React.FC<LessonViewProps> = ({
           flaggedItems={flaggedItems}
           onToggleFlag={toggleFlag}
           onPlayAudio={playAudio}
-          sectionRef={(el) => {
-            sectionRefs.current["phrases"] = el;
+          selectedSubId={
+            phraseSubNavItems.length > 1 ? selectedPhraseSubId : undefined
+          }
+          onStartPractice={(mode, group) => {
+            if (mode === "PHRASE_SCENARIO" && group) {
+              navigate(
+                `/generaltest/${unit.id}?lane=PHRASE_SCENARIO&subId=${group}`,
+              );
+            } else {
+              startGeneralTest();
+            }
           }}
         />
       </div>

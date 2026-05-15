@@ -27,14 +27,18 @@ import {
   PRACTICE_MENU_LABEL_TO_LANE,
   buildSections,
   filterQuestionsByLane,
+  filterVocabDrillQuestions,
+  filterQuestionsBySubLesson,
   isLessonTestLane,
   mapAnswersToBackendPayload,
   preparePracticeQuestionsForSections,
   shuffleArray,
+  generateGeneralQuestions,
 } from "./utils/testUtils";
 import { useGeneralTestState } from "./hooks/useGeneralTestState";
 import { useSonner } from "@/hooks/use-sonner";
 import { practiceQuestionService } from "@/services/practice-question.service";
+import { lessonService } from "@/services/lesson.service";
 
 interface GeneralKnowledgeTestProps {
   lessons: Unit[];
@@ -75,12 +79,24 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     return null;
   }, [searchParams, locationState?.sectionTitle]);
 
+  const vocabDrillParam = searchParams.get("vocabDrill");
+  const vocabDrill: "en-vi" | "vi-en" | "matching" | null =
+    vocabDrillParam === "en-vi" ||
+    vocabDrillParam === "vi-en" ||
+    vocabDrillParam === "matching"
+      ? vocabDrillParam
+      : null;
+
+  const subLessonIdParam = searchParams.get("subId")?.trim() || null;
+
   const effectiveLane = testMode === "type" ? focusedLane : null;
 
-  const scopedQuestions = useMemo(
-    () => filterQuestionsByLane(questions, effectiveLane),
-    [questions, effectiveLane],
-  );
+  const scopedQuestions = useMemo(() => {
+    if (vocabDrill) {
+      return filterVocabDrillQuestions(questions, vocabDrill);
+    }
+    return filterQuestionsByLane(questions, effectiveLane);
+  }, [questions, effectiveLane, vocabDrill]);
   const [bankLimit, setBankLimit] = useState<number>(40);
   const [shuffleTrigger, setShuffleTrigger] = useState<number>(0);
 
@@ -123,6 +139,96 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     const loadQuestions = async () => {
       setIsLoadingQuestions(true);
       try {
+        const unit = mode === "unit" && lessons.length === 1 ? lessons[0] : null;
+
+        if (unit && vocabDrill) {
+          const sources =
+            vocabDrill === "en-vi"
+              ? (["vocab"] as const)
+              : (["practice", "vocab"] as const);
+          let fetched: Question[] = [];
+          try {
+            fetched = await practiceQuestionService.getQuestions({
+              unitNumbers: [unit.id],
+              sources: [...sources],
+              limitPerUnit: 80,
+            });
+          } catch {
+            fetched = [];
+          }
+          let merged = filterVocabDrillQuestions(fetched, vocabDrill);
+          if (merged.length === 0) {
+            const gen = generateGeneralQuestions([unit]);
+            merged = filterVocabDrillQuestions(gen, vocabDrill);
+          }
+          const shuffled = shuffleArray(merged);
+          const draftSections = buildSections(shuffled, testMode, bankLimit);
+          setQuestions(
+            preparePracticeQuestionsForSections(shuffled, draftSections),
+          );
+          return;
+        }
+
+        if (unit && effectiveLane && !vocabDrill) {
+          let fetched: Question[] = [];
+          try {
+            fetched = await lessonService.getLessonTests(unit.id, effectiveLane);
+          } catch {
+            fetched = [];
+          }
+
+          if (subLessonIdParam) {
+            const bySub = filterQuestionsBySubLesson(fetched, subLessonIdParam);
+            if (bySub.length > 0) {
+              fetched = bySub;
+            } else {
+              try {
+                const fromPractice = await practiceQuestionService.getQuestions({
+                  unitNumbers: [unit.id],
+                  sources: ["practice"],
+                  subLessonId: subLessonIdParam,
+                });
+                const laneFiltered = filterQuestionsByLane(
+                  fromPractice,
+                  effectiveLane,
+                );
+                fetched =
+                  laneFiltered.length > 0 ? laneFiltered : fromPractice;
+              } catch {
+                fetched = [];
+              }
+            }
+          }
+
+          if (fetched.length === 0) {
+            let local = filterQuestionsByLane(unit.practice, effectiveLane);
+            if (subLessonIdParam) {
+              local = filterQuestionsBySubLesson(local, subLessonIdParam);
+            }
+            fetched = local;
+          }
+
+          if (fetched.length === 0 && testMode === "bank") {
+            try {
+              fetched = await practiceQuestionService.getTestBank(
+                unit.id,
+                "general",
+                bankLimit,
+              );
+              fetched = filterQuestionsByLane(fetched, effectiveLane);
+            } catch {
+              fetched = [];
+            }
+          }
+
+          const shuffled = shuffleArray(fetched);
+          const draftSections = buildSections(shuffled, testMode, bankLimit);
+          setQuestions(
+            preparePracticeQuestionsForSections(shuffled, draftSections),
+          );
+          return;
+        }
+
         const fetched =
           mode === "unit" && lessons.length === 1
             ? await practiceQuestionService.getTestBank(
@@ -149,7 +255,17 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
       }
     };
     void loadQuestions();
-  }, [lessons, notifyError, testMode, bankLimit, mode]);
+  }, [
+    lessons,
+    notifyError,
+    testMode,
+    bankLimit,
+    mode,
+    vocabDrill,
+    subLessonIdParam,
+    focusedLane,
+    effectiveLane,
+  ]);
 
   const sections: Section[] = useMemo(
     () => buildSections(scopedQuestions, testMode, bankLimit),
@@ -158,11 +274,13 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
   );
 
   useEffect(() => {
-    setCurrentSectionIndex(0);
-    setExpandedSectionIndex(0);
-    setCurrentPageIndex(0);
-    setCurrentIndexInSection(0);
-  }, [effectiveLane, testMode]);
+    queueMicrotask(() => {
+      setCurrentSectionIndex(0);
+      setExpandedSectionIndex(0);
+      setCurrentPageIndex(0);
+      setCurrentIndexInSection(0);
+    });
+  }, [effectiveLane, testMode, vocabDrill, subLessonIdParam]);
 
   const currentSection = sections[currentSectionIndex];
 
@@ -427,7 +545,12 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     );
   }
 
-  if (!isLoadingQuestions && effectiveLane && scopedQuestions.length === 0) {
+  if (
+    !isLoadingQuestions &&
+    effectiveLane &&
+    scopedQuestions.length === 0 &&
+    !vocabDrill
+  ) {
     const title = SECTION_META[effectiveLane].title;
     return (
       <div className="max-w-2xl mx-auto py-20 text-center px-4">
@@ -511,7 +634,23 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
         />
 
         <div className="flex-1 w-full space-y-6">
-          {effectiveLane ? (
+          {vocabDrill ? (
+            <div className="rounded-lg border border-primary/15 bg-primary/5 px-4 py-3">
+              <p className="text-sm font-semibold text-foreground">
+                {vocabDrill === "en-vi" && "Trắc nghiệm Anh → Việt"}
+                {vocabDrill === "vi-en" && "Trắc nghiệm Việt → Anh"}
+                {vocabDrill === "matching" && "Ghép cặp từ vựng"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 leading-snug">
+                {vocabDrill === "en-vi" &&
+                  "Chọn nghĩa tiếng Việt đúng cho từ/cụm từ tiếng Anh."}
+                {vocabDrill === "vi-en" &&
+                  "Chọn từ tiếng Anh đúng theo nghĩa hoặc mô tả tiếng Việt."}
+                {vocabDrill === "matching" &&
+                  "Ghép nối thuật ngữ tiếng Anh với nghĩa tiếng Việt tương ứng."}
+              </p>
+            </div>
+          ) : effectiveLane ? (
             <div className="rounded-lg border border-primary/15 bg-primary/5 px-4 py-3">
               <p className="text-sm font-semibold text-foreground">
                 {SECTION_META[effectiveLane].title}
