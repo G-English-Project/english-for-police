@@ -39,6 +39,11 @@ export const API_ROUTES = {
     QUESTIONS: "/api/v1/practice/questions",
     QUICK_TEST: "/api/v1/practice/quick-test",
   },
+  EVALUATION: {
+    STUDENT: (userId: number) => `/api/v1/evaluation/students/${userId}`,
+    IMPROVEMENT: (userId: number) =>
+      `/api/v1/evaluation/students/${userId}/improvement`,
+  },
   REPORTS: {
     DASHBOARD_OVERVIEW: "/api/v1/reports/dashboard/overview",
     STUDENTS: "/api/v1/reports/dashboard/students",

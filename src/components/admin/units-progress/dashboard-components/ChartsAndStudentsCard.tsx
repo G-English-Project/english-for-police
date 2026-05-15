@@ -1,4 +1,5 @@
 import { Fragment, useState } from "react";
+import { Link } from "react-router-dom";
 import { ChevronDown, ChevronUp, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -210,20 +211,34 @@ export function ChartsAndStudentsCard({
                                 /10
                               </td>
                               <td className="py-3 px-4 text-center">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-8 border-slate-300 text-slate-700 hover:bg-slate-50"
-                                  onClick={() =>
-                                    toggleStudentDetails(student.userId)
-                                  }
-                                >
-                                  {isExpanded ? (
-                                    <ChevronUp className="h-4 w-4" />
-                                  ) : (
-                                    <ChevronDown className="h-4 w-4" />
-                                  )}
-                                </Button>
+                                <div className="flex flex-wrap items-center justify-center gap-1.5">
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    className="h-8 text-[10px] font-bold"
+                                    asChild
+                                  >
+                                    <Link
+                                      to={`/admin/students/${student.userId}/evaluation`}
+                                    >
+                                      Đánh giá
+                                    </Link>
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 border-slate-300 text-slate-700 hover:bg-slate-50"
+                                    onClick={() =>
+                                      toggleStudentDetails(student.userId)
+                                    }
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronUp className="h-4 w-4" />
+                                    ) : (
+                                      <ChevronDown className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                </div>
                               </td>
                             </tr>
                             {isExpanded ? (
