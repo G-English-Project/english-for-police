@@ -78,24 +78,24 @@ export const LessonVocabularySection: React.FC<
       id="vocabulary"
       data-section="vocabulary"
       ref={sectionRef}
-      className="scroll-mt-24"
+      className="max-w-full min-w-0 scroll-mt-24 overflow-x-hidden"
     >
       <div className="mb-6 space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <Badge
               variant="outline"
               className="border-primary bg-primary/5 px-3 py-1 text-lg font-bold text-primary"
             >
               01
             </Badge>
-            <h2 className="font-heading text-2xl font-extrabold tracking-tight">
+            <h2 className="font-heading text-xl font-extrabold tracking-tight sm:text-2xl">
               TỪ VỰNG
             </h2>
           </div>
 
           {totalPages > 1 ? (
-            <div className="flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-white px-2 py-1.5 shadow-sm">
+            <div className="ml-auto flex shrink-0 items-center gap-1 rounded-full border border-slate-200 bg-white px-1.5 py-1 shadow-sm sm:gap-2 sm:px-2 sm:py-1.5">
               <Button
                 variant="ghost"
                 size="icon"
@@ -177,19 +177,19 @@ export const LessonVocabularySection: React.FC<
         ) : null}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 min-h-400px">
+      <div className="grid min-h-400px w-full min-w-0 grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {visibleItems.map((v, i) => {
           const flagged = isFlagged(v.word);
           return (
             <Card
               key={`${v.word}-${startIndex + i}`}
-              className={`group relative hover:police-shadow transition-all border-l-4 ${flagged ? "border-l-secondary" : "border-l-primary/20 hover:border-l-primary"}`}
+              className={`group relative w-full min-w-0 max-w-full overflow-hidden border-l-4 transition-all hover:police-shadow ${flagged ? "border-l-secondary" : "border-l-primary/20 hover:border-l-primary"}`}
             >
               <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-xl font-bold text-primary">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="wrap-break-word text-xl font-bold text-primary">
                         {v.word}
                       </h3>
                       <Badge variant="outline" className="text-[10px] py-0">
@@ -227,12 +227,14 @@ export const LessonVocabularySection: React.FC<
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="font-bold text-base leading-tight">{v.meaning}</p>
-                <div className="flex items-center gap-3">
+                <p className="wrap-break-word text-base font-bold leading-tight">
+                  {v.meaning}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 rounded-full text-xs font-bold transition-all group-hover:bg-primary group-hover:text-white hover:bg-primary hover:text-white"
+                    className="h-8 shrink-0 rounded-full text-xs font-bold transition-all group-hover:bg-primary group-hover:text-white hover:bg-primary hover:text-white"
                     onClick={(e) => onPlayAudio(v.word, e.currentTarget)}
                   >
                     <Volume2 className="h-3 w-3 mr-1.5" />

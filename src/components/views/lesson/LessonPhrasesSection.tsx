@@ -192,21 +192,21 @@ export const LessonPhrasesSection: React.FC<LessonPhrasesSectionProps> = ({
     );
 
   return (
-    <>
-      <div className="flex items-center gap-4 px-6 pt-6 pb-4">
+    <div className="max-w-full min-w-0 overflow-x-hidden">
+      <div className="flex items-center gap-3 px-4 pb-4 pt-6 sm:gap-4 sm:px-6">
         <Badge
           variant="outline"
           className="border-primary bg-primary/5 px-3 py-1 text-lg font-bold text-primary"
         >
           02
         </Badge>
-        <h2 className="font-heading text-2xl font-extrabold tracking-tight">
+        <h2 className="font-heading text-xl font-extrabold tracking-tight sm:text-2xl">
           CẤU TRÚC
         </h2>
       </div>
       <Card
         id="phrases"
-        className="scroll-mt-24 overflow-hidden rounded-lg border-none police-shadow"
+        className="w-full max-w-full min-w-0 scroll-mt-24 overflow-hidden rounded-lg border-none police-shadow"
       >
         <CardContent className="p-0">
           <Accordion
@@ -227,23 +227,23 @@ export const LessonPhrasesSection: React.FC<LessonPhrasesSectionProps> = ({
                   className="phrase-section-anchor scroll-mt-28 h-0 w-full"
                   aria-hidden
                 />
-                <AccordionTrigger className="group items-center gap-3 px-6 py-4 transition-all hover:bg-muted/30 hover:no-underline">
-                  <div className="flex min-w-0 flex-1 items-center gap-4 text-left">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-black text-primary transition-colors group-data-[state=open]:bg-primary group-data-[state=open]:text-white">
+                <AccordionTrigger className="group flex-wrap items-center gap-2 px-4 py-3 transition-all hover:bg-muted/30 hover:no-underline sm:gap-3 sm:px-6 sm:py-4">
+                  <div className="flex min-w-0 flex-1 items-center gap-3 text-left sm:gap-4">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-black text-primary transition-colors group-data-[state=open]:bg-primary group-data-[state=open]:text-white sm:h-10 sm:w-10 sm:text-sm">
                       {group.id}
                     </div>
-                    <div className="min-w-0">
-                      <h3 className="font-heading text-lg font-bold uppercase tracking-tight text-primary">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-heading text-base font-bold uppercase tracking-tight wrap-break-word text-primary sm:text-lg">
                         {group.title}
                       </h3>
-                      <p className="text-xs text-muted-foreground font-medium">
+                      <p className="text-xs font-medium text-muted-foreground">
                         {group.phrases.length} mẫu câu ứng dụng
                       </p>
                     </div>
                   </div>
                   <Button
                     size="sm"
-                    className="primary-gradient police-shadow group/practice h-9 shrink-0 rounded-lg px-3 text-[10px] font-black transition-all hover:scale-105 active:scale-95 sm:px-4 sm:text-xs"
+                    className="primary-gradient police-shadow group/practice hidden h-9 max-w-full shrink-0 rounded-lg px-3 text-[10px] font-black sm:inline-flex sm:px-4 sm:text-xs"
                     disabled={group.phrases.length === 0}
                     onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
@@ -252,11 +252,21 @@ export const LessonPhrasesSection: React.FC<LessonPhrasesSectionProps> = ({
                     }}
                   >
                     <Sparkles className="mr-1.5 h-3.5 w-3.5 shrink-0 animate-pulse text-secondary" />
-                    LUYỆN TẬP PHẦN {group.id}
+                    <span className="truncate">LUYỆN TẬP PHẦN {group.id}</span>
                     <ArrowRight className="ml-1.5 h-3.5 w-3.5 shrink-0 transition-transform group-hover/practice:translate-x-0.5" />
                   </Button>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pt-2 pb-6">
+                <AccordionContent className="px-4 pt-2 pb-6 sm:px-6">
+                  <Button
+                    size="sm"
+                    className="primary-gradient police-shadow mb-4 h-9 w-full rounded-lg text-[10px] font-black sm:hidden"
+                    disabled={group.phrases.length === 0}
+                    onClick={() => onStartPractice("PHRASE_SCENARIO", group.id)}
+                  >
+                    <Sparkles className="mr-1.5 h-3.5 w-3.5 animate-pulse text-secondary" />
+                    LUYỆN TẬP PHẦN {group.id}
+                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                  </Button>
                   <div className="space-y-4">
                     {group.phrases.length > 0 ? (
                       group.phrases.map((phrase, idx) => {
@@ -264,68 +274,66 @@ export const LessonPhrasesSection: React.FC<LessonPhrasesSectionProps> = ({
                         return (
                           <div
                             key={`${group.id}-${idx}`}
-                            className="group/item p-4 rounded-xl border border-muted bg-card hover:border-primary/30 hover:bg-primary/5 transition-all animate-in fade-in slide-in-from-left-2"
+                            className="group/item min-w-0 overflow-hidden rounded-xl border border-muted bg-card p-3 transition-all animate-in fade-in slide-in-from-left-2 hover:border-primary/30 hover:bg-primary/5 sm:p-4"
                           >
-                            <div className="flex justify-between items-start gap-4">
-                              <div className="flex-1 space-y-3">
-                                <div className="space-y-1">
-                                  <h4 className="text-lg font-bold text-primary leading-tight">
-                                    {phrase.text}
-                                  </h4>
-                                  <p className="text-muted-foreground font-medium italic border-l-2 border-primary/20 pl-3">
-                                    {phrase.translation}
-                                  </p>
-                                </div>
-
-                                <div className="flex items-center gap-3">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 rounded-full text-[10px] font-black transition-all hover:bg-primary hover:text-white"
-                                    onClick={(e) =>
-                                      onPlayAudio(
-                                        phrase.text,
-                                        e.currentTarget,
-                                        true,
-                                      )
-                                    }
-                                  >
-                                    <Volume2 className="h-3 w-3 mr-1.5" />
-                                    NGHE MẪU
-                                  </Button>
-                                  <AudioRecorderButton className="h-8 text-[10px] font-black" />
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className={`h-8 w-8 rounded-full ${flagged ? "text-secondary" : "text-muted-foreground"}`}
-                                    onClick={() =>
-                                      onToggleFlag({
-                                        unitId: unit.id,
-                                        type: "phrase",
-                                        key: phrase.text,
-                                      })
-                                    }
-                                  >
-                                    <Star
-                                      className={`h-4 w-4 ${flagged ? "fill-current" : ""}`}
-                                    />
-                                  </Button>
-                                </div>
+                            <div className="flex min-w-0 flex-col gap-3">
+                              <div className="min-w-0 space-y-1">
+                                <h4 className="wrap-break-word text-base font-bold leading-tight text-primary sm:text-lg">
+                                  {phrase.text}
+                                </h4>
+                                <p className="wrap-break-word border-l-2 border-primary/20 pl-3 text-sm font-medium italic text-muted-foreground">
+                                  {phrase.translation}
+                                </p>
                               </div>
-                              <Button
-                                size="icon"
-                                variant="secondary"
-                                className="rounded-full h-10 w-10 shrink-0 police-shadow hover:scale-110 active:scale-95 transition-all"
-                                onClick={(e) =>
-                                  onPlayAudio(
-                                    phrase.text,
-                                    e.currentTarget,
-                                    true,
-                                  )
-                                }
-                              >
-                                <PlayCircle className="h-5 w-5" />
-                              </Button>
+
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 shrink-0 rounded-full text-[10px] font-black transition-all hover:bg-primary hover:text-white"
+                                  onClick={(e) =>
+                                    onPlayAudio(
+                                      phrase.text,
+                                      e.currentTarget,
+                                      true,
+                                    )
+                                  }
+                                >
+                                  <Volume2 className="h-3 w-3 mr-1.5" />
+                                  NGHE MẪU
+                                </Button>
+                                <AudioRecorderButton className="h-8 shrink-0 text-[10px] font-black" />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className={`h-8 w-8 shrink-0 rounded-full ${flagged ? "text-secondary" : "text-muted-foreground"}`}
+                                  onClick={() =>
+                                    onToggleFlag({
+                                      unitId: unit.id,
+                                      type: "phrase",
+                                      key: phrase.text,
+                                    })
+                                  }
+                                >
+                                  <Star
+                                    className={`h-4 w-4 ${flagged ? "fill-current" : ""}`}
+                                  />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="secondary"
+                                  className="ml-auto h-9 w-9 shrink-0 rounded-full police-shadow transition-all hover:scale-105 active:scale-95 sm:h-10 sm:w-10"
+                                  onClick={(e) =>
+                                    onPlayAudio(
+                                      phrase.text,
+                                      e.currentTarget,
+                                      true,
+                                    )
+                                  }
+                                >
+                                  <PlayCircle className="h-5 w-5" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         );
@@ -342,7 +350,7 @@ export const LessonPhrasesSection: React.FC<LessonPhrasesSectionProps> = ({
           </Accordion>
         </CardContent>
       </Card>
-    </>
+    </div>
   );
 };
 

@@ -207,7 +207,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
   }, [unit.id]);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 items-start">
+    <div className="flex flex-col items-start gap-8 lg:flex-row">
       {/* Sticky TOC Sidebar */}
       <aside className="w-full lg:w-64 lg:sticky lg:top-20 lg:self-start space-y-2">
         <LessonTableOfContents
@@ -241,7 +241,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 space-y-12 pb-24">
+      <div className="min-w-0 max-w-full flex-1 space-y-12 overflow-x-hidden pb-24">
         <LessonVocabularySection
           unit={unit}
           flaggedItems={flaggedItems}
