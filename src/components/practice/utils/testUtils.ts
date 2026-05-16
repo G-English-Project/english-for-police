@@ -617,3 +617,29 @@ export function getPhraseSubNavItems(unit: Unit): PhraseSubNavItem[] {
 
   return [];
 }
+
+export const PRACTICE_TYPE_LABELS = Object.keys(PRACTICE_MENU_LABEL_TO_LANE);
+
+export function lanesAvailableForSubLesson(
+  questions: Question[],
+  subLessonId: string,
+): Set<LessonTestLane> {
+  const lanes = new Set<LessonTestLane>();
+  for (const q of filterQuestionsBySubLesson(questions, subLessonId)) {
+    lanes.add(resolvedLane(q));
+  }
+  return lanes;
+}
+
+export function practiceTypesForSubLesson(
+  questions: Question[],
+  subLessonId: string,
+): { label: string; lane: LessonTestLane }[] {
+  const available = lanesAvailableForSubLesson(questions, subLessonId);
+  return PRACTICE_TYPE_LABELS.filter((label) =>
+    available.has(PRACTICE_MENU_LABEL_TO_LANE[label]),
+  ).map((label) => ({
+    label,
+    lane: PRACTICE_MENU_LABEL_TO_LANE[label],
+  }));
+}

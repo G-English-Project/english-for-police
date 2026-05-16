@@ -29,6 +29,7 @@ import {
   FlashcardResultsPage,
   GeneralTestPage,
   UnitsProgressPage,
+  StudentEvaluationPage,
   AdminLessonsPage,
   AdminLessonWorkspacePage,
 } from "@/pages";
@@ -313,6 +314,16 @@ export function AppRouter() {
               }
             />
             <Route path="/admin/units" element={<UnitsProgressPage />} />
+            <Route
+              path="/admin/students/:userId/evaluation"
+              element={
+                user?.role === UserRole.ADMIN ? (
+                  <StudentEvaluationPage />
+                ) : (
+                  <Navigate to="/" replace />
+                )
+              }
+            />
             <Route
               path="/admin/lessons"
               element={
