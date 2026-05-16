@@ -13,7 +13,7 @@ import {
   getPhraseSubNavItems,
 } from "@/components/practice/utils/testUtils";
 import { lessonService } from "@/services/lesson.service";
-import type { LessonTestLane } from "@/types";
+import type { LessonTestLane, Question } from "@/types";
 
 interface LessonViewProps {
   unit: Unit;
@@ -35,6 +35,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
   const [availableLanes, setAvailableLanes] = useState<Set<LessonTestLane>>(
     new Set(),
   );
+  const [lessonQuestions, setLessonQuestions] = useState<Question[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -43,6 +44,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
         const questions = await lessonService.getLessonTests(unit.id);
         if (!isMounted) return;
 
+        setLessonQuestions(questions);
         const lanes = new Set<LessonTestLane>();
         questions.forEach((q) => {
           lanes.add(resolvedLane(q));
@@ -50,19 +52,31 @@ export const LessonView: React.FC<LessonViewProps> = ({
         setAvailableLanes(lanes);
       } catch (err) {
         console.error("Failed to fetch unit tests for availability check", err);
+        if (isMounted) {
+          setLessonQuestions(unit.practice ?? []);
+        }
       }
     };
     void checkAvailability();
     return () => {
       isMounted = false;
     };
-  }, [unit.id]);
+  }, [unit.id, unit.practice]);
+
+  const practiceQuestions = useMemo(
+    () => (lessonQuestions.length > 0 ? lessonQuestions : unit.practice),
+    [lessonQuestions, unit.practice],
+  );
 
   const testsLocked = !isAuthenticated;
 
   const startPractice = () => navigate(`/practice/${unit.id}`);
   const startFlashcards = () => navigate(`/flashcards/${unit.id}`);
-  const startGeneralTest = (mode?: "type" | "bank", sectionTitle?: string) => {
+  const startGeneralTest = (
+    mode?: "type" | "bank",
+    sectionTitle?: string,
+    subLessonId?: string,
+  ) => {
     if (mode === "bank") {
       navigate(`/generaltest/${unit.id}?mode=bank`);
       return;
@@ -70,7 +84,12 @@ export const LessonView: React.FC<LessonViewProps> = ({
     if (mode === "type" && sectionTitle) {
       const lane = PRACTICE_MENU_LABEL_TO_LANE[sectionTitle];
       if (lane) {
-        navigate(`/generaltest/${unit.id}?lane=${encodeURIComponent(lane)}`);
+        const params = new URLSearchParams();
+        params.set("lane", lane);
+        if (subLessonId?.trim()) {
+          params.set("subId", subLessonId.trim());
+        }
+        navigate(`/generaltest/${unit.id}?${params.toString()}`);
         return;
       }
     }
@@ -208,8 +227,8 @@ export const LessonView: React.FC<LessonViewProps> = ({
 
   return (
     <div className="flex flex-col items-start gap-8 lg:flex-row">
-      {/* Sticky TOC Sidebar */}
-      <aside className="w-full lg:w-64 lg:sticky lg:top-20 lg:self-start space-y-2">
+      {/* Sticky TOC — left */}
+      <aside className="w-full shrink-0 lg:sticky lg:top-20 lg:w-64 lg:self-start">
         <LessonTableOfContents
           unitId={unit.id}
           activeSection={activeSection}
@@ -219,25 +238,6 @@ export const LessonView: React.FC<LessonViewProps> = ({
           selectedPhraseSubId={selectedPhraseSubId}
           onPhraseSubSelect={handlePhraseSubSelect}
         />
-
-        {/* Shortcuts */}
-        <div className="bg-card rounded-md border police-shadow overflow-hidden">
-          <div className="p-4">
-            <LessonShortcutButtons
-              testsLocked={testsLocked}
-              availableLanes={availableLanes}
-              onStartPractice={startPractice}
-              onStartFlashcards={startFlashcards}
-              onStartGeneralTest={startGeneralTest}
-              onStartVocabDrill={(drill) => {
-                const lane = drill === "matching" ? "MATCHING" : "VOCAB_MCQ";
-                navigate(
-                  `/generaltest/${unit.id}?lane=${encodeURIComponent(lane)}&vocabDrill=${drill}`,
-                );
-              }}
-            />
-          </div>
-        </div>
       </aside>
 
       {/* Main Content Area */}
@@ -271,6 +271,29 @@ export const LessonView: React.FC<LessonViewProps> = ({
           }}
         />
       </div>
+
+      {/* Sticky shortcuts — right (mirrors TOC) */}
+      <aside className="w-full shrink-0 lg:sticky lg:top-20 lg:w-64 lg:self-start">
+        <div className="overflow-hidden rounded-md border bg-card police-shadow">
+          <div className="p-4">
+            <LessonShortcutButtons
+              unit={unit}
+              practiceQuestions={practiceQuestions}
+              testsLocked={testsLocked}
+              availableLanes={availableLanes}
+              onStartPractice={startPractice}
+              onStartFlashcards={startFlashcards}
+              onStartGeneralTest={startGeneralTest}
+              onStartVocabDrill={(drill) => {
+                const lane = drill === "matching" ? "MATCHING" : "VOCAB_MCQ";
+                navigate(
+                  `/generaltest/${unit.id}?lane=${encodeURIComponent(lane)}&vocabDrill=${drill}`,
+                );
+              }}
+            />
+          </div>
+        </div>
+      </aside>
     </div>
   );
 };
