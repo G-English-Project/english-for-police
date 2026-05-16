@@ -210,7 +210,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                       >
                         <BarChart3 className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         <span className="text-sm font-medium text-foreground">
-                          Tiến độ chương trình
+                          Bảng điều khiển
                         </span>
                       </DropdownMenuItem>
                       <DropdownMenuItem
