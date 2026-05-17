@@ -30,7 +30,8 @@ import {
   phraseSubLessonLabel,
   practiceTypesForSubLesson,
 } from "@/components/practice/utils/testUtils";
-import { PracticeGroupedTypeMenu } from "@/components/views/lesson/PracticeGroupedTypeMenu";
+import { PracticePhraseDialogMenu } from "@/components/views/lesson/PracticePhraseDialogMenu";
+import { PHRASE_PRACTICE_TYPE_LABELS } from "@/components/views/lesson/practice-menu-groups";
 
 interface LessonPhrasesSectionProps {
   unit: Unit;
@@ -161,9 +162,19 @@ export const LessonPhrasesSection: React.FC<LessonPhrasesSectionProps> = ({
   } | null>(null);
   const skipSubScrollRef = useRef(true);
 
-  const dialogPracticeTypes = useMemo(() => {
-    if (!practiceDialogGroup) return [];
-    return practiceTypesForSubLesson(practiceQuestions, practiceDialogGroup.id);
+  const dialogPhraseLabels = useMemo(() => {
+    if (!practiceDialogGroup) return new Set<string>();
+    const types = practiceTypesForSubLesson(
+      practiceQuestions,
+      practiceDialogGroup.id,
+    );
+    return new Set(
+      types
+        .map((t) => t.label)
+        .filter((label) =>
+          (PHRASE_PRACTICE_TYPE_LABELS as readonly string[]).includes(label),
+        ),
+    );
   }, [practiceDialogGroup, practiceQuestions]);
 
   const openPracticeDialog = (
@@ -418,18 +429,16 @@ export const LessonPhrasesSection: React.FC<LessonPhrasesSectionProps> = ({
           </DialogHeader>
 
           <div className="p-4">
-            <PracticeGroupedTypeMenu
-              variant="dialog"
-              availableLabels={
-                new Set(dialogPracticeTypes.map((t) => t.label))
-              }
-              emptyMessage={`Chưa có bài tập cho phần ${practiceDialogGroup?.id ?? "này"}.`}
-              onSelectType={(typeLabel) => {
-                if (!practiceDialogGroup) return;
-                onStartPracticeByType(typeLabel, practiceDialogGroup.id);
-                setPracticeDialogGroup(null);
-              }}
-            />
+            {practiceDialogGroup ? (
+              <PracticePhraseDialogMenu
+                availableLabels={dialogPhraseLabels}
+                emptyMessage={`Chưa có bài tập cho phần ${practiceDialogGroup.id}.`}
+                onSelectType={(typeLabel) => {
+                  onStartPracticeByType(typeLabel, practiceDialogGroup.id);
+                  setPracticeDialogGroup(null);
+                }}
+              />
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>

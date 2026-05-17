@@ -146,7 +146,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     className="h-6 w-6 rounded-sm object-cover"
                   />
                 </div>
-                Cao đẳng cảnh sát nhân dân II
+                CAO ĐẲNG CẢNH SÁT NHÂN DÂN II
               </h1>
             </div>
           </div>

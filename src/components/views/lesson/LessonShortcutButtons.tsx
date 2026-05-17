@@ -4,12 +4,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { requestOpenLoginDialog } from "@/lib/auth-ui-events";
 import {
-  PRACTICE_MENU_LABEL_TO_LANE,
   getPhraseSubNavItems,
-  practiceTypesForSubLesson,
   type VocabDrillMode,
 } from "@/components/practice/utils/testUtils";
-import { PracticeGroupedTypeMenu } from "@/components/views/lesson/PracticeGroupedTypeMenu";
+import { PracticeSidebarMenu } from "@/components/views/lesson/PracticeSidebarMenu";
 import type { LessonTestLane, Question, Unit } from "@/types";
 import {
   Tooltip,
@@ -53,48 +51,7 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
 }) => {
   const [isTypeExpanded, setIsTypeExpanded] = useState(false);
   const [isToolsExpanded, setIsToolsExpanded] = useState(false);
-  const [expandedSubId, setExpandedSubId] = useState<string | null>(null);
-
   const subNavItems = useMemo(() => getPhraseSubNavItems(unit), [unit]);
-
-  const toggleSubLesson = (subId: string) => {
-    setExpandedSubId((prev) => (prev === subId ? null : subId));
-  };
-
-  const labelsForSubLesson = (subLessonId?: string) => {
-    const types = subLessonId
-      ? practiceTypesForSubLesson(practiceQuestions, subLessonId)
-      : [];
-    if (subLessonId) {
-      return new Set(types.map((t) => t.label));
-    }
-    return new Set(
-      Object.entries(PRACTICE_MENU_LABEL_TO_LANE)
-        .filter(([, lane]) => availableLanes.has(lane))
-        .map(([label]) => label),
-    );
-  };
-
-  const renderGroupedPracticeMenu = (subLessonId?: string) => (
-    <PracticeGroupedTypeMenu
-      availableLabels={labelsForSubLesson(subLessonId)}
-      showUnavailable
-      variant="sidebar"
-      emptyMessage={
-        subLessonId
-          ? `Chưa có bài tập cho phần ${subLessonId}`
-          : "Phần luyện tập này hiện chưa có nội dung cho chương này."
-      }
-      unavailableHint={() =>
-        subLessonId
-          ? `Phần ${subLessonId} chưa có bài tập dạng này.`
-          : "Phần luyện tập này hiện chưa có nội dung cho chương này."
-      }
-      onSelectType={(typeLabel) =>
-        onStartGeneralTest("type", typeLabel, subLessonId)
-      }
-    />
-  );
 
   return (
     <TooltipProvider>
@@ -194,10 +151,7 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
               <Button
                 variant="outline"
                 className="h-10 w-full justify-between font-bold"
-                onClick={() => {
-                  setIsTypeExpanded(!isTypeExpanded);
-                  if (isTypeExpanded) setExpandedSubId(null);
-                }}
+                onClick={() => setIsTypeExpanded(!isTypeExpanded)}
               >
                 Luyện tập
                 <ChevronRight
@@ -209,44 +163,21 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
               </Button>
 
               {isTypeExpanded ? (
-                <div className="mb-2 ml-2 animate-in space-y-1 border-l-2 border-muted pl-3 pr-1 fade-in">
-                  {subNavItems.length > 0 ? (
-                    subNavItems.map((item) => {
-                      const isSubOpen = expandedSubId === item.id;
-
-                      return (
-                        <div key={item.id} className="space-y-0.5">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="h-8 w-full justify-between px-2 text-left text-[11px] font-semibold text-primary hover:text-primary"
-                            onClick={() => toggleSubLesson(item.id)}
-                          >
-                            <span className="min-w-0 truncate">
-                              • {item.id}
-                              <span className="ml-1 font-normal text-muted-foreground">
-                                {item.title}
-                              </span>
-                            </span>
-                            <ChevronRight
-                              className={cn(
-                                "h-3.5 w-3.5 shrink-0 transition-transform",
-                                isSubOpen && "rotate-90",
-                              )}
-                            />
-                          </Button>
-
-                          {isSubOpen ? (
-                            <div className="ml-2 border-l-2 border-muted/80 pl-2">
-                              {renderGroupedPracticeMenu(item.id)}
-                            </div>
-                          ) : null}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    renderGroupedPracticeMenu()
-                  )}
+                <div className="mb-2 ml-2 animate-in border-l-2 border-muted pl-3 pr-1 fade-in">
+                  <PracticeSidebarMenu
+                    subNavItems={subNavItems}
+                    practiceQuestions={practiceQuestions}
+                    availableLanes={availableLanes}
+                    showUnavailable
+                    unavailableHint={(subId) =>
+                      subId
+                        ? `Phần ${subId} chưa có bài tập dạng này.`
+                        : "Phần luyện tập này hiện chưa có nội dung cho chương này."
+                    }
+                    onSelectType={(typeLabel, subId) =>
+                      onStartGeneralTest("type", typeLabel, subId)
+                    }
+                  />
                 </div>
               ) : null}
             </div>
