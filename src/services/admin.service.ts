@@ -123,7 +123,6 @@ export const adminService = {
       fullName: dashboard.fullName,
       email: dashboard.email,
       role: "STUDENT",
-      dateOfBirth: "",
       rank: "STUDENT",
       proficiencyScore: Math.round(dashboard.overallProgressPercent),
       totalStudyTime: dashboard.activity.totalAttempts,

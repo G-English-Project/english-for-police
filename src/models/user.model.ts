@@ -11,7 +11,6 @@ export interface User {
   email: string;
   fullName: string;
   role: UserRole;
-  dateOfBirth: string;
   createdAt?: string;
   currentStreak?: number;
 }

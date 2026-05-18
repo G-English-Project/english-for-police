@@ -7,7 +7,6 @@ export interface UserListItem {
   email: string;
   fullName: string;
   role: string;
-  dateOfBirth: string;
   createdAt?: string;
 }
 
@@ -17,7 +16,6 @@ export interface UserDetail {
   email: string;
   fullName: string;
   role: string;
-  dateOfBirth: string;
   createdAt: string;
   currentStreak: number;
 }
