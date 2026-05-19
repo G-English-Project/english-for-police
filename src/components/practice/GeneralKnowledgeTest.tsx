@@ -103,7 +103,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     }
     return filterQuestionsByLane(questions, effectiveLane);
   }, [questions, effectiveLane, vocabDrill]);
-  const [bankLimit, setBankLimit] = useState<number>(40);
+  const [bankLimit, setBankLimit] = useState<number>(10);
   const [shuffleTrigger, setShuffleTrigger] = useState<number>(0);
 
   // 2. Navigation State
