@@ -138,7 +138,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               onClick={onLogoClick}
             >
               <h1 className="flex items-center gap-2 text-sm font-heading font-bold tracking-tight text-white transition-colors group-hover:text-secondary sm:text-lg">
-                <span className="max-w-36 truncate leading-tight sm:max-w-none sm:whitespace-nowrap"></span>
                 <div className="shrink-0 rounded-lg bg-white/20 p-1">
                   <img
                     src="/police.png"
@@ -146,7 +145,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                     className="h-6 w-6 rounded-sm object-cover"
                   />
                 </div>
-                CAO ĐẲNG CẢNH SÁT NHÂN DÂN II
+                <span className="hidden sm:inline leading-tight whitespace-nowrap">
+                  CAO ĐẲNG CẢNH SÁT NHÂN DÂN II
+                </span>
               </h1>
             </div>
           </div>

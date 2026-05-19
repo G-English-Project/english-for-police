@@ -1,18 +1,10 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Volume2, Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { AudioRecorderButton } from "@/components/common/AudioRecorderButton";
 import type { Unit, FlaggedItem } from "@/types";
-import { sortSubLessonIds } from "@/components/practice/utils/testUtils";
 
 interface LessonVocabularySectionProps {
   readonly unit: Unit;
@@ -25,42 +17,18 @@ interface LessonVocabularySectionProps {
 export const LessonVocabularySection: React.FC<
   LessonVocabularySectionProps
 > = ({ unit, flaggedItems, onToggleFlag, onPlayAudio, sectionRef }) => {
-  const vocabSubIds = useMemo(() => {
-    const fromVocab = unit.vocabulary
-      .map((v) => v.subLessonId?.trim())
-      .filter((x): x is string => !!x);
-    const fromPhrases = unit.phrases
-      .map((p) => p.subLessonId?.trim())
-      .filter((x): x is string => !!x);
-    const merged = new Set([...fromVocab, ...fromPhrases]);
-    return sortSubLessonIds([...merged]).filter((id) =>
-      id.startsWith(`${unit.id}.`),
-    );
-  }, [unit]);
-
-  const [vocabSubFilter, setVocabSubFilter] = useState<string>("all");
-
-  const filteredVocabulary = useMemo(() => {
-    if (vocabSubFilter === "all" || vocabSubIds.length === 0) {
-      return unit.vocabulary;
-    }
-    return unit.vocabulary.filter(
-      (v) => (v.subLessonId ?? "").trim() === vocabSubFilter,
-    );
-  }, [unit.vocabulary, vocabSubFilter, vocabSubIds.length]);
-
   const [currentPage, setCurrentPage] = useState(0);
   const itemsPerPage = 6;
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredVocabulary.length / itemsPerPage),
+    Math.ceil(unit.vocabulary.length / itemsPerPage),
   );
 
   useEffect(() => {
     queueMicrotask(() => {
       setCurrentPage(0);
     });
-  }, [vocabSubFilter, unit.id]);
+  }, [unit.id]);
 
   const isFlagged = (word: string) =>
     flaggedItems.some(
@@ -68,7 +36,7 @@ export const LessonVocabularySection: React.FC<
     );
 
   const startIndex = currentPage * itemsPerPage;
-  const visibleItems = filteredVocabulary.slice(
+  const visibleItems = unit.vocabulary.slice(
     startIndex,
     startIndex + itemsPerPage,
   );
@@ -154,27 +122,6 @@ export const LessonVocabularySection: React.FC<
             </div>
           ) : null}
         </div>
-
-        {vocabSubIds.length > 0 ? (
-          <div className="max-w-xs space-y-1 sm:max-w-sm">
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-              Lọc theo tiểu mục
-            </p>
-            <Select value={vocabSubFilter} onValueChange={setVocabSubFilter}>
-              <SelectTrigger className="h-9 text-xs font-bold">
-                <SelectValue placeholder="Tất cả từ vựng" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả tiểu mục</SelectItem>
-                {vocabSubIds.map((id) => (
-                  <SelectItem key={id} value={id}>
-                    Phần {id}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ) : null}
       </div>
 
       <div className="grid min-h-400px w-full min-w-0 grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">

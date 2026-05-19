@@ -239,8 +239,27 @@ export const LessonView: React.FC<LessonViewProps> = ({
         />
       </aside>
 
-      {/* Main Content Area */}
-      <div className="min-w-0 max-w-full flex-1 space-y-12 overflow-x-hidden pb-24">
+      {/* Main: shortcuts (dưới mục lục) rồi nội dung bài */}
+      <div className="min-w-0 max-w-full flex-1 space-y-8 overflow-x-hidden pb-24 lg:space-y-12">
+        <div className="overflow-hidden rounded-md border bg-card police-shadow">
+          <div className="p-4">
+            <LessonShortcutButtons
+              unit={unit}
+              practiceQuestions={practiceQuestions}
+              testsLocked={testsLocked}
+              availableLanes={availableLanes}
+              onStartFlashcards={startFlashcards}
+              onStartGeneralTest={startGeneralTest}
+              onStartVocabDrill={(drill) => {
+                const lane = drill === "matching" ? "MATCHING" : "VOCAB_MCQ";
+                navigate(
+                  `/generaltest/${unit.id}?lane=${encodeURIComponent(lane)}&vocabDrill=${drill}`,
+                );
+              }}
+            />
+          </div>
+        </div>
+
         <LessonVocabularySection
           unit={unit}
           flaggedItems={flaggedItems}
@@ -266,28 +285,6 @@ export const LessonView: React.FC<LessonViewProps> = ({
           }
         />
       </div>
-
-      {/* Sticky shortcuts — right (mirrors TOC) */}
-      <aside className="w-full shrink-0 lg:sticky lg:top-20 lg:w-64 lg:self-start">
-        <div className="overflow-hidden rounded-md border bg-card police-shadow">
-          <div className="p-4">
-            <LessonShortcutButtons
-              unit={unit}
-              practiceQuestions={practiceQuestions}
-              testsLocked={testsLocked}
-              availableLanes={availableLanes}
-              onStartFlashcards={startFlashcards}
-              onStartGeneralTest={startGeneralTest}
-              onStartVocabDrill={(drill) => {
-                const lane = drill === "matching" ? "MATCHING" : "VOCAB_MCQ";
-                navigate(
-                  `/generaltest/${unit.id}?lane=${encodeURIComponent(lane)}&vocabDrill=${drill}`,
-                );
-              }}
-            />
-          </div>
-        </div>
-      </aside>
     </div>
   );
 };
