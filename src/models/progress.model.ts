@@ -3,9 +3,13 @@ export interface QuizAnswer {
   answer: string;
 }
 
+export type ProgressTestType = "GENERAL";
+
 export interface QuizAttemptRequest {
   unitNumber: number;
   answers: QuizAnswer[];
+  /** Chỉ gửi với bài kiểm tra tổng quát (≥80% mới hoàn thành chương). */
+  testType?: ProgressTestType;
 }
 
 export interface TypeScore {
@@ -23,6 +27,7 @@ export interface UnitProgress {
   unitNumber: number;
   unitTitle?: string;
   status: string;
+  progressPercent: number;
   attemptCount: number;
   bestScore: number;
   latestScore: number;

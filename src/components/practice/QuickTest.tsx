@@ -29,22 +29,20 @@ import { practiceQuestionService } from "@/services/practice-question.service";
 
 export interface QuickTestProps {
   lessons: Unit[];
-  completedUnitIds: number[];
   onBack: () => void;
   onComplete?: (score: number) => void;
 }
 
 export const QuickTest: React.FC<QuickTestProps> = ({
-  completedUnitIds,
   onBack,
   onComplete,
 }) => {
   const location = useLocation();
   const stateUnitIds = location.state?.selectedUnitIds as number[] | undefined;
   const effectiveUnitIds = useMemo(() => {
-    const raw = stateUnitIds?.length ? stateUnitIds : completedUnitIds;
+    const raw = stateUnitIds ?? [];
     return [...new Set(raw)].sort((a, b) => a - b);
-  }, [stateUnitIds, completedUnitIds]);
+  }, [stateUnitIds]);
 
   const chapterIdsKey = effectiveUnitIds.join(",");
 

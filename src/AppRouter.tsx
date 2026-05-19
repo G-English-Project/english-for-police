@@ -111,8 +111,6 @@ export function AppRouter() {
   const {
     lessons,
     setLessons,
-    progress,
-    setProgress,
     flaggedItems,
     setFlaggedItems,
     dailyTasks,
@@ -202,7 +200,6 @@ export function AppRouter() {
                 ) : (
                   <HomeView
                     lessons={lessons}
-                    progress={progress}
                     flaggedItems={flaggedItems}
                     dailyTasks={dailyTasks}
                     onSelectUnit={navigateToLesson}
@@ -233,8 +230,6 @@ export function AppRouter() {
                 <RequireAuthForLessonTests>
                   <TrainingGroundPage
                     lessons={lessons}
-                    progress={progress}
-                    setProgress={setProgress}
                     onBack={navigateToLesson}
                     onComplete={navigateToHome}
                   />
@@ -292,7 +287,6 @@ export function AppRouter() {
                 <RequireAuth>
                   <QuickTest
                     lessons={lessons}
-                    completedUnitIds={progress.completedUnits}
                     onBack={navigateToHome}
                     onComplete={() => updateDailyTask("test", 1)}
                   />

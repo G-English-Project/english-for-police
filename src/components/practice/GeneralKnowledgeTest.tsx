@@ -89,6 +89,12 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
 
   const subLessonIdParam = searchParams.get("subId")?.trim() || null;
 
+  /** Kiểm tra tổng quát — không luyện theo lane / tiểu mục / vocab drill. */
+  const isGeneralUnitCompletionTest = useMemo(
+    () => !focusedLane && !vocabDrill && !subLessonIdParam,
+    [focusedLane, vocabDrill, subLessonIdParam],
+  );
+
   const effectiveLane = testMode === "type" ? focusedLane : null;
 
   const scopedQuestions = useMemo(() => {
@@ -382,6 +388,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
         await submitAttempt({
           unitNumber: Number(unitNumber),
           answers,
+          ...(isGeneralUnitCompletionTest ? { testType: "GENERAL" } : {}),
         });
       }
 
@@ -403,6 +410,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     notifyError,
     submitAttempt,
     setShowResults,
+    isGeneralUnitCompletionTest,
   ]);
 
   const handleBack = () => {
