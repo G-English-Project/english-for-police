@@ -1,6 +1,6 @@
 import { lazy } from "react";
 import { useParams } from "react-router-dom";
-import type { Unit, UserProgress } from "@/types";
+import type { Unit } from "@/types";
 
 const TrainingGround = lazy(() =>
   import("@/components/practice/TrainingGround").then((m) => ({
@@ -10,19 +10,11 @@ const TrainingGround = lazy(() =>
 
 interface Props {
   lessons: Unit[];
-  progress: UserProgress;
-  setProgress: (p: UserProgress) => void;
   onBack: (u: Unit) => void;
   onComplete: () => void;
 }
 
-export function TrainingGroundPage({
-  lessons,
-  progress,
-  setProgress,
-  onBack,
-  onComplete,
-}: Props) {
+export function TrainingGroundPage({ lessons, onBack, onComplete }: Props) {
   const { unitId } = useParams();
   const unit = lessons.find((l) => l.id === Number(unitId));
   if (!unit) return null;
@@ -31,15 +23,7 @@ export function TrainingGroundPage({
     <TrainingGround
       unit={unit}
       onBack={() => onBack(unit)}
-      onComplete={() => {
-        setProgress({
-          ...progress,
-          completedUnits: Array.from(
-            new Set([...progress.completedUnits, unit.id]),
-          ),
-        });
-        onComplete();
-      }}
+      onComplete={onComplete}
     />
   );
 }

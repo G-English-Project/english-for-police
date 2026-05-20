@@ -9,6 +9,7 @@ import type {
   QuizAttemptResponse,
   ProgressData,
   DashboardSummary,
+  UnitProgress,
 } from "@/models/progress.model";
 import { useSonner } from "@/hooks/use-sonner";
 
@@ -21,6 +22,24 @@ export function useProgress() {
   const [dashboardData, setDashboardData] = useState<DashboardSummary | null>(
     null,
   );
+  const [unitsProgress, setUnitsProgress] = useState<UnitProgress[]>([]);
+
+  const refetchProgressViews = useCallback(async () => {
+    if (!user?.userId) return;
+
+    const [overviewRes, unitsRes] = await Promise.all([
+      progressService.getProgress({
+        userId: user.userId,
+        view: "overview",
+      }),
+      progressService.getProgress({
+        userId: user.userId,
+        view: "units",
+      }),
+    ]);
+    setDashboardData(overviewRes.overview);
+    setUnitsProgress(unitsRes.units ?? []);
+  }, [user?.userId]);
 
   const submitAttempt = async (
     data: QuizAttemptRequest,
@@ -29,6 +48,7 @@ export function useProgress() {
     setError(null);
     try {
       const result = await progressService.submitAttempt(data);
+      await refetchProgressViews();
       notifySuccess("Nộp bài thành công", "Kết quả đã được cập nhật.");
       return result;
     } catch (err) {
@@ -90,13 +110,39 @@ export function useProgress() {
     }
   }, [notifyError, user]);
 
+  const fetchUnitsProgress = useCallback(async () => {
+    if (!user?.userId) return;
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await progressService.getProgress({
+        userId: user.userId,
+        view: "units",
+      });
+      const units = data.units ?? [];
+      setUnitsProgress(units);
+      return units;
+    } catch (err) {
+      const apiError = err as { message?: string };
+      const message = apiError.message || "Không thể tải lộ trình học.";
+      setError(message);
+      notifyError("Tải lộ trình thất bại", message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [notifyError, user]);
+
   return {
     isLoading,
     error,
     progressData,
     dashboardData,
+    unitsProgress,
     submitAttempt,
     fetchProgress,
     fetchDashboard,
+    fetchUnitsProgress,
+    refetchProgressViews,
   };
 }

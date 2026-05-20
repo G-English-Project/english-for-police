@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { DailyTask, FlaggedItem, Unit, UserProgress } from "@/types";
+import type { DailyTask, FlaggedItem, Unit } from "@/types";
 import { fetchLessons } from "@/lib/lessonApi";
 import { loadSeedLessons } from "@/lib/seed-lessons";
 import { useSonner } from "@/hooks/use-sonner";
@@ -19,11 +19,6 @@ function readStoredLessons(): Unit[] {
 export function useAppState() {
   const { notifyError, notifyWarning } = useSonner();
   const [lessons, setLessons] = useState<Unit[]>(readStoredLessons);
-
-  const [progress, setProgress] = useState<UserProgress>(() => {
-    const saved = localStorage.getItem("police_english_progress");
-    return saved ? JSON.parse(saved) : { completedUnits: [], scores: {} };
-  });
 
   const [flaggedItems, setFlaggedItems] = useState<FlaggedItem[]>(() => {
     const saved = localStorage.getItem("police_english_flagged");
@@ -123,9 +118,6 @@ export function useAppState() {
   }, [notifyError, notifyWarning]);
 
   useEffect(() => {
-    localStorage.setItem("police_english_progress", JSON.stringify(progress));
-  }, [progress]);
-  useEffect(() => {
     localStorage.setItem("police_english_lessons", JSON.stringify(lessons));
   }, [lessons]);
   useEffect(() => {
@@ -183,8 +175,6 @@ export function useAppState() {
   return {
     lessons,
     setLessons,
-    progress,
-    setProgress,
     flaggedItems,
     setFlaggedItems,
     dailyTasks,

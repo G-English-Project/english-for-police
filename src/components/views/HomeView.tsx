@@ -18,11 +18,16 @@ import {
   Target,
   Loader2,
 } from "lucide-react";
-import type { Unit, UserProgress, FlaggedItem, DailyTask } from "@/types";
+import type { Unit, FlaggedItem, DailyTask } from "@/types";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProgress } from "@/hooks/use-progress";
+import {
+  isUnitCompleted,
+  unitProgressByNumber,
+  unitProgressPercent,
+} from "@/lib/unit-progress";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useUsers } from "@/hooks/use-users";
@@ -30,7 +35,6 @@ import { StreakLeaderboardCard } from "@/components/dashboard/StreakLeaderboardC
 
 interface HomeViewProps {
   lessons: Unit[];
-  progress: UserProgress;
   flaggedItems: FlaggedItem[];
   dailyTasks: DailyTask;
   onSelectUnit: (unit: Unit) => void;
@@ -39,7 +43,6 @@ interface HomeViewProps {
 
 export const HomeView: React.FC<HomeViewProps> = ({
   lessons,
-  progress,
   flaggedItems,
   dailyTasks,
   onSelectUnit,
@@ -48,6 +51,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const {
     dashboardData,
     fetchDashboard,
+    fetchUnitsProgress,
+    unitsProgress,
     isLoading: isDashboardLoading,
   } = useProgress();
 
@@ -97,18 +102,26 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   useEffect(() => {
     fetchDashboard();
+    fetchUnitsProgress();
     if (user?.userId) {
       fetchUserById(user.userId);
       fetchUserContributions(user.userId);
     }
-  }, [fetchDashboard, fetchUserContributions, fetchUserById, user?.userId]);
+  }, [
+    fetchDashboard,
+    fetchUnitsProgress,
+    fetchUserContributions,
+    fetchUserById,
+    user?.userId,
+  ]);
+
+  const unitsByNumber = useMemo(
+    () => unitProgressByNumber(unitsProgress),
+    [unitsProgress],
+  );
 
   const completedCount = dailyTasks.tasks.filter((t) => t.completed).length;
-  const overallProgress =
-    dashboardData?.completionPercent ??
-    (lessons.length > 0
-      ? Math.round((progress.completedUnits.length / lessons.length) * 100)
-      : 0);
+  const overallProgress = dashboardData?.completionPercent ?? 0;
 
   const displayedTasks = [...dailyTasks.tasks].sort((a, b) => {
     const hash = (value: string) => {
@@ -217,11 +230,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
 
         <div className="flex flex-col gap-4">
-          {lessons.map((unit) => (
+          {lessons.map((unit) => {
+            const unitProgress = unitsByNumber.get(unit.id);
+            const percent = unitProgressPercent(unitProgress);
+            const completed = isUnitCompleted(unitProgress);
+
+            return (
             <Card
               key={unit.id}
               className={`group cursor-pointer border-2 transition-all hover:shadow-xl hover:-translate-y-1 ${
-                progress.completedUnits.includes(unit.id)
+                completed
                   ? "border-emerald-100 bg-emerald-50/10"
                   : "border-slate-100 bg-white hover:border-primary/30"
               }`}
@@ -234,7 +252,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded uppercase">
                         Chương {unit.id}
                       </span>
-                      {progress.completedUnits.includes(unit.id) && (
+                      {completed && (
                         <Check className="h-3 w-3 text-emerald-500" />
                       )}
                     </div>
@@ -252,24 +270,23 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     <span className="text-slate-400">Hoàn thành</span>
                     <span
                       className={
-                        progress.completedUnits.includes(unit.id)
+                        completed
                           ? "text-emerald-600"
                           : "text-slate-400"
                       }
                     >
-                      {progress.completedUnits.includes(unit.id)
-                        ? "100%"
-                        : "0%"}
+                      {percent}%
                     </span>
                   </div>
                   <Progress
-                    value={progress.completedUnits.includes(unit.id) ? 100 : 0}
-                    className={`h-1 ${progress.completedUnits.includes(unit.id) ? "bg-emerald-100 [&>div]:bg-emerald-500" : "bg-slate-100"}`}
+                    value={percent}
+                    className={`h-1 ${completed ? "bg-emerald-100 [&>div]:bg-emerald-500" : "bg-slate-100"}`}
                   />
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       </div>
 
