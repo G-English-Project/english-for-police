@@ -179,6 +179,24 @@ export const LessonView: React.FC<LessonViewProps> = ({
     scrollLockUntilRef.current = Date.now() + 1500;
     setSelectedPhraseSubId(id);
     setActiveSection(`phrases-${id}`);
+
+    const scrollToPhraseSub = () => {
+      const anchor =
+        document.getElementById(`phrases-${id}`) ??
+        document.querySelector<HTMLElement>(`[data-phrase-anchor="${id}"]`);
+      if (!anchor) {
+        scrollToSection("phrases");
+        return;
+      }
+      const headerOffset = 100;
+      const top =
+        anchor.getBoundingClientRect().top + window.pageYOffset - headerOffset;
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    };
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(scrollToPhraseSub);
+    });
   };
 
   useEffect(() => {
@@ -224,6 +242,29 @@ export const LessonView: React.FC<LessonViewProps> = ({
     return () => observer.disconnect();
   }, [unit.id]);
 
+  const shortcutButtons = (
+    <LessonShortcutButtons
+      unit={unit}
+      practiceQuestions={practiceQuestions}
+      testsLocked={testsLocked}
+      availableLanes={availableLanes}
+      onStartFlashcards={startFlashcards}
+      onStartGeneralTest={startGeneralTest}
+      onStartVocabDrill={(drill) => {
+        const lane = drill === "matching" ? "MATCHING" : "VOCAB_MCQ";
+        navigate(
+          `/generaltest/${unit.id}?lane=${encodeURIComponent(lane)}&vocabDrill=${drill}`,
+        );
+      }}
+    />
+  );
+
+  const shortcutsCard = (
+    <div className="overflow-hidden rounded-md border bg-card police-shadow">
+      <div className="p-4">{shortcutButtons}</div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col items-start gap-8 lg:flex-row">
       {/* Sticky TOC — left */}
@@ -239,27 +280,11 @@ export const LessonView: React.FC<LessonViewProps> = ({
         />
       </aside>
 
-      {/* Main: shortcuts (dưới mục lục) rồi nội dung bài */}
-      <div className="min-w-0 max-w-full flex-1 space-y-8 overflow-x-hidden pb-24 lg:space-y-12">
-        <div className="overflow-hidden rounded-md border bg-card police-shadow">
-          <div className="p-4">
-            <LessonShortcutButtons
-              unit={unit}
-              practiceQuestions={practiceQuestions}
-              testsLocked={testsLocked}
-              availableLanes={availableLanes}
-              onStartFlashcards={startFlashcards}
-              onStartGeneralTest={startGeneralTest}
-              onStartVocabDrill={(drill) => {
-                const lane = drill === "matching" ? "MATCHING" : "VOCAB_MCQ";
-                navigate(
-                  `/generaltest/${unit.id}?lane=${encodeURIComponent(lane)}&vocabDrill=${drill}`,
-                );
-              }}
-            />
-          </div>
-        </div>
+      {/* Shortcuts — mobile only: below TOC, above lesson content */}
+      <aside className="w-full shrink-0 lg:hidden">{shortcutsCard}</aside>
 
+      {/* Main Content Area */}
+      <div className="min-w-0 max-w-full flex-1 space-y-12 overflow-x-hidden pb-24">
         <LessonVocabularySection
           unit={unit}
           flaggedItems={flaggedItems}
@@ -285,6 +310,11 @@ export const LessonView: React.FC<LessonViewProps> = ({
           }
         />
       </div>
+
+      {/* Sticky shortcuts — desktop: right column */}
+      <aside className="hidden w-full shrink-0 lg:sticky lg:top-20 lg:block lg:w-64 lg:self-start">
+        {shortcutsCard}
+      </aside>
     </div>
   );
 };
