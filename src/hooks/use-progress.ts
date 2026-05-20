@@ -10,6 +10,7 @@ import type {
   ProgressData,
   DashboardSummary,
   UnitProgress,
+  FlashcardViewItem,
 } from "@/models/progress.model";
 import { useSonner } from "@/hooks/use-sonner";
 
@@ -40,6 +41,47 @@ export function useProgress() {
     setDashboardData(overviewRes.overview);
     setUnitsProgress(unitsRes.units ?? []);
   }, [user?.userId]);
+
+  const markFlashcardViews = useCallback(
+    async (
+      unitNumber: number,
+      cards: FlashcardViewItem[],
+    ): Promise<UnitProgress | null> => {
+      if (!user?.userId || cards.length === 0) return null;
+
+      try {
+        const updated = await progressService.markFlashcardViews({
+          unitNumber,
+          cards,
+        });
+        setUnitsProgress((prev) => {
+          const next = [...prev];
+          const idx = next.findIndex((u) => u.unitNumber === unitNumber);
+          if (idx >= 0) {
+            next[idx] = updated;
+          } else {
+            next.push(updated);
+          }
+          return next;
+        });
+        const [overviewRes] = await Promise.all([
+          progressService.getProgress({
+            userId: user.userId,
+            view: "overview",
+          }),
+        ]);
+        setDashboardData(overviewRes.overview);
+        return updated;
+      } catch (err) {
+        const apiError = err as { message?: string };
+        const message =
+          apiError.message || "Không thể lưu tiến độ flashcard.";
+        notifyError("Lưu tiến độ thất bại", message);
+        return null;
+      }
+    },
+    [notifyError, user?.userId],
+  );
 
   const submitAttempt = async (
     data: QuizAttemptRequest,
@@ -140,6 +182,7 @@ export function useProgress() {
     dashboardData,
     unitsProgress,
     submitAttempt,
+    markFlashcardViews,
     fetchProgress,
     fetchDashboard,
     fetchUnitsProgress,

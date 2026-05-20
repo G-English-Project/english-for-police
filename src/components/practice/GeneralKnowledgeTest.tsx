@@ -89,10 +89,14 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
 
   const subLessonIdParam = searchParams.get("subId")?.trim() || null;
 
-  /** Kiểm tra tổng quát — không luyện theo lane / tiểu mục / vocab drill. */
-  const isGeneralUnitCompletionTest = useMemo(
-    () => !focusedLane && !vocabDrill && !subLessonIdParam,
-    [focusedLane, vocabDrill, subLessonIdParam],
+  /** Kiểm tra tổng quát chương (không luyện theo lane / tiểu mục / drill). */
+  const isChapterGeneralTest = useMemo(
+    () =>
+      mode === "unit" &&
+      !focusedLane &&
+      !vocabDrill &&
+      !subLessonIdParam,
+    [mode, focusedLane, vocabDrill, subLessonIdParam],
   );
 
   const effectiveLane = testMode === "type" ? focusedLane : null;
@@ -388,7 +392,6 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
         await submitAttempt({
           unitNumber: Number(unitNumber),
           answers,
-          ...(isGeneralUnitCompletionTest ? { testType: "GENERAL" } : {}),
         });
       }
 
@@ -410,7 +413,6 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     notifyError,
     submitAttempt,
     setShowResults,
-    isGeneralUnitCompletionTest,
   ]);
 
   const handleBack = () => {
@@ -602,7 +604,16 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
         userAnswers={getCombinedAnswers()}
         onBack={handleBack}
         onReview={() => setIsReviewMode(true)}
-        title="KẾT QUẢ LUYỆN TẬP"
+        title={
+          isChapterGeneralTest
+            ? "KẾT QUẢ KIỂM TRA TỔNG QUÁT"
+            : "KẾT QUẢ LUYỆN TẬP"
+        }
+        subtitle={
+          isChapterGeneralTest
+            ? "Điểm bài kiểm tra không quy đổi % hoàn thành chương. Tiến độ chương theo flashcard trên Lộ trình học."
+            : undefined
+        }
       />
     );
   }

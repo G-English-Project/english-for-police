@@ -12,6 +12,7 @@ interface PracticeResultsProps {
   onBack: () => void;
   onReview?: () => void;
   title?: string;
+  subtitle?: string;
 }
 
 export const PracticeResults: React.FC<PracticeResultsProps> = ({
@@ -22,6 +23,7 @@ export const PracticeResults: React.FC<PracticeResultsProps> = ({
   onBack,
   onReview,
   title = "KẾT QUẢ BÀI LÀM",
+  subtitle,
 }) => {
   const isCorrect = (q: Question) => {
     const ans = userAnswers[q.id];
@@ -58,6 +60,11 @@ export const PracticeResults: React.FC<PracticeResultsProps> = ({
           <h2 className="text-3xl font-heading font-black text-white uppercase tracking-widest">
             {title}
           </h2>
+          {subtitle && (
+            <p className="mt-3 text-sm text-white/85 max-w-md mx-auto leading-relaxed">
+              {subtitle}
+            </p>
+          )}
           <div className="mt-5 inline-flex flex-col items-center justify-center h-28 w-28 rounded-full bg-white/10 border-4 border-white/20">
             <span className="text-4xl font-black text-white">{score}%</span>
             <span className="text-[10px] font-bold text-white/70">

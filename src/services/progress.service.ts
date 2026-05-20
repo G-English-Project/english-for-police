@@ -6,6 +6,8 @@ import type {
   ProgressData,
   ProgressResponse,
   StreakLeaderboardItem,
+  MarkFlashcardViewsRequest,
+  UnitProgress,
 } from "@/models/progress.model";
 
 export interface ProgressFilters {
@@ -51,4 +53,13 @@ export const progressService = {
     return response.data;
   },
 
+  markFlashcardViews: async (
+    data: MarkFlashcardViewsRequest,
+  ): Promise<UnitProgress> => {
+    const response = await api.post<ProgressResponse<UnitProgress>>(
+      API_ROUTES.PROGRESS.FLASHCARD_VIEWS,
+      data,
+    );
+    return response.data;
+  },
 };

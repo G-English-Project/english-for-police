@@ -19,3 +19,15 @@ export function unitProgressByNumber(
 ): Map<number, UnitProgress> {
   return new Map((units ?? []).map((u) => [u.unitNumber, u]));
 }
+
+export function unitFlashcardCounts(
+  unit: UnitProgress | undefined,
+): { viewed: number; total: number } | null {
+  if (!unit || typeof unit.flashcardsTotal !== "number") {
+    return null;
+  }
+  return {
+    viewed: unit.flashcardsViewed ?? 0,
+    total: unit.flashcardsTotal,
+  };
+}
