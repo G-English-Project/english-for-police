@@ -72,7 +72,7 @@ function catalogToDeckCards(
     deckMode === "vocabulary" ? "VOCAB" : "PHRASE";
   return catalog
     .filter((item) => item.cardKind === kind)
-    .map((item) => {
+    .map((item): DeckCard | null => {
       if (item.cardKind === "VOCAB") {
         const v = vocabularyFromCardKey(unit, item.cardKey);
         if (!v) return null;
