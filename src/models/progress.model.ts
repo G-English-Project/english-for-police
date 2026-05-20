@@ -3,13 +3,25 @@ export interface QuizAnswer {
   answer: string;
 }
 
+/** Lịch sử attempt; BE không dùng để hoàn thành chương. */
 export type ProgressTestType = "GENERAL";
 
 export interface QuizAttemptRequest {
   unitNumber: number;
   answers: QuizAnswer[];
-  /** Chỉ gửi với bài kiểm tra tổng quát (≥80% mới hoàn thành chương). */
   testType?: ProgressTestType;
+}
+
+export type FlashcardCardKind = "VOCAB" | "PHRASE";
+
+export interface FlashcardViewItem {
+  cardKey: string;
+  cardKind: FlashcardCardKind;
+}
+
+export interface MarkFlashcardViewsRequest {
+  unitNumber: number;
+  cards: FlashcardViewItem[];
 }
 
 export interface TypeScore {
@@ -28,6 +40,8 @@ export interface UnitProgress {
   unitTitle?: string;
   status: string;
   progressPercent: number;
+  flashcardsViewed?: number;
+  flashcardsTotal?: number;
   attemptCount: number;
   bestScore: number;
   latestScore: number;

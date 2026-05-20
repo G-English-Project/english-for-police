@@ -239,23 +239,27 @@ export function AppRouter() {
             <Route
               path="/flashcards/:unitId"
               element={
-                <FlashcardReviewPage
-                  lessons={lessons}
-                  flashcardRound={flashcardRound}
-                  onBack={navigateToLesson}
-                  onComplete={(summary) => {
-                    setFlashcardSummary(summary);
-                    const { unitId } = parseUnitIdFromPath(location.pathname);
-                    navigate(`/flashcards/${unitId}/results`);
-                    updateDailyTask("vocab", summary.knownCount);
-                  }}
-                />
+                <RequireAuthForLessonTests>
+                  <FlashcardReviewPage
+                    lessons={lessons}
+                    flashcardRound={flashcardRound}
+                    onBack={navigateToLesson}
+                    onComplete={(summary) => {
+                      setFlashcardSummary(summary);
+                      const { unitId } =
+                        parseUnitIdFromPath(location.pathname);
+                      navigate(`/flashcards/${unitId}/results`);
+                      updateDailyTask("vocab", summary.knownCount);
+                    }}
+                  />
+                </RequireAuthForLessonTests>
               }
             />
             <Route
               path="/flashcards/:unitId/results"
               element={
-                <FlashcardResultsPage
+                <RequireAuthForLessonTests>
+                  <FlashcardResultsPage
                   lessons={lessons}
                   flashcardSummary={flashcardSummary}
                   onBack={navigateToLesson}
@@ -279,6 +283,7 @@ export function AppRouter() {
                     });
                   }}
                 />
+                </RequireAuthForLessonTests>
               }
             />
             <Route

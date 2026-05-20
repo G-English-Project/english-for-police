@@ -28,10 +28,13 @@ export const API_ROUTES = {
       `/api/v1/lessons/${unitNumber}/structures/${id}`,
     TEST_BANK: (unitNumber: number) =>
       `/api/v1/lessons/${unitNumber}/tests/bank`,
+    FLASHCARDS: (unitNumber: number) =>
+      `/api/v1/lessons/${unitNumber}/flashcards`,
   },
   PROGRESS: {
     SUBMIT_ATTEMPT: "/api/v1/progress/attempts",
     GET_PROGRESS: "/api/v1/progress",
+    FLASHCARD_VIEWS: "/api/v1/progress/flashcards/views",
     LEADERBOARD_STREAKS: "/api/v1/progress/leaderboard/streaks",
   },
   PRACTICE: {

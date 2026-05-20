@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { useProgress } from "@/hooks/use-progress";
 import {
   isUnitCompleted,
+  unitFlashcardCounts,
   unitProgressByNumber,
   unitProgressPercent,
 } from "@/lib/unit-progress";
@@ -234,6 +235,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             const unitProgress = unitsByNumber.get(unit.id);
             const percent = unitProgressPercent(unitProgress);
             const completed = isUnitCompleted(unitProgress);
+            const flashCounts = unitFlashcardCounts(unitProgress);
 
             return (
             <Card
@@ -267,7 +269,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                    <span className="text-slate-400">Hoàn thành</span>
+                    <span className="text-slate-400">Flashcard</span>
                     <span
                       className={
                         completed
@@ -278,6 +280,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       {percent}%
                     </span>
                   </div>
+                  {flashCounts && flashCounts.total > 0 && (
+                    <p className="text-[9px] text-slate-400 font-medium">
+                      Đã xem {flashCounts.viewed}/{flashCounts.total} thẻ
+                    </p>
+                  )}
                   <Progress
                     value={percent}
                     className={`h-1 ${completed ? "bg-emerald-100 [&>div]:bg-emerald-500" : "bg-slate-100"}`}

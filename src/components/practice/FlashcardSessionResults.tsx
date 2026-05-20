@@ -35,6 +35,15 @@ export const FlashcardSessionResults: React.FC<
           <p className="text-white/80 font-medium">
             Bài {summary.unitId}: {summary.unitTitle}
           </p>
+          {typeof summary.chapterFlashcardsTotal === "number" &&
+            summary.chapterFlashcardsTotal > 0 && (
+              <p className="text-white/70 text-sm mt-3">
+                Tiến độ chương (flashcard):{" "}
+                {summary.chapterFlashcardsViewed ?? 0}/
+                {summary.chapterFlashcardsTotal} thẻ ·{" "}
+                {summary.chapterProgressPercent ?? 0}%
+              </p>
+            )}
           <div className="mt-8 inline-flex flex-col items-center justify-center h-40 w-40 rounded-full bg-white/10 backdrop-blur-md border-4 border-white/20">
             <span className="text-5xl font-black">
               {summary.currentKnownRate}%

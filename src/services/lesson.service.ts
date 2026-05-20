@@ -12,6 +12,7 @@ import {
   unitToLessonApiBody,
 } from "@/lib/lessons/lesson-payload";
 import { practiceQuestionService } from "@/services/practice-question.service";
+import type { FlashcardCatalogItem } from "@/lib/flashcard-keys";
 import {
   filterQuestionsByLane,
   isLessonTestLane,
@@ -36,6 +37,15 @@ export const lessonService = {
       API_ROUTES.LESSONS.DETAIL(unitNumber),
     );
     return normalizeLessonFromApi(response.data);
+  },
+
+  getFlashcardCatalog: async (
+    unitNumber: number,
+  ): Promise<FlashcardCatalogItem[]> => {
+    const response = await api.get<ApiResponse<FlashcardCatalogItem[]>>(
+      API_ROUTES.LESSONS.FLASHCARDS(unitNumber),
+    );
+    return response.data;
   },
 
   /** ADMIN + JWT: practice answers included for edit forms. */
