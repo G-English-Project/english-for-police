@@ -140,7 +140,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               <h1 className="flex items-center gap-2 text-sm font-heading font-bold tracking-tight text-white transition-colors group-hover:text-secondary sm:text-lg">
                 <div className="shrink-0 rounded-lg bg-white/20 p-1">
                   <img
-                    src="/police.png"
+                    src="/logo.jpg"
                     alt="Police"
                     className="h-6 w-6 rounded-sm object-cover"
                   />
