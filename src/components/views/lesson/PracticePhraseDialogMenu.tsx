@@ -19,7 +19,7 @@ export function PracticePhraseDialogMenu({
 
   if (types.length === 0) {
     return (
-      <p className="px-2 py-6 text-center text-sm italic text-muted-foreground">
+      <p className="px-2 py-4 text-center text-xs italic text-muted-foreground sm:py-6 sm:text-sm">
         {emptyMessage}
       </p>
     );

@@ -56,7 +56,9 @@ export function PracticeMenuRow({
       disabled={disabled && !isExpandable}
       className={cn(
         "w-full justify-between transition-all",
-        isDialog ? "h-11 rounded-lg px-4 text-sm" : "h-8 px-2 text-[11px]",
+        isDialog
+          ? "h-10 rounded-lg px-3.5 text-sm sm:h-11 sm:px-4"
+          : "h-8 px-2 text-[11px]",
         depth === 0
           ? "font-semibold text-primary hover:text-primary"
           : depth === 1 && label.includes("—")

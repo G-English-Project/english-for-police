@@ -108,7 +108,7 @@ export function AuthDialogs({
                     htmlFor="email"
                     className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-focus-within:text-primary transition-colors"
                   >
-                    Email công vụ
+                    Email
                   </Label>
                   <div className="relative tactical-border">
                     <Mail className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

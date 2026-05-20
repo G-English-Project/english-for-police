@@ -401,14 +401,14 @@ export const LessonPhrasesSection: React.FC<LessonPhrasesSectionProps> = ({
           if (!open) setPracticeDialogGroup(null);
         }}
       >
-        <DialogContent className="max-w-md gap-0 overflow-hidden rounded-xl border-none p-0 police-shadow sm:max-w-md">
-          <DialogHeader className="primary-gradient gap-2 rounded-none border-0 px-6 py-5 text-white">
-            <div className="flex items-start justify-between gap-3">
+        <DialogContent className="max-w-[min(100%,20.5rem)] gap-0 overflow-hidden rounded-xl border-none p-0 police-shadow sm:max-w-md">
+          <DialogHeader className="primary-gradient gap-1.5 rounded-none border-0 px-5 py-3.5 text-white sm:gap-2 sm:px-6 sm:py-5">
+            <div className="flex items-start justify-between gap-2 pr-6 sm:gap-3 sm:pr-0">
               <div className="min-w-0 space-y-1 text-left">
-                <DialogTitle className="text-xl font-heading font-black text-white">
+                <DialogTitle className="text-lg font-heading font-black leading-tight text-white sm:text-xl">
                   Luyện tập
                 </DialogTitle>
-                <DialogDescription className="text-sm text-white/85">
+                <DialogDescription className="line-clamp-2 text-xs leading-snug text-white/85 sm:text-sm">
                   {practiceDialogGroup ? (
                     <>
                       Phần{" "}
@@ -422,13 +422,13 @@ export const LessonPhrasesSection: React.FC<LessonPhrasesSectionProps> = ({
                 </DialogDescription>
               </div>
               <Sparkles
-                className="h-10 w-10 shrink-0 text-white/25"
+                className="h-7 w-7 shrink-0 text-white/25 sm:h-9 sm:w-9"
                 aria-hidden
               />
             </div>
           </DialogHeader>
 
-          <div className="p-4">
+          <div className="p-3 sm:p-4">
             {practiceDialogGroup ? (
               <PracticePhraseDialogMenu
                 availableLabels={dialogPhraseLabels}
