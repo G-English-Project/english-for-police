@@ -35,7 +35,9 @@ export function useQuestionAnswers(questions: Question[]) {
         );
       }
       if (q.type === "Arrangement") {
-        return (arrangementAnswers[q.id] || []).length > 0;
+        const selected = arrangementAnswers[q.id] || [];
+        const required = q.options?.length ?? 0;
+        return required > 0 && selected.length === required;
       }
       return (
         typeof answers[q.id] === "string" &&
@@ -104,6 +106,13 @@ export function useQuestionAnswers(questions: Question[]) {
     setSelectedLeft({});
   }, []);
 
+  const areAllQuestionsAnswered = useCallback(
+    (questionList: Question[]) =>
+      questionList.length > 0 &&
+      questionList.every((q) => isQuestionAnswered(q)),
+    [isQuestionAnswered],
+  );
+
   return {
     answers,
     setAnswers,
@@ -115,6 +124,7 @@ export function useQuestionAnswers(questions: Question[]) {
     setSelectedLeft,
     matchingRightOptionsByQuestionId,
     isQuestionAnswered,
+    areAllQuestionsAnswered,
     calculateCorrectCount,
     getCombinedAnswers,
     resetAnswers,

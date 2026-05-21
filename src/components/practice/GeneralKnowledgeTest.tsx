@@ -91,11 +91,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
 
   /** Kiểm tra tổng quát chương (không luyện theo lane / tiểu mục / drill). */
   const isChapterGeneralTest = useMemo(
-    () =>
-      mode === "unit" &&
-      !focusedLane &&
-      !vocabDrill &&
-      !subLessonIdParam,
+    () => mode === "unit" && !focusedLane && !vocabDrill && !subLessonIdParam,
     [mode, focusedLane, vocabDrill, subLessonIdParam],
   );
 
@@ -137,10 +133,16 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     sectionResults,
     setSectionResults,
     isQuestionAnswered,
+    areAllQuestionsAnswered,
     calculateScore,
     getCombinedAnswers,
     resetBaseState,
   } = useGeneralTestState(scopedQuestions);
+
+  const allQuestionsAnswered = useMemo(
+    () => areAllQuestionsAnswered(scopedQuestions),
+    [areAllQuestionsAnswered, scopedQuestions],
+  );
 
   const { submitAttempt, isLoading: isSubmitting } = useProgress();
   const { notifyError } = useSonner();
@@ -149,7 +151,8 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     const loadQuestions = async () => {
       setIsLoadingQuestions(true);
       try {
-        const unit = mode === "unit" && lessons.length === 1 ? lessons[0] : null;
+        const unit =
+          mode === "unit" && lessons.length === 1 ? lessons[0] : null;
 
         if (unit && vocabDrill) {
           const sources =
@@ -182,7 +185,10 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
         if (unit && effectiveLane && !vocabDrill) {
           let fetched: Question[] = [];
           try {
-            fetched = await lessonService.getLessonTests(unit.id, effectiveLane);
+            fetched = await lessonService.getLessonTests(
+              unit.id,
+              effectiveLane,
+            );
           } catch {
             fetched = [];
           }
@@ -193,17 +199,18 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
               fetched = bySub;
             } else {
               try {
-                const fromPractice = await practiceQuestionService.getQuestions({
-                  unitNumbers: [unit.id],
-                  sources: ["practice"],
-                  subLessonId: subLessonIdParam,
-                });
+                const fromPractice = await practiceQuestionService.getQuestions(
+                  {
+                    unitNumbers: [unit.id],
+                    sources: ["practice"],
+                    subLessonId: subLessonIdParam,
+                  },
+                );
                 const laneFiltered = filterQuestionsByLane(
                   fromPractice,
                   effectiveLane,
                 );
-                fetched =
-                  laneFiltered.length > 0 ? laneFiltered : fromPractice;
+                fetched = laneFiltered.length > 0 ? laneFiltered : fromPractice;
               } catch {
                 fetched = [];
               }
@@ -337,6 +344,13 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
   /** Một lần nộp toàn bài → chấm mọi phần, gửi API, màn kết quả. */
   const handleSubmitPractice = useCallback(async () => {
     if (scopedQuestions.length === 0 || sections.length === 0) return;
+    if (!areAllQuestionsAnswered(scopedQuestions)) {
+      notifyError(
+        "Chưa thể nộp bài",
+        "Vui lòng hoàn thành tất cả câu hỏi trong mọi phần trước khi nộp.",
+      );
+      return;
+    }
 
     const nextResults: Record<number, SectionResult> = {};
     sections.forEach((section, idx) => {
@@ -436,6 +450,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     focusedLane,
     subLessonIdParam,
     testMode,
+    areAllQuestionsAnswered,
   ]);
 
   const handleBack = () => {
@@ -502,6 +517,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
         ? {
             onSubmit: () => void handleSubmitPractice(),
             submitting: isSubmitting,
+            canSubmit: allQuestionsAnswered,
           }
         : undefined,
   };
@@ -672,7 +688,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
         <GeneralTestSectionSidebar
           vm={sectionSidebarVm}
           actions={sectionSidebarActions}
-          hideSectionSubmit={isReviewMode}
+          hideSectionSubmit
         />
 
         <div className="flex-1 w-full space-y-6">

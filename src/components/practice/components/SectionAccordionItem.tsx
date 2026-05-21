@@ -196,16 +196,14 @@ export const SectionAccordionItem: React.FC<SectionAccordionItemProps> = ({
             <Button
               size="sm"
               className={`w-full h-10 text-[11px] font-black rounded-xl transition-all ${isActive ? "primary-gradient police-shadow" : "bg-muted text-muted-foreground opacity-60"}`}
-              disabled={!isActive || isSubmitting}
+              disabled={!isActive || isSubmitting || !progress.isComplete}
               onClick={(e) => {
                 e.stopPropagation();
                 onSubmit();
               }}
             >
               {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  ĐANG NỘP...
-                </span>
+                <span className="flex items-center gap-2">ĐANG NỘP...</span>
               ) : result?.submitted ? (
                 "NỘP LẠI PHẦN NÀY"
               ) : (

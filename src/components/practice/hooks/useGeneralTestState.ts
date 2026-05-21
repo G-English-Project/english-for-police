@@ -15,6 +15,7 @@ export function useGeneralTestState(questions: Question[]) {
     setSelectedLeft,
     matchingRightOptionsByQuestionId,
     isQuestionAnswered,
+    areAllQuestionsAnswered,
     calculateCorrectCount,
     getCombinedAnswers,
     resetAnswers,
@@ -22,16 +23,24 @@ export function useGeneralTestState(questions: Question[]) {
 
   const [showResults, setShowResults] = useState(false);
   const [overallScore, setOverallScore] = useState(0);
-  const [sectionResults, setSectionResults] = useState<Record<number, SectionResult>>({});
+  const [sectionResults, setSectionResults] = useState<
+    Record<number, SectionResult>
+  >({});
 
-  const calculateScore = useCallback((questionList: Question[]) => {
-    const correctCount = calculateCorrectCount(questionList);
-    return {
-      correctCount,
-      total: questionList.length,
-      score: questionList.length > 0 ? Math.round((correctCount / questionList.length) * 100) : 0,
-    };
-  }, [calculateCorrectCount]);
+  const calculateScore = useCallback(
+    (questionList: Question[]) => {
+      const correctCount = calculateCorrectCount(questionList);
+      return {
+        correctCount,
+        total: questionList.length,
+        score:
+          questionList.length > 0
+            ? Math.round((correctCount / questionList.length) * 100)
+            : 0,
+      };
+    },
+    [calculateCorrectCount],
+  );
 
   const resetBaseState = useCallback(() => {
     resetAnswers();
@@ -57,6 +66,7 @@ export function useGeneralTestState(questions: Question[]) {
     sectionResults,
     setSectionResults,
     isQuestionAnswered,
+    areAllQuestionsAnswered,
     calculateScore,
     getCombinedAnswers,
     resetBaseState,

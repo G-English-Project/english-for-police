@@ -27,6 +27,7 @@ export interface GeneralTestQuestionPanelViewModel {
   inlineSubmit?: {
     onSubmit: () => void;
     submitting: boolean;
+    canSubmit: boolean;
   };
 }
 
@@ -168,10 +169,14 @@ export const GeneralTestQuestionPanel: React.FC<
             type="button"
             size="lg"
             className="w-full font-black text-sm primary-gradient police-shadow"
-            disabled={inlineSubmit.submitting}
+            disabled={inlineSubmit.submitting || !inlineSubmit.canSubmit}
             onClick={inlineSubmit.onSubmit}
           >
-            {inlineSubmit.submitting ? "Đang nộp…" : "Nộp bài"}
+            {inlineSubmit.submitting
+              ? "Đang nộp…"
+              : inlineSubmit.canSubmit
+                ? "Nộp bài"
+                : "Nộp bài (làm hết câu hỏi)"}
           </Button>
         </div>
       ) : null}

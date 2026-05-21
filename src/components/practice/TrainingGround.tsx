@@ -45,6 +45,7 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
     setSelectedLeft,
     matchingRightOptionsByQuestionId,
     isQuestionAnswered,
+    areAllQuestionsAnswered,
     calculateCorrectCount,
     getCombinedAnswers,
   } = useQuestionAnswers(questions);
@@ -81,6 +82,13 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
   }, [notifyError, unit.id]);
 
   const handleFinish = useCallback(async () => {
+    if (!areAllQuestionsAnswered(questions)) {
+      notifyError(
+        "Chưa thể nộp bài",
+        "Vui lòng hoàn thành tất cả câu hỏi trước khi nộp.",
+      );
+      return;
+    }
     const correctCount = calculateCorrectCount(questions);
     const finalScore = Math.round((correctCount / questions.length) * 100);
     const combinedAnswers = getCombinedAnswers();
@@ -118,6 +126,7 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
       );
     }
   }, [
+    areAllQuestionsAnswered,
     calculateCorrectCount,
     questions,
     getCombinedAnswers,
@@ -142,7 +151,14 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
       setTimeLeft((prev) => {
         if (prev <= 1) {
           if (timerRef.current) clearInterval(timerRef.current);
-          void handleFinish();
+          if (areAllQuestionsAnswered(questions)) {
+            void handleFinish();
+          } else {
+            notifyError(
+              "Hết giờ",
+              "Bạn chưa hoàn thành hết câu hỏi. Vui lòng nộp bài sau khi làm xong.",
+            );
+          }
           return 0;
         }
         return prev - 1;
@@ -151,7 +167,13 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [handleFinish, isLoadingQuestions, questions.length]);
+  }, [
+    areAllQuestionsAnswered,
+    handleFinish,
+    isLoadingQuestions,
+    notifyError,
+    questions,
+  ]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -160,7 +182,7 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
   };
 
   const answeredCount = questions.filter((q) => isQuestionAnswered(q)).length;
-  const allQuestionsAnswered = answeredCount === questions.length;
+  const allQuestionsAnswered = areAllQuestionsAnswered(questions);
 
   if (isLoadingQuestions) {
     return (
@@ -234,6 +256,7 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
               <Button
                 className="w-full h-11 font-bold primary-gradient police-shadow group"
                 disabled={
+                  isSubmitting ||
                   (!isReviewMode && isFinished) ||
                   (!isReviewMode && !allQuestionsAnswered)
                 }

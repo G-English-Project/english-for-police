@@ -60,9 +60,12 @@ export const QuickTest: React.FC<QuickTestProps> = ({
     setSelectedLeft,
     matchingRightOptionsByQuestionId,
     isQuestionAnswered,
+    areAllQuestionsAnswered,
     calculateCorrectCount,
     getCombinedAnswers,
   } = useQuestionAnswers(questions);
+
+  const allQuestionsAnswered = areAllQuestionsAnswered(questions);
 
   const { submitAttempt, isLoading: isSubmitting } = useProgress();
   const { notifyError } = useSonner();
@@ -182,16 +185,19 @@ export const QuickTest: React.FC<QuickTestProps> = ({
             <Button
               size="lg"
               className={`w-full h-16 text-lg font-black rounded-xl primary-gradient police-shadow transition-all ${
-                isReviewMode || questions.every((q) => isQuestionAnswered(q))
+                isReviewMode || allQuestionsAnswered
                   ? "scale-100 opacity-100"
                   : "opacity-50 scale-95"
               }`}
-              disabled={
-                !isReviewMode && !questions.every((q) => isQuestionAnswered(q))
-              }
+              disabled={!isReviewMode && (!allQuestionsAnswered || isSubmitting)}
               onClick={async () => {
                 if (isReviewMode) {
                   setIsReviewMode(false);
+                } else if (!allQuestionsAnswered) {
+                  notifyError(
+                    "Chưa thể nộp bài",
+                    "Vui lòng trả lời hết tất cả câu hỏi trước khi nộp.",
+                  );
                 } else {
                   const combinedAnswers = getCombinedAnswers();
                   const scoreValue = calculateCorrectCount(questions);

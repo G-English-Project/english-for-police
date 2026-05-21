@@ -3,8 +3,9 @@ import { toast } from "sonner";
 
 export const AUTH_SESSION_CHANGED_EVENT = "auth-changed";
 
-const AUTH_TOKEN_KEY = "auth_token";
-const AUTH_USER_KEY = "auth_user";
+const STORAGE_NAMESPACE = "english-for-police";
+const AUTH_TOKEN_KEY = `${STORAGE_NAMESPACE}:session`;
+const AUTH_USER_KEY = `${STORAGE_NAMESPACE}:user`;
 
 const DEFAULT_EXPIRY_LEEWAY_SECONDS = 30;
 
