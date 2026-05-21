@@ -224,7 +224,7 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
                       attempted={practiceCounts.attempted}
                       total={practiceCounts.total}
                       percent={practiceCounts.percent}
-                      detailLabel="Tiểu mục"
+                      detailLabel="Đã làm"
                     />
                   </div>
                 ) : null}
