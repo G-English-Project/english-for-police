@@ -33,6 +33,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useUsers } from "@/hooks/use-users";
 import { StreakLeaderboardCard } from "@/components/dashboard/StreakLeaderboardCard";
+import { UnitRoadmapTrackDetail } from "@/components/dashboard/UnitRoadmapTrackDetail";
 
 interface HomeViewProps {
   lessons: Unit[];
@@ -284,6 +285,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                         hạng mục (flashcard, công cụ, luyện tập)
                       </p>
                     )}
+                    {isAuthenticated ? (
+                      <UnitRoadmapTrackDetail unitProgress={unitProgress} />
+                    ) : null}
                     <Progress
                       value={percent}
                       className={`h-1 ${completed ? "bg-emerald-100 [&>div]:bg-emerald-500" : "bg-slate-100"}`}

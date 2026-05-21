@@ -42,10 +42,18 @@ export const lessonService = {
   getFlashcardCatalog: async (
     unitNumber: number,
   ): Promise<FlashcardCatalogItem[]> => {
-    const response = await api.get<ApiResponse<FlashcardCatalogItem[]>>(
-      API_ROUTES.LESSONS.FLASHCARDS(unitNumber),
-    );
-    return response.data;
+    try {
+      const response = await api.get<ApiResponse<FlashcardCatalogItem[]>>(
+        API_ROUTES.LESSONS.FLASHCARDS(unitNumber),
+      );
+      return response.data ?? [];
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      if (status === 404) {
+        return [];
+      }
+      throw err;
+    }
   },
 
   /** ADMIN + JWT: practice answers included for edit forms. */

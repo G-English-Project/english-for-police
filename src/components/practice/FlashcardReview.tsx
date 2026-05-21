@@ -123,6 +123,10 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
   const pendingViewsRef = useRef<Map<string, FlashcardViewItem>>(new Map());
   const syncedViewKeysRef = useRef<Set<string>>(new Set());
   const flushInFlightRef = useRef(false);
+  const markActionLockRef = useRef(false);
+  const sessionFinishedRef = useRef(false);
+  const [isFinishing, setIsFinishing] = useState(false);
+  const [markLocked, setMarkLocked] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -206,7 +210,18 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
     [],
   );
 
-  const currentCard = cards[currentIndex];
+  const safeIndex =
+    cards.length > 0
+      ? Math.min(Math.max(0, currentIndex), cards.length - 1)
+      : 0;
+  const currentCard = cards[safeIndex];
+
+  useEffect(() => {
+    if (cards.length === 0) return;
+    if (currentIndex !== safeIndex) {
+      setCurrentIndex(safeIndex);
+    }
+  }, [cards.length, currentIndex, safeIndex]);
 
   useEffect(() => {
     if (!currentCard) return;
@@ -232,16 +247,18 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
   }, [flushPendingViews]);
 
   const nextCard = useCallback(() => {
-    if (currentIndex < cards.length - 1) {
-      setIsFlipped(false);
-      setTimeout(() => {
-        setCurrentIndex((prev) => prev + 1);
-      }, 50);
-    }
-  }, [currentIndex, cards.length]);
+    setIsFlipped(false);
+    setCurrentIndex((prev) =>
+      prev < cards.length - 1 ? prev + 1 : prev,
+    );
+  }, [cards.length]);
 
   const finishSession = useCallback(
     async (newStatuses: Record<string, FlashcardStatus>) => {
+      if (sessionFinishedRef.current) return;
+      sessionFinishedRef.current = true;
+      setIsFinishing(true);
+
       const updated =
         (await flushPendingViews(true)) ??
         unitsProgress.find((u) => u.unitNumber === unit.id);
@@ -275,33 +292,61 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
         chapterProgressPercent: unitProgressPercent(latest),
       };
 
-      onComplete(summary);
+      try {
+        onComplete(summary);
+      } catch {
+        sessionFinishedRef.current = false;
+        setIsFinishing(false);
+        setMarkLocked(false);
+        markActionLockRef.current = false;
+      }
     },
     [cards, unit, onComplete, deckMode, flushPendingViews, unitsProgress],
   );
 
   const markCard = useCallback(
     (status: FlashcardStatus) => {
-      if (!currentCard || cards.length === 0) {
+      if (
+        markActionLockRef.current ||
+        markLocked ||
+        sessionFinishedRef.current ||
+        isFinishing ||
+        !currentCard ||
+        cards.length === 0
+      ) {
         return;
       }
 
-      setCardStatuses((prev) => {
-        const newStatuses = {
-          ...prev,
-          [currentCard.cardKey]: status,
-        };
+      markActionLockRef.current = true;
+      setMarkLocked(true);
 
-        if (currentIndex === cards.length - 1) {
-          setTimeout(() => void finishSession(newStatuses), 0);
-        } else {
-          nextCard();
-        }
+      const newStatuses = {
+        ...cardStatuses,
+        [currentCard.cardKey]: status,
+      };
+      setCardStatuses(newStatuses);
 
-        return newStatuses;
-      });
+      const isLastCard = safeIndex >= cards.length - 1;
+      if (isLastCard) {
+        void finishSession(newStatuses);
+      } else {
+        nextCard();
+        window.setTimeout(() => {
+          markActionLockRef.current = false;
+          setMarkLocked(false);
+        }, 120);
+      }
     },
-    [currentCard, currentIndex, cards, nextCard, finishSession],
+    [
+      cardStatuses,
+      currentCard,
+      cards.length,
+      safeIndex,
+      isFinishing,
+      markLocked,
+      nextCard,
+      finishSession,
+    ],
   );
 
   const playAudio = (text: string) => {
@@ -312,18 +357,21 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
     if (!currentCard) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (markLocked || isFinishing) return;
       if (e.code === "Space") {
         e.preventDefault();
         setIsFlipped((prev) => !prev);
       } else if (e.code === "ArrowRight") {
+        e.preventDefault();
         markCard("known");
       } else if (e.code === "ArrowLeft") {
+        e.preventDefault();
         markCard("review");
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [markCard, currentCard]);
+  }, [markCard, currentCard, markLocked, isFinishing]);
 
   const stats = useMemo(() => {
     const currentCardKeys = new Set(cards.map((c) => c.cardKey));
@@ -347,7 +395,19 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
     );
   }
 
-  if (!currentCard) return null;
+  if (!currentCard || isFinishing) {
+    return (
+      <div className="flex min-h-[50vh] w-full max-w-5xl flex-col items-center justify-center px-4 text-center text-muted-foreground">
+        <p className="text-sm font-medium">
+          {isFinishing
+            ? "Đang lưu tiến độ và chuyển màn hình kết quả..."
+            : "Đang tải thẻ..."}
+        </p>
+      </div>
+    );
+  }
+
+  const controlsDisabled = markLocked || isFinishing;
 
   return (
     <div className="flex flex-col items-center w-full max-w-5xl mx-auto px-4 py-0">
@@ -355,7 +415,10 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
         onBack={onBack}
         deckMode={deckMode}
         onModeChange={(mode) => {
+          if (markActionLockRef.current || isFinishing) return;
           void flushPendingViews(true);
+          sessionFinishedRef.current = false;
+          markActionLockRef.current = false;
           setDeckMode(mode);
           setCurrentIndex(0);
           setIsFlipped(false);
@@ -393,16 +456,20 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
 
         <div className="w-full flex items-center justify-center gap-8 order-2 lg:contents mt-2 lg:mt-0">
           <button
+            type="button"
+            disabled={controlsDisabled}
             onClick={() => markCard("review")}
-            className="h-16 w-16 lg:h-20 lg:w-20 rounded-full flex items-center justify-center transition-all bg-orange-500 text-white hover:bg-orange-600 hover:scale-110 active:scale-90 shadow-[0_15px_30px_-10px_rgba(249,115,22,0.5)] lg:order-1 group/btn"
+            className="h-16 w-16 lg:h-20 lg:w-20 rounded-full flex items-center justify-center transition-all bg-orange-500 text-white hover:bg-orange-600 hover:scale-110 active:scale-90 shadow-[0_15px_30px_-10px_rgba(249,115,22,0.5)] lg:order-1 group/btn disabled:pointer-events-none disabled:opacity-50"
             title="Học lại (Phím ←)"
           >
             <ChevronLeft className="h-8 w-8 lg:h-10 lg:w-10 transition-transform group-hover/btn:-translate-x-1" />
           </button>
 
           <button
+            type="button"
+            disabled={controlsDisabled}
             onClick={() => markCard("known")}
-            className="h-16 w-16 lg:h-20 lg:w-20 rounded-full flex items-center justify-center transition-all bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-110 active:scale-90 shadow-[0_15px_30px_-10px_rgba(16,185,129,0.5)] lg:order-3 group/btn"
+            className="h-16 w-16 lg:h-20 lg:w-20 rounded-full flex items-center justify-center transition-all bg-emerald-500 text-white hover:bg-emerald-600 hover:scale-110 active:scale-90 shadow-[0_15px_30px_-10px_rgba(16,185,129,0.5)] lg:order-3 group/btn disabled:pointer-events-none disabled:opacity-50"
             title="Đã thuộc (Phím →)"
           >
             <ChevronRight className="h-8 w-8 lg:h-10 lg:w-10 transition-transform group-hover/btn:translate-x-1" />
