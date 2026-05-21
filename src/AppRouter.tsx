@@ -64,6 +64,9 @@ const GeneralTestPage = lazy(() =>
   })),
 );
 const UnitsProgressPage = lazy(() => import("@/pages/admin/UnitsProgressPage"));
+const GeneralAttemptsPage = lazy(
+  () => import("@/pages/admin/GeneralAttemptsPage"),
+);
 const StudentEvaluationPage = lazy(
   () => import("@/pages/admin/StudentEvaluationPage"),
 );
@@ -333,6 +336,16 @@ export function AppRouter() {
               }
             />
             <Route path="/admin/units" element={<UnitsProgressPage />} />
+            <Route
+              path="/admin/general-attempts"
+              element={
+                user?.role === UserRole.ADMIN ? (
+                  <GeneralAttemptsPage />
+                ) : (
+                  <Navigate to="/" replace />
+                )
+              }
+            />
             <Route
               path="/admin/students/:userId/evaluation"
               element={

@@ -392,6 +392,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
         await submitAttempt({
           unitNumber: Number(unitNumber),
           answers,
+          ...(isChapterGeneralTest ? { testType: "GENERAL" as const } : {}),
         });
       }
 
@@ -413,6 +414,7 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     notifyError,
     submitAttempt,
     setShowResults,
+    isChapterGeneralTest,
   ]);
 
   const handleBack = () => {

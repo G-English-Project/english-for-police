@@ -46,6 +46,11 @@ export const API_ROUTES = {
     IMPROVEMENT: (userId: number) =>
       `/api/v1/evaluation/students/${userId}/improvement`,
   },
+  ADMIN: {
+    GENERAL_ATTEMPT_STUDENTS: "/api/v1/admin/general-attempts/students",
+    GENERAL_ATTEMPT_STUDENT: (userId: number) =>
+      `/api/v1/admin/general-attempts/students/${userId}`,
+  },
   REPORTS: {
     DASHBOARD_OVERVIEW: "/api/v1/reports/dashboard/overview",
     STUDENTS: "/api/v1/reports/dashboard/students",

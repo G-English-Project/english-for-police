@@ -6,6 +6,7 @@ import {
   BarChart3,
   BookOpen,
   CalendarDays,
+  ClipboardList,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -223,6 +224,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                         <BookOpen className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         <span className="text-sm font-medium text-foreground">
                           Quản lý bài học
+                        </span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="flex items-center gap-3 px-3 py-2 rounded-md cursor-pointer hover:bg-accent focus:bg-accent transition-colors group"
+                        onClick={() => navigate("/admin/general-attempts")}
+                      >
+                        <ClipboardList className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                        <span className="text-sm font-medium text-foreground">
+                          Từng làm
                         </span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="my-1.5" />
