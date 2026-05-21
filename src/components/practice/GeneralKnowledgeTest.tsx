@@ -27,6 +27,7 @@ import {
   PRACTICE_MENU_LABEL_TO_LANE,
   buildSections,
   filterQuestionsByLane,
+  buildViEnQuestionsFromVocabBank,
   filterVocabDrillQuestions,
   filterQuestionsBySubLesson,
   isLessonTestLane,
@@ -169,8 +170,18 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
           } catch {
             fetched = [];
           }
-          let merged = filterVocabDrillQuestions(fetched, vocabDrill);
-          if (merged.length === 0) {
+          let merged: Question[] = [];
+          if (vocabDrill === "vi-en") {
+            merged = buildViEnQuestionsFromVocabBank(
+              fetched.filter((q) => q.sourceCategory === "vocab"),
+            );
+            if (merged.length === 0) {
+              merged = filterVocabDrillQuestions(fetched, vocabDrill);
+            }
+          } else {
+            merged = filterVocabDrillQuestions(fetched, vocabDrill);
+          }
+          if (merged.length === 0 && vocabDrill === "en-vi") {
             const gen = generateGeneralQuestions([unit]);
             merged = filterVocabDrillQuestions(gen, vocabDrill);
           }

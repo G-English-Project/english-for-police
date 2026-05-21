@@ -19,7 +19,6 @@ export interface Phrase {
   subLessonId?: string | null;
 }
 
-
 export type LessonTestLane =
   | "VOCAB_MCQ"
   | "MATCHING"
@@ -61,13 +60,12 @@ export interface Question {
   explanation?: string;
   vnPrompt?: string;
   pairs?: { left: string; right: string }[];
-  /** Gắn câu luyện tập persisted với tiểu mục (vd. 2.1). */
   subLessonId?: string | null;
+  backendSubmitAnswer?: string;
 }
 
 export interface MemoryBoost {
   summary: string;
-  /** Trường OpenAPI; FE có thể bỏ qua nếu không dùng UI collocation. */
   collocations?: { verb: string; noun: string }[];
 }
 

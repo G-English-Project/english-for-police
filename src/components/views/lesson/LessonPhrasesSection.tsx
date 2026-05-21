@@ -279,27 +279,28 @@ export const LessonPhrasesSection: React.FC<LessonPhrasesSectionProps> = ({
                   className="phrase-section-anchor scroll-mt-28 h-0 w-full"
                   aria-hidden
                 />
-                <AccordionTrigger className="group flex-wrap items-center gap-2 px-4 py-3 transition-all hover:bg-muted/30 hover:no-underline sm:gap-3 sm:px-6 sm:py-4">
-                  <div className="flex min-w-0 flex-1 items-center gap-3 text-left sm:gap-4">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-black text-primary transition-colors group-data-[state=open]:bg-primary group-data-[state=open]:text-white sm:h-10 sm:w-10 sm:text-sm">
-                      {group.id}
+                <div className="flex flex-wrap items-center gap-2 px-4 py-3 sm:gap-3 sm:px-6 sm:py-4">
+                  <AccordionTrigger className="group min-w-0 flex-1 items-center gap-2 py-0 transition-all hover:bg-muted/30 hover:no-underline sm:gap-3 [&>svg]:shrink-0">
+                    <div className="flex min-w-0 flex-1 items-center gap-3 text-left sm:gap-4">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-black text-primary transition-colors group-data-[state=open]:bg-primary group-data-[state=open]:text-white sm:h-10 sm:w-10 sm:text-sm">
+                        {group.id}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-heading text-base font-bold uppercase tracking-tight wrap-break-word text-primary sm:text-lg">
+                          {group.title}
+                        </h3>
+                        <p className="text-xs font-medium text-muted-foreground">
+                          {group.phrases.length} mẫu câu ứng dụng
+                        </p>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="font-heading text-base font-bold uppercase tracking-tight wrap-break-word text-primary sm:text-lg">
-                        {group.title}
-                      </h3>
-                      <p className="text-xs font-medium text-muted-foreground">
-                        {group.phrases.length} mẫu câu ứng dụng
-                      </p>
-                    </div>
-                  </div>
+                  </AccordionTrigger>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     className="h-9 max-w-full shrink-0 rounded-lg px-3 text-[10px] font-bold sm:px-4 sm:text-xs"
                     disabled={group.phrases.length === 0}
-                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={(e) =>
                       openPracticeDialog(
                         { id: group.id, title: group.title },
@@ -310,7 +311,7 @@ export const LessonPhrasesSection: React.FC<LessonPhrasesSectionProps> = ({
                     <span className="truncate">Luyện tập</span>
                     <ChevronRight className="ml-1.5 h-3.5 w-3.5 shrink-0" />
                   </Button>
-                </AccordionTrigger>
+                </div>
                 <AccordionContent className="px-4 pt-2 pb-6 sm:px-6">
                   <div className="space-y-4">
                     {group.phrases.length > 0 ? (

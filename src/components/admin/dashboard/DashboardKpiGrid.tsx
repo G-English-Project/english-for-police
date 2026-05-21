@@ -1,10 +1,4 @@
-import {
-  Activity,
-  AlertTriangle,
-  BarChart3,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { Activity, BarChart3, TrendingUp, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { AdminReportOverview } from "@/models/admin.model";
 
@@ -45,19 +39,11 @@ const KPI_ITEMS = [
     bg: "bg-violet-50",
     format: (v: number) => `${(v / 10).toFixed(1)}/10`,
   },
-  {
-    key: "studentsAtRiskCount" as const,
-    label: "Cần chú ý",
-    icon: AlertTriangle,
-    color: "text-amber-600",
-    bg: "bg-amber-50",
-    format: (v: number) => String(v),
-  },
 ];
 
 export function DashboardKpiGrid({ overview }: DashboardKpiGridProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {KPI_ITEMS.map(({ key, label, icon: Icon, color, bg, format }) => {
         const value = overview[key];
         return (

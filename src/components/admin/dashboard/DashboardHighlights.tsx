@@ -3,7 +3,6 @@ import type { AdminReportStudentSummary } from "@/models/admin.model";
 
 interface DashboardHighlightsProps {
   topStudents: AdminReportStudentSummary[];
-  atRiskStudents: AdminReportStudentSummary[];
   onSelectStudent: (userId: number) => void;
 }
 
@@ -63,25 +62,15 @@ function StudentHighlightList({
 
 export function DashboardHighlights({
   topStudents,
-  atRiskStudents,
   onSelectStudent,
 }: DashboardHighlightsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <StudentHighlightList
-        title="Học viên nổi bật"
-        students={topStudents}
-        emptyText="Chưa có dữ liệu top học viên."
-        variant="top"
-        onSelectStudent={onSelectStudent}
-      />
-      <StudentHighlightList
-        title="Cần chú ý"
-        students={atRiskStudents}
-        emptyText="Không có học viên at-risk trong kỳ."
-        variant="risk"
-        onSelectStudent={onSelectStudent}
-      />
-    </div>
+    <StudentHighlightList
+      title="Học viên nổi bật"
+      students={topStudents}
+      emptyText="Chưa có dữ liệu top học viên."
+      variant="top"
+      onSelectStudent={onSelectStudent}
+    />
   );
 }

@@ -1,4 +1,6 @@
 import type { UnitProgress } from "@/models/progress.model";
+import type { LessonTestLane } from "@/types";
+import { PRACTICE_MENU_LABEL_TO_LANE } from "@/components/practice/utils/testUtils";
 
 export function unitProgressPercent(
   unit: UnitProgress | undefined,
@@ -38,11 +40,15 @@ export function unitToolsCounts(
   if (!unit || typeof unit.toolsTotal !== "number") {
     return null;
   }
-  return {
-    attempted: unit.toolsAttempted ?? 0,
-    total: unit.toolsTotal,
-    percent: unit.toolsPercent ?? 0,
-  };
+  const total = unit.toolsTotal;
+  const fromApi = unit.toolsAttempted ?? 0;
+  const fromDrills = unit.completedVocabDrills?.length ?? 0;
+  const attempted = Math.min(total, Math.max(fromApi, fromDrills));
+  const percent =
+    total > 0
+      ? Math.min(100, Math.round((attempted / total) * 100))
+      : (unit.toolsPercent ?? 0);
+  return { attempted, total, percent };
 }
 
 export function unitPracticeSubLessonCounts(
@@ -102,4 +108,47 @@ export function isUnitCombinedCompleted(
   const counts = unitCombinedProgressCounts(unit);
   if (!counts || counts.total <= 0) return false;
   return counts.done >= counts.total;
+}
+
+export function isFlashcardTrackComplete(
+  unit: UnitProgress | undefined,
+): boolean {
+  const flash = unitFlashcardCounts(unit);
+  return flash != null && flash.total > 0 && flash.viewed >= flash.total;
+}
+
+export function isVocabDrillComplete(
+  unit: UnitProgress | undefined,
+  drill: "en-vi" | "vi-en" | "matching",
+): boolean {
+  return unit?.completedVocabDrills?.includes(drill) ?? false;
+}
+
+export function isPracticeLaneComplete(
+  unit: UnitProgress | undefined,
+  lane: LessonTestLane,
+  subLessonId?: string,
+): boolean {
+  if (!unit) return false;
+  if (subLessonId?.trim()) {
+    const lanes = unit.completedPhraseLanesBySubLesson?.[subLessonId.trim()];
+    return lanes?.includes(lane) ?? false;
+  }
+  return unit.completedChapterPracticeLanes?.includes(lane) ?? false;
+}
+
+export function isPracticeTypeLabelComplete(
+  unit: UnitProgress | undefined,
+  typeLabel: string,
+  subLessonId?: string,
+): boolean {
+  const lane = PRACTICE_MENU_LABEL_TO_LANE[typeLabel];
+  if (!lane) return false;
+  return isPracticeLaneComplete(unit, lane, subLessonId);
+}
+
+export function isGeneralTestAttempted(
+  unit: UnitProgress | undefined,
+): boolean {
+  return unit?.generalTestAttempted === true;
 }

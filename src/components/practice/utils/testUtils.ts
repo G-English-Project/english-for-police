@@ -454,14 +454,6 @@ export function extractQuestion(
     };
   }
 
-  // Training-ground generated IDs (e.g. vocab-0, phrase-recog-0) don't include unit.
-  if (fallbackUnitNumber !== undefined) {
-    return {
-      unitNumber: fallbackUnitNumber,
-      questionId,
-    };
-  }
-
   return null;
 }
 
@@ -496,13 +488,6 @@ export function resolveBackendQuestionRef(
     };
   }
 
-  if (question.id === clientQuestionId) {
-    const unitFromId = extractUnitId(clientQuestionId);
-    if (unitFromId != null) {
-      return { unitNumber: unitFromId, questionId: clientQuestionId };
-    }
-  }
-
   return null;
 }
 
@@ -519,7 +504,10 @@ export function serializeAnswerForApi(
   }
 
   if (question?.type === "Arrangement" && Array.isArray(answer)) {
-    return answer.map((w) => String(w).trim()).filter(Boolean).join(" ");
+    return answer
+      .map((w) => String(w).trim())
+      .filter(Boolean)
+      .join(" ");
   }
 
   if (typeof answer === "string") return answer;
@@ -553,10 +541,16 @@ export function mapAnswersToBackendPayload(
       );
       if (!ref) return null;
 
+      const answerForBackend =
+        question.backendSubmitAnswer != null &&
+        question.backendSubmitAnswer !== ""
+          ? question.backendSubmitAnswer
+          : answer;
+
       return {
         unitNumber: ref.unitNumber,
         questionId: ref.questionId,
-        answer: serializeAnswerForApi(answer, question),
+        answer: serializeAnswerForApi(answerForBackend, question),
       };
     })
     .filter((item): item is NonNullable<typeof item> => !!item);
@@ -577,6 +571,51 @@ function isViEnMcq(q: Question): boolean {
     (o) => typeof o === "string" && !VIETNAMESE_REGEX.test(o),
   );
   return promptHasVi && optsLookEnglish;
+}
+
+function extractEnglishWordFromVocabPrompt(prompt: string): string | null {
+  const match = prompt.match(/"([^"]+)"/);
+  return match?.[1]?.trim() || null;
+}
+
+export function buildViEnQuestionsFromVocabBank(
+  vocabQuestions: Question[],
+): Question[] {
+  const entries: { word: string; meaning: string; source: Question }[] = [];
+
+  for (const q of vocabQuestions) {
+    if (q.type !== "MCQ" || q.sourceCategory !== "vocab") continue;
+    if (!q.backendQuestionId || q.backendUnitNumber == null) continue;
+    const word = extractEnglishWordFromVocabPrompt(q.prompt);
+    const meaning =
+      typeof q.answer === "string"
+        ? q.answer.trim()
+        : String(q.answer ?? "").trim();
+    if (!word || !meaning) continue;
+    entries.push({ word, meaning, source: q });
+  }
+
+  if (entries.length === 0) return [];
+
+  return entries.map(({ word, meaning, source }) => {
+    const wrongWords = shuffleArray(
+      entries
+        .filter((e) => e.word !== word)
+        .slice(0, 3)
+        .map((e) => e.word),
+    );
+
+    return {
+      ...source,
+      id: `vi-en-${source.backendQuestionId}`,
+      prompt: `Từ nào có nghĩa là "${meaning}"?`,
+      options: shuffleArray([word, ...wrongWords]),
+      answer: word,
+      backendSubmitAnswer: meaning,
+      sourceCategory: "practice",
+      testLane: "VOCAB_MCQ",
+    };
+  });
 }
 
 /** Lọc 3 dạng luyện từ vựng theo spec API (vocab / practice + FE). */

@@ -67,7 +67,7 @@ export default function GeneralAttemptsPage() {
 
   return (
     <AdminPageLayout
-      title="Từng làm — Kiểm tra tổng quát"
+      title="Thống kê điểm số — Kiểm tra tổng quát"
       description="Danh sách học viên đã nộp bài kiểm tra tổng quát. Chọn học viên để xem theo từng chương và từng lần làm bài."
       actions={
         <div className="flex gap-2">

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ChevronRight, HelpCircle } from "lucide-react";
+import { Check, ChevronRight, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -23,6 +23,8 @@ interface RowProps extends PracticeMenuRowsProps {
   isOpen?: boolean;
   onToggle?: () => void;
   isAvailable?: boolean;
+  /** User has finished this item at least once; row stays clickable. */
+  completed?: boolean;
   onSelect?: () => void;
 }
 
@@ -41,6 +43,7 @@ export function PracticeMenuRow({
   isOpen = false,
   onToggle,
   isAvailable = true,
+  completed = false,
   onSelect,
   showUnavailable = false,
   unavailableHint,
@@ -70,7 +73,22 @@ export function PracticeMenuRow({
       )}
       onClick={canClick}
     >
-      <span className="truncate text-left">• {label}</span>
+      <span className="flex min-w-0 items-center gap-1.5 truncate text-left">
+        {completed ? (
+          <Check
+            className={cn(
+              "shrink-0 text-emerald-600",
+              isDialog ? "h-4 w-4" : "h-3.5 w-3.5",
+            )}
+            aria-hidden
+          />
+        ) : (
+          <span className="shrink-0 text-muted-foreground/50" aria-hidden>
+            •
+          </span>
+        )}
+        <span className="truncate">{label}</span>
+      </span>
       {isExpandable ? (
         <ChevronRight
           className={cn(

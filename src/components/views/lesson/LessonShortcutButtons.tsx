@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ChevronRight, Lock, HelpCircle } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { Check, ChevronRight, Lock, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { requestOpenLoginDialog } from "@/lib/auth-ui-events";
@@ -19,6 +20,9 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useProgress } from "@/hooks/use-progress";
 import {
+  isFlashcardTrackComplete,
+  isGeneralTestAttempted,
+  isVocabDrillComplete,
   unitFlashcardCounts,
   unitPracticeSubLessonCounts,
   unitToolsCounts,
@@ -59,15 +63,26 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
 }) => {
   const { isAuthenticated } = useAuth();
   const { unitsProgress, fetchUnitsProgress } = useProgress();
+  const location = useLocation();
   const [isTypeExpanded, setIsTypeExpanded] = useState(false);
   const [isToolsExpanded, setIsToolsExpanded] = useState(false);
   const subNavItems = useMemo(() => getPhraseSubNavItems(unit), [unit]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      void fetchUnitsProgress();
-    }
-  }, [isAuthenticated, fetchUnitsProgress, unit.id]);
+    if (!isAuthenticated) return;
+    void fetchUnitsProgress();
+  }, [isAuthenticated, fetchUnitsProgress, unit.id, location.pathname]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        void fetchUnitsProgress();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [isAuthenticated, fetchUnitsProgress]);
 
   const unitProgress = useMemo(
     () => unitsProgress.find((u) => u.unitNumber === unit.id),
@@ -93,7 +108,15 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
             onClick={onStartFlashcards}
           >
             <div className="flex w-full items-center justify-between">
-              <span>Flashcard</span>
+              <span className="flex items-center gap-1.5">
+                {isFlashcardTrackComplete(unitProgress) ? (
+                  <Check
+                    className="h-4 w-4 shrink-0 text-emerald-600"
+                    aria-hidden
+                  />
+                ) : null}
+                Flashcard
+              </span>
               <ChevronRight className="h-4 w-4 shrink-0" />
             </div>
             {flashCounts && flashCounts.total > 0 ? (
@@ -140,6 +163,7 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
             <div className="mb-2 ml-2 animate-in space-y-1 border-l-2 border-muted pl-3 pr-1 fade-in">
               {VOCAB_TOOL_ITEMS.map(({ id, label, lane }) => {
                 const isAvailable = availableLanes.has(lane);
+                const completed = isVocabDrillComplete(unitProgress, id);
                 return (
                   <Tooltip key={id} delayDuration={300}>
                     <TooltipTrigger asChild>
@@ -155,7 +179,22 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
                           )}
                           onClick={() => isAvailable && onStartVocabDrill(id)}
                         >
-                          <span className="truncate">• {label}</span>
+                          <span className="flex min-w-0 items-center gap-1.5 truncate">
+                            {completed ? (
+                              <Check
+                                className="h-3.5 w-3.5 shrink-0 text-emerald-600"
+                                aria-hidden
+                              />
+                            ) : (
+                              <span
+                                className="shrink-0 text-muted-foreground/50"
+                                aria-hidden
+                              >
+                                •
+                              </span>
+                            )}
+                            {label}
+                          </span>
                           {!isAvailable && (
                             <HelpCircle className="h-3 w-3 shrink-0 opacity-40" />
                           )}
@@ -236,6 +275,7 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
                     subNavItems={subNavItems}
                     practiceQuestions={practiceQuestions}
                     availableLanes={availableLanes}
+                    unitProgress={unitProgress}
                     showUnavailable
                     unavailableHint={(subId) =>
                       subId
@@ -255,8 +295,16 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
               className="h-10 w-full justify-between font-bold"
               onClick={() => onStartGeneralTest("bank")}
             >
-              Kiểm tra tổng quát
-              <ChevronRight className="h-4 w-4" />
+              <span className="flex items-center gap-1.5">
+                {isGeneralTestAttempted(unitProgress) ? (
+                  <Check
+                    className="h-4 w-4 shrink-0 text-emerald-600"
+                    aria-hidden
+                  />
+                ) : null}
+                Kiểm tra tổng quát
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0" />
             </Button>
           </div>
         </div>

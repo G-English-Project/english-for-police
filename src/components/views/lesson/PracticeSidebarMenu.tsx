@@ -3,6 +3,8 @@ import {
   PRACTICE_MENU_LABEL_TO_LANE,
   practiceTypesForSubLesson,
 } from "@/components/practice/utils/testUtils";
+import type { UnitProgress } from "@/models/progress.model";
+import { isPracticeTypeLabelComplete } from "@/lib/unit-progress";
 import type { LessonTestLane, Question } from "@/types";
 import {
   formatPracticeSubLessonLabel,
@@ -21,6 +23,7 @@ interface PracticeSidebarMenuProps {
   subNavItems: PracticeSubNavItem[];
   practiceQuestions: Question[];
   availableLanes: Set<LessonTestLane>;
+  unitProgress?: UnitProgress;
   showUnavailable?: boolean;
   emptyMessage?: string;
   unavailableHint?: (subLessonId?: string) => string;
@@ -31,6 +34,7 @@ export function PracticeSidebarMenu({
   subNavItems,
   practiceQuestions,
   availableLanes,
+  unitProgress,
   showUnavailable = true,
   emptyMessage = "Chưa có bài tập cho chương này.",
   unavailableHint,
@@ -104,6 +108,7 @@ export function PracticeSidebarMenu({
                   label={typeLabel}
                   depth={1}
                   isAvailable={vocabAvailable.has(typeLabel)}
+                  completed={isPracticeTypeLabelComplete(unitProgress, typeLabel)}
                   showUnavailable={showUnavailable}
                   unavailableHint={hint}
                   onSelect={() => onSelectType(typeLabel)}
@@ -163,6 +168,11 @@ export function PracticeSidebarMenu({
                                 label={typeLabel}
                                 depth={2}
                                 isAvailable={subLabels.has(typeLabel)}
+                                completed={isPracticeTypeLabelComplete(
+                                  unitProgress,
+                                  typeLabel,
+                                  item.id,
+                                )}
                                 showUnavailable={showUnavailable}
                                 unavailableHint={
                                   unavailableHint?.(item.id) ??
@@ -187,6 +197,10 @@ export function PracticeSidebarMenu({
                         label={typeLabel}
                         depth={1}
                         isAvailable={isAvailable}
+                        completed={isPracticeTypeLabelComplete(
+                          unitProgress,
+                          typeLabel,
+                        )}
                         showUnavailable={showUnavailable}
                         unavailableHint={hint}
                         onSelect={() => onSelectType(typeLabel)}

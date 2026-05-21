@@ -51,6 +51,13 @@ export interface UnitProgress {
   practiceSubLessonsAttempted?: number;
   practiceSubLessonsTotal?: number;
   practiceSubLessonsPercent?: number;
+  /** en-vi | vi-en | matching — Công cụ drills already attempted */
+  completedVocabDrills?: string[];
+  /** VOCAB_MCQ | MATCHING — Luyện tập → Từ vựng lanes attempted (chapter-level) */
+  completedChapterPracticeLanes?: string[];
+  /** e.g. { "1.1": ["PHRASE_SCENARIO"] } */
+  completedPhraseLanesBySubLesson?: Record<string, string[]>;
+  generalTestAttempted?: boolean;
   attemptCount: number;
   bestScore: number;
   latestScore: number;

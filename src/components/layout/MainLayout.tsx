@@ -232,7 +232,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                       >
                         <ClipboardList className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                         <span className="text-sm font-medium text-foreground">
-                          Từng làm
+                          Thống kê điểm số
                         </span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator className="my-1.5" />

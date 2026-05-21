@@ -8,8 +8,10 @@ import {
   DashboardHighlights,
   DashboardKpiGrid,
   DashboardStudentTable,
+  DashboardUnitTracksChart,
   StudentDashboardSheet,
 } from "@/components/admin/dashboard";
+import { useAdminUnitTrackAverages } from "@/hooks/use-admin-unit-track-averages";
 import { Button } from "@/components/ui/button";
 import { usePagination } from "@/hooks/app/use-pagination";
 import { useDebouncedValue } from "@/hooks/app/use-debounced-value";
@@ -33,6 +35,13 @@ export default function UnitsProgressPage() {
     openStudentDetail,
     closeStudentDetail,
   } = useAdminDashboard();
+
+  const {
+    unitTrackAverages,
+    isLoadingTracks,
+    tracksError,
+    reloadTracks,
+  } = useAdminUnitTrackAverages(students, !isLoading && students.length > 0);
 
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
@@ -77,7 +86,10 @@ export default function UnitsProgressPage() {
           size="sm"
           className="h-8 gap-1.5 border-slate-300 text-xs font-semibold"
           disabled={isLoading}
-          onClick={() => void reload()}
+          onClick={() => {
+            void reload();
+            void reloadTracks();
+          }}
         >
           <RefreshCw
             className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`}
@@ -109,6 +121,12 @@ export default function UnitsProgressPage() {
         <div className="space-y-6">
           <DashboardKpiGrid overview={overview} />
 
+          <DashboardUnitTracksChart
+            data={unitTrackAverages}
+            isLoading={isLoadingTracks}
+            error={tracksError}
+          />
+
           <DashboardDistributionCharts
             progressBuckets={overview.progressDistributionBuckets}
             scoreBuckets={overview.scoreDistributionBuckets}
@@ -118,7 +136,6 @@ export default function UnitsProgressPage() {
 
           <DashboardHighlights
             topStudents={overview.topStudents}
-            atRiskStudents={overview.atRiskStudents}
             onSelectStudent={(id) => void openStudentDetail(id)}
           />
 
