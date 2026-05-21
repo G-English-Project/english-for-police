@@ -22,6 +22,8 @@ import { useProgress } from "@/hooks/use-progress";
 import {
   isFlashcardTrackComplete,
   isGeneralTestAttempted,
+  isPracticeTrackComplete,
+  isToolsTrackComplete,
   isVocabDrillComplete,
   unitFlashcardCounts,
   unitPracticeSubLessonCounts,
@@ -139,7 +141,15 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
             onClick={() => setIsToolsExpanded(!isToolsExpanded)}
           >
             <div className="flex w-full items-center justify-between">
-              <span>Công cụ</span>
+              <span className="flex items-center gap-1.5">
+                {isToolsTrackComplete(unitProgress) ? (
+                  <Check
+                    className="h-4 w-4 shrink-0 text-emerald-600"
+                    aria-hidden
+                  />
+                ) : null}
+                Công cụ
+              </span>
               <ChevronRight
                 className={cn(
                   "h-4 w-4 shrink-0 transition-transform",
@@ -249,7 +259,15 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
                 onClick={() => setIsTypeExpanded(!isTypeExpanded)}
               >
                 <div className="flex w-full items-center justify-between">
-                  <span>Luyện tập</span>
+                  <span className="flex items-center gap-1.5">
+                    {isPracticeTrackComplete(unitProgress) ? (
+                      <Check
+                        className="h-4 w-4 shrink-0 text-emerald-600"
+                        aria-hidden
+                      />
+                    ) : null}
+                    Luyện tập
+                  </span>
                   <ChevronRight
                     className={cn(
                       "h-4 w-4 shrink-0 transition-transform",

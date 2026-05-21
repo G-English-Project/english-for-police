@@ -117,6 +117,24 @@ export function isFlashcardTrackComplete(
   return flash != null && flash.total > 0 && flash.viewed >= flash.total;
 }
 
+export function isToolsTrackComplete(
+  unit: UnitProgress | undefined,
+): boolean {
+  const tools = unitToolsCounts(unit);
+  return tools != null && tools.total > 0 && tools.attempted >= tools.total;
+}
+
+export function isPracticeTrackComplete(
+  unit: UnitProgress | undefined,
+): boolean {
+  const practice = unitPracticeSubLessonCounts(unit);
+  return (
+    practice != null &&
+    practice.total > 0 &&
+    practice.attempted >= practice.total
+  );
+}
+
 export function isVocabDrillComplete(
   unit: UnitProgress | undefined,
   drill: "en-vi" | "vi-en" | "matching",
@@ -145,6 +163,18 @@ export function isPracticeTypeLabelComplete(
   const lane = PRACTICE_MENU_LABEL_TO_LANE[typeLabel];
   if (!lane) return false;
   return isPracticeLaneComplete(unit, lane, subLessonId);
+}
+
+/** Mọi dạng trong danh sách (đã lọc theo nội dung có sẵn) đều đã làm. */
+export function arePracticeTypeLabelsComplete(
+  unit: UnitProgress | undefined,
+  typeLabels: readonly string[],
+  subLessonId?: string,
+): boolean {
+  if (typeLabels.length === 0) return false;
+  return typeLabels.every((label) =>
+    isPracticeTypeLabelComplete(unit, label, subLessonId),
+  );
 }
 
 export function isGeneralTestAttempted(

@@ -238,61 +238,59 @@ export const HomeView: React.FC<HomeViewProps> = ({
             const combinedCounts = unitCombinedProgressCounts(unitProgress);
 
             return (
-            <Card
-              key={unit.id}
-              className={`group cursor-pointer border-2 transition-all hover:shadow-xl hover:-translate-y-1 ${
-                completed
-                  ? "border-emerald-100 bg-emerald-50/10"
-                  : "border-slate-100 bg-white hover:border-primary/30"
-              }`}
-              onClick={() => onSelectUnit(unit)}
-            >
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded uppercase">
-                        Chương {unit.id}
-                      </span>
-                      {completed && (
-                        <Check className="h-3 w-3 text-emerald-500" />
-                      )}
+              <Card
+                key={unit.id}
+                className={`group cursor-pointer border-2 transition-all hover:shadow-xl hover:-translate-y-1 ${
+                  completed
+                    ? "border-emerald-100 bg-emerald-50/10"
+                    : "border-slate-100 bg-white hover:border-primary/30"
+                }`}
+                onClick={() => onSelectUnit(unit)}
+              >
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded uppercase">
+                          Chương {unit.id}
+                        </span>
+                        {completed && (
+                          <Check className="h-3 w-3 text-emerald-500" />
+                        )}
+                      </div>
+                      <h4 className="font-bold text-slate-800 leading-snug group-hover:text-primary transition-colors">
+                        {unit.title}
+                      </h4>
                     </div>
-                    <h4 className="font-bold text-slate-800 leading-snug group-hover:text-primary transition-colors">
-                      {unit.title}
-                    </h4>
+                    <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:primary-gradient group-hover:text-white transition-all shadow-sm">
+                      <ChevronRight className="h-4 w-4" />
+                    </div>
                   </div>
-                  <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center group-hover:primary-gradient group-hover:text-white transition-all shadow-sm">
-                    <ChevronRight className="h-4 w-4" />
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                    <span className="text-slate-400">Progress</span>
-                    <span
-                      className={
-                        completed
-                          ? "text-emerald-600"
-                          : "text-slate-400"
-                      }
-                    >
-                      {percent}%
-                    </span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                      <span className="text-slate-400">Progress</span>
+                      <span
+                        className={
+                          completed ? "text-emerald-600" : "text-slate-400"
+                        }
+                      >
+                        {percent}%
+                      </span>
+                    </div>
+                    {combinedCounts && combinedCounts.total > 0 && (
+                      <p className="text-[9px] text-slate-400 font-medium">
+                        Hoàn thành {combinedCounts.done}/{combinedCounts.total}{" "}
+                        hạng mục (flashcard, công cụ, luyện tập)
+                      </p>
+                    )}
+                    <Progress
+                      value={percent}
+                      className={`h-1 ${completed ? "bg-emerald-100 [&>div]:bg-emerald-500" : "bg-slate-100"}`}
+                    />
                   </div>
-                  {combinedCounts && combinedCounts.total > 0 && (
-                    <p className="text-[9px] text-slate-400 font-medium">
-                      Hoàn thành {combinedCounts.done}/{combinedCounts.total}{" "}
-                      hạng mục (flashcard, công cụ, luyện tập)
-                    </p>
-                  )}
-                  <Progress
-                    value={percent}
-                    className={`h-1 ${completed ? "bg-emerald-100 [&>div]:bg-emerald-500" : "bg-slate-100"}`}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
@@ -308,8 +306,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 Kiểm tra nhanh
               </CardTitle>
               <p className="mt-1 text-xs font-medium leading-snug text-white/85">
-                Chọn một hoặc nhiều chương — hệ thống random tối đa 10 câu practice
-                đã lưu trên server.
+                Chọn một hoặc nhiều chương — hệ thống random tối đa 10 câu
+                practice đã lưu trên server.
               </p>
             </CardHeader>
             <CardContent className="p-4">

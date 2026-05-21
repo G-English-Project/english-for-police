@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   PRACTICE_MENU_LABEL_TO_LANE,
   practiceTypesForSubLesson,
 } from "@/components/practice/utils/testUtils";
 import type { UnitProgress } from "@/models/progress.model";
-import { isPracticeTypeLabelComplete } from "@/lib/unit-progress";
+import {
+  arePracticeTypeLabelsComplete,
+  isPracticeTypeLabelComplete,
+} from "@/lib/unit-progress";
 import type { LessonTestLane, Question } from "@/types";
 import {
   formatPracticeSubLessonLabel,
@@ -63,6 +66,14 @@ export function PracticeSidebarMenu({
     showUnavailable ||
     VOCAB_PRACTICE_TYPE_LABELS.some((l) => vocabAvailable.has(l));
 
+  const vocabLabelsToTrack = VOCAB_PRACTICE_TYPE_LABELS.filter((l) =>
+    vocabAvailable.has(l),
+  );
+  const vocabGroupComplete = arePracticeTypeLabelsComplete(
+    unitProgress,
+    vocabLabelsToTrack,
+  );
+
   const phraseSubs = subNavItems.length > 0 ? subNavItems : [];
   const hasPhraseSection =
     phraseSubs.length > 0
@@ -89,6 +100,34 @@ export function PracticeSidebarMenu({
   const hint =
     unavailableHint?.() ?? "Phần luyện tập này hiện chưa có nội dung.";
 
+  const phraseGroupComplete = useMemo(() => {
+    const phrasePartsToTrack: { labels: string[]; subId?: string }[] = [];
+    if (phraseSubs.length > 0) {
+      for (const item of phraseSubs) {
+        const subLabels = labelsForSub(item.id);
+        const labels = PHRASE_PRACTICE_TYPE_LABELS.filter((l) =>
+          subLabels.has(l),
+        );
+        if (labels.length > 0) {
+          phrasePartsToTrack.push({ labels, subId: item.id });
+        }
+      }
+    } else {
+      const labels = PHRASE_PRACTICE_TYPE_LABELS.filter((l) =>
+        availableLanes.has(PRACTICE_MENU_LABEL_TO_LANE[l]),
+      );
+      if (labels.length > 0) {
+        phrasePartsToTrack.push({ labels });
+      }
+    }
+    return (
+      phrasePartsToTrack.length > 0 &&
+      phrasePartsToTrack.every((part) =>
+        arePracticeTypeLabelsComplete(unitProgress, part.labels, part.subId),
+      )
+    );
+  }, [phraseSubs, practiceQuestions, availableLanes, unitProgress]);
+
   return (
     <PracticeMenuGroup>
       {hasVocab ? (
@@ -98,6 +137,7 @@ export function PracticeSidebarMenu({
             isExpandable
             isOpen={vocabOpen}
             onToggle={() => setVocabOpen((v) => !v)}
+            completed={vocabGroupComplete}
             showUnavailable={showUnavailable}
           />
           {vocabOpen ? (
@@ -129,6 +169,7 @@ export function PracticeSidebarMenu({
               setPhraseOpen((v) => !v);
               if (phraseOpen) setOpenPhraseSubId(null);
             }}
+            completed={phraseGroupComplete}
             showUnavailable={showUnavailable}
           />
           {phraseOpen ? (
@@ -142,6 +183,15 @@ export function PracticeSidebarMenu({
                       PHRASE_PRACTICE_TYPE_LABELS.some((l) => subLabels.has(l));
 
                     if (!subHasContent) return null;
+
+                    const subLabelsToTrack = PHRASE_PRACTICE_TYPE_LABELS.filter(
+                      (l) => subLabels.has(l),
+                    );
+                    const subGroupComplete = arePracticeTypeLabelsComplete(
+                      unitProgress,
+                      subLabelsToTrack,
+                      item.id,
+                    );
 
                     return (
                       <div key={item.id} className="space-y-0.5">
@@ -158,6 +208,7 @@ export function PracticeSidebarMenu({
                               prev === item.id ? null : item.id,
                             )
                           }
+                          completed={subGroupComplete}
                           showUnavailable={showUnavailable}
                         />
                         {subOpen ? (
