@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import {
   progressService,
   type ProgressFilters,
@@ -20,41 +13,10 @@ import type {
   FlashcardViewItem,
 } from "@/models/progress.model";
 import { useSonner } from "@/hooks/use-sonner";
-
-function mergeUnitProgress(
-  prev: UnitProgress[],
-  incoming: UnitProgress,
-): UnitProgress[] {
-  const next = [...prev];
-  const idx = next.findIndex((u) => u.unitNumber === incoming.unitNumber);
-  if (idx >= 0) {
-    next[idx] = { ...next[idx], ...incoming };
-  } else {
-    next.push(incoming);
-  }
-  return next;
-}
-
-export interface ProgressContextValue {
-  isLoading: boolean;
-  error: string | null;
-  progressData: ProgressData | null;
-  dashboardData: DashboardSummary | null;
-  unitsProgress: UnitProgress[];
-  submitAttempt: (data: QuizAttemptRequest) => Promise<QuizAttemptResponse>;
-  markFlashcardViews: (
-    unitNumber: number,
-    cards: FlashcardViewItem[],
-  ) => Promise<UnitProgress | null>;
-  fetchProgress: (
-    filters?: Omit<ProgressFilters, "userId">,
-  ) => Promise<ProgressData | undefined>;
-  fetchDashboard: () => Promise<DashboardSummary | undefined>;
-  fetchUnitsProgress: () => Promise<UnitProgress[] | undefined>;
-  refetchProgressViews: () => Promise<void>;
-}
-
-const ProgressContext = createContext<ProgressContextValue | null>(null);
+import {
+  mergeUnitProgress,
+  ProgressContext,
+} from "@/contexts/progress-context-state";
 
 export function ProgressProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -243,12 +205,4 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       {children}
     </ProgressContext.Provider>
   );
-}
-
-export function useProgressContext(): ProgressContextValue {
-  const ctx = useContext(ProgressContext);
-  if (!ctx) {
-    throw new Error("useProgress must be used within ProgressProvider");
-  }
-  return ctx;
 }

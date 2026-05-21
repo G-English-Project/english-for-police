@@ -1,5 +1,10 @@
-import { useProgressContext } from "@/contexts/progress-context";
+import { useContext } from "react";
+import { ProgressContext } from "@/contexts/progress-context-state";
 
 export function useProgress() {
-  return useProgressContext();
+  const ctx = useContext(ProgressContext);
+  if (!ctx) {
+    throw new Error("useProgress must be used within ProgressProvider");
+  }
+  return ctx;
 }
