@@ -136,7 +136,7 @@ export const GeneralTestQuestionPanel: React.FC<
           <Button
             variant="outline"
             size="sm"
-            className="flex items-center gap-1.5 font-bold text-xs border-primary/20 text-primary hover:bg-primary/5 disabled:opacity-30"
+            className="shrink-0 flex items-center gap-1.5 font-bold text-xs border-primary/20 text-primary hover:bg-primary/5 disabled:opacity-30"
             disabled={isFirstQuestion}
             onClick={onPrevQuestion}
           >
@@ -144,16 +144,28 @@ export const GeneralTestQuestionPanel: React.FC<
             Câu Trước
           </Button>
 
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-            {absoluteIndex}
-            {" / "}
-            {sectionQuestionsLength}
-          </span>
+          {inlineSubmit && sectionQuestionsLength > 0 ? (
+            <Button
+              type="button"
+              size="sm"
+              className="min-w-34 shrink-0 font-black text-xs primary-gradient police-shadow"
+              disabled={inlineSubmit.submitting || !inlineSubmit.canSubmit}
+              onClick={inlineSubmit.onSubmit}
+            >
+              {inlineSubmit.submitting
+                ? "Đang nộp…"
+                : inlineSubmit.canSubmit
+                  ? "Nộp bài"
+                  : "Nộp bài (làm hết câu hỏi)"}
+            </Button>
+          ) : (
+            <div className="min-w-34 shrink-0" aria-hidden />
+          )}
 
           <Button
             variant="outline"
             size="sm"
-            className="flex items-center gap-1.5 font-bold text-xs border-primary/20 text-primary hover:bg-primary/5 disabled:opacity-30"
+            className="shrink-0 flex items-center gap-1.5 font-bold text-xs border-primary/20 text-primary hover:bg-primary/5 disabled:opacity-30"
             disabled={isLastQuestion || pagedSectionQuestionsLength === 0}
             onClick={onNextQuestion}
           >
@@ -162,24 +174,6 @@ export const GeneralTestQuestionPanel: React.FC<
           </Button>
         </div>
       )}
-
-      {inlineSubmit && sectionQuestionsLength > 0 ? (
-        <div className="border-t bg-primary/6 px-5 py-4">
-          <Button
-            type="button"
-            size="lg"
-            className="w-full font-black text-sm primary-gradient police-shadow"
-            disabled={inlineSubmit.submitting || !inlineSubmit.canSubmit}
-            onClick={inlineSubmit.onSubmit}
-          >
-            {inlineSubmit.submitting
-              ? "Đang nộp…"
-              : inlineSubmit.canSubmit
-                ? "Nộp bài"
-                : "Nộp bài (làm hết câu hỏi)"}
-          </Button>
-        </div>
-      ) : null}
     </Card>
   );
 };

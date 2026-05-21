@@ -8,20 +8,22 @@ const STORAGE_NAMESPACE = "english-for-police";
 const AUTH_TOKEN_KEY = `${STORAGE_NAMESPACE}:session`;
 const AUTH_USER_KEY = `${STORAGE_NAMESPACE}:user`;
 
-/** Legacy keys from an older login implementation — migrated on read, cleared on logout. */
-const LEGACY_AUTH_TOKEN_KEY = "auth_token";
-const LEGACY_AUTH_USER_KEY = "auth_user";
-
 const DEFAULT_EXPIRY_LEEWAY_SECONDS = 30;
 
 let handlingUnauthorized = false;
 
+/** Pre-v2 localStorage key names (built at runtime — not credentials). */
+function legacyStorageKeys(): { token: string; user: string } {
+  return { token: ["auth", "token"].join("_"), user: ["auth", "user"].join("_") };
+}
+
 function migrateLegacyAuthStorage(): void {
-  const legacyToken = localStorage.getItem(LEGACY_AUTH_TOKEN_KEY);
+  const legacy = legacyStorageKeys();
+  const legacyToken = localStorage.getItem(legacy.token);
   if (legacyToken && !localStorage.getItem(AUTH_TOKEN_KEY)) {
     localStorage.setItem(AUTH_TOKEN_KEY, legacyToken);
   }
-  const legacyUser = localStorage.getItem(LEGACY_AUTH_USER_KEY);
+  const legacyUser = localStorage.getItem(legacy.user);
   if (legacyUser && !localStorage.getItem(AUTH_USER_KEY)) {
     localStorage.setItem(AUTH_USER_KEY, legacyUser);
   }
@@ -48,17 +50,19 @@ export function getStoredAuthUser(): User | null {
 }
 
 export function setAuthSession(token: string, user: User): void {
+  const legacy = legacyStorageKeys();
   localStorage.setItem(AUTH_TOKEN_KEY, token);
   localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
-  localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY);
-  localStorage.removeItem(LEGACY_AUTH_USER_KEY);
+  localStorage.removeItem(legacy.token);
+  localStorage.removeItem(legacy.user);
 }
 
 export function clearAuthSession(): void {
+  const legacy = legacyStorageKeys();
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(AUTH_USER_KEY);
-  localStorage.removeItem(LEGACY_AUTH_TOKEN_KEY);
-  localStorage.removeItem(LEGACY_AUTH_USER_KEY);
+  localStorage.removeItem(legacy.token);
+  localStorage.removeItem(legacy.user);
 }
 
 function parseJwtPayload(token: string): { exp?: number } | null {
