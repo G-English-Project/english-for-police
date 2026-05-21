@@ -31,3 +31,29 @@ export function unitFlashcardCounts(
     total: unit.flashcardsTotal,
   };
 }
+
+export function unitToolsCounts(
+  unit: UnitProgress | undefined,
+): { attempted: number; total: number; percent: number } | null {
+  if (!unit || typeof unit.toolsTotal !== "number") {
+    return null;
+  }
+  return {
+    attempted: unit.toolsAttempted ?? 0,
+    total: unit.toolsTotal,
+    percent: unit.toolsPercent ?? 0,
+  };
+}
+
+export function unitPracticeSubLessonCounts(
+  unit: UnitProgress | undefined,
+): { attempted: number; total: number; percent: number } | null {
+  if (!unit || typeof unit.practiceSubLessonsTotal !== "number") {
+    return null;
+  }
+  return {
+    attempted: unit.practiceSubLessonsAttempted ?? 0,
+    total: unit.practiceSubLessonsTotal,
+    percent: unit.practiceSubLessonsPercent ?? 0,
+  };
+}

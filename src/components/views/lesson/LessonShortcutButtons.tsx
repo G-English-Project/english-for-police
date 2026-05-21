@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ChevronRight, Lock, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,7 @@ import {
   type VocabDrillMode,
 } from "@/components/practice/utils/testUtils";
 import { PracticeSidebarMenu } from "@/components/views/lesson/PracticeSidebarMenu";
+import { LessonTrackProgressRow } from "@/components/views/lesson/LessonTrackProgressRow";
 import type { LessonTestLane, Question, Unit } from "@/types";
 import {
   Tooltip,
@@ -15,6 +16,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useAuth } from "@/hooks/use-auth";
+import { useProgress } from "@/hooks/use-progress";
+import {
+  unitFlashcardCounts,
+  unitPracticeSubLessonCounts,
+  unitToolsCounts,
+} from "@/lib/unit-progress";
 
 const VOCAB_TOOL_ITEMS: {
   id: VocabDrillMode;
@@ -49,35 +57,83 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
   onStartGeneralTest,
   onStartVocabDrill,
 }) => {
+  const { isAuthenticated } = useAuth();
+  const { unitsProgress, fetchUnitsProgress } = useProgress();
   const [isTypeExpanded, setIsTypeExpanded] = useState(false);
   const [isToolsExpanded, setIsToolsExpanded] = useState(false);
   const subNavItems = useMemo(() => getPhraseSubNavItems(unit), [unit]);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      void fetchUnitsProgress();
+    }
+  }, [isAuthenticated, fetchUnitsProgress, unit.id]);
+
+  const unitProgress = useMemo(
+    () => unitsProgress.find((u) => u.unitNumber === unit.id),
+    [unitsProgress, unit.id],
+  );
+
+  const flashCounts = unitFlashcardCounts(unitProgress);
+  const toolsCounts = unitToolsCounts(unitProgress);
+  const practiceCounts = unitPracticeSubLessonCounts(unitProgress);
+
+  const flashPercent =
+    flashCounts && flashCounts.total > 0
+      ? Math.round((flashCounts.viewed / flashCounts.total) * 100)
+      : 0;
+
   return (
     <TooltipProvider>
       <div className="mt-4 space-y-2">
-        <Button
-          variant="outline"
-          className="h-10 w-full justify-between font-bold"
-          onClick={onStartFlashcards}
-        >
-          Flashcard
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-
-        <div className="space-y-2">
+        <div className="overflow-hidden rounded-md border border-border bg-card/50">
           <Button
-            variant="outline"
-            className="h-10 w-full justify-between font-bold"
+            variant="ghost"
+            className="h-auto min-h-10 w-full flex-col items-stretch gap-0 rounded-none px-3 py-2 font-bold hover:bg-muted/40"
+            onClick={onStartFlashcards}
+          >
+            <div className="flex w-full items-center justify-between">
+              <span>Flashcard</span>
+              <ChevronRight className="h-4 w-4 shrink-0" />
+            </div>
+            {flashCounts && flashCounts.total > 0 ? (
+              <div className="mt-2 w-full">
+                <LessonTrackProgressRow
+                  attempted={flashCounts.viewed}
+                  total={flashCounts.total}
+                  percent={flashPercent}
+                  detailLabel="Đã xem"
+                />
+              </div>
+            ) : null}
+          </Button>
+        </div>
+
+        <div className="space-y-2 overflow-hidden rounded-md border border-border bg-card/50">
+          <Button
+            variant="ghost"
+            className="h-auto min-h-10 w-full flex-col items-stretch gap-0 rounded-none px-3 py-2 font-bold hover:bg-muted/40"
             onClick={() => setIsToolsExpanded(!isToolsExpanded)}
           >
-            Công cụ
-            <ChevronRight
-              className={cn(
-                "h-4 w-4 transition-transform",
-                isToolsExpanded && "rotate-180",
-              )}
-            />
+            <div className="flex w-full items-center justify-between">
+              <span>Công cụ</span>
+              <ChevronRight
+                className={cn(
+                  "h-4 w-4 shrink-0 transition-transform",
+                  isToolsExpanded && "rotate-180",
+                )}
+              />
+            </div>
+            {toolsCounts && toolsCounts.total > 0 ? (
+              <div className="mt-2 w-full">
+                <LessonTrackProgressRow
+                  attempted={toolsCounts.attempted}
+                  total={toolsCounts.total}
+                  percent={toolsCounts.percent}
+                  detailLabel="Đã luyện"
+                />
+              </div>
+            ) : null}
           </Button>
 
           {isToolsExpanded ? (
@@ -147,19 +203,31 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
               testsLocked && "pointer-events-none select-none opacity-[0.22]",
             )}
           >
-            <div className="space-y-2">
+            <div className="space-y-2 overflow-hidden rounded-md border border-border bg-card/50">
               <Button
-                variant="outline"
-                className="h-10 w-full justify-between font-bold"
+                variant="ghost"
+                className="h-auto min-h-10 w-full flex-col items-stretch gap-0 rounded-none px-3 py-2 font-bold hover:bg-muted/40"
                 onClick={() => setIsTypeExpanded(!isTypeExpanded)}
               >
-                Luyện tập
-                <ChevronRight
-                  className={cn(
-                    "h-4 w-4 transition-transform",
-                    isTypeExpanded && "rotate-180",
-                  )}
-                />
+                <div className="flex w-full items-center justify-between">
+                  <span>Luyện tập</span>
+                  <ChevronRight
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition-transform",
+                      isTypeExpanded && "rotate-180",
+                    )}
+                  />
+                </div>
+                {practiceCounts && practiceCounts.total > 0 ? (
+                  <div className="mt-2 w-full">
+                    <LessonTrackProgressRow
+                      attempted={practiceCounts.attempted}
+                      total={practiceCounts.total}
+                      percent={practiceCounts.percent}
+                      detailLabel="Tiểu mục"
+                    />
+                  </div>
+                ) : null}
               </Button>
 
               {isTypeExpanded ? (

@@ -389,11 +389,28 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
 
       for (const [unitNumber, answers] of Object.entries(answersByUnit)) {
         if (answers.length === 0) continue;
-        await submitAttempt({
+        const unitPayload = {
           unitNumber: Number(unitNumber),
           answers,
-          ...(isChapterGeneralTest ? { testType: "GENERAL" as const } : {}),
-        });
+        };
+        if (isChapterGeneralTest) {
+          await submitAttempt({ ...unitPayload, testType: "GENERAL" });
+        } else if (vocabDrill) {
+          await submitAttempt({
+            ...unitPayload,
+            testType: "VOCAB_DRILL",
+            vocabDrill,
+          });
+        } else if (testMode === "type" && focusedLane) {
+          await submitAttempt({
+            ...unitPayload,
+            testType: "PRACTICE",
+            practiceLane: focusedLane,
+            ...(subLessonIdParam ? { subLessonId: subLessonIdParam } : {}),
+          });
+        } else {
+          await submitAttempt(unitPayload);
+        }
       }
 
       setShowResults(true);
@@ -415,6 +432,10 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     submitAttempt,
     setShowResults,
     isChapterGeneralTest,
+    vocabDrill,
+    focusedLane,
+    subLessonIdParam,
+    testMode,
   ]);
 
   const handleBack = () => {

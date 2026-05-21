@@ -4,12 +4,15 @@ export interface QuizAnswer {
 }
 
 /** Lịch sử attempt; BE không dùng để hoàn thành chương. */
-export type ProgressTestType = "GENERAL";
+export type ProgressTestType = "GENERAL" | "VOCAB_DRILL" | "PRACTICE";
 
 export interface QuizAttemptRequest {
   unitNumber: number;
   answers: QuizAnswer[];
   testType?: ProgressTestType;
+  vocabDrill?: "en-vi" | "vi-en" | "matching";
+  practiceLane?: string;
+  subLessonId?: string;
 }
 
 export type FlashcardCardKind = "VOCAB" | "PHRASE";
@@ -42,6 +45,12 @@ export interface UnitProgress {
   progressPercent: number;
   flashcardsViewed?: number;
   flashcardsTotal?: number;
+  toolsAttempted?: number;
+  toolsTotal?: number;
+  toolsPercent?: number;
+  practiceSubLessonsAttempted?: number;
+  practiceSubLessonsTotal?: number;
+  practiceSubLessonsPercent?: number;
   attemptCount: number;
   bestScore: number;
   latestScore: number;
