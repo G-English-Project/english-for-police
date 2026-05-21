@@ -1,6 +1,6 @@
 import { API_ROUTES } from "@/api/routes";
 import { api } from "@/utils/api-client";
-import { clearAuthSession } from "@/utils/auth-session";
+import { clearAuthSession, setAuthSession } from "@/utils/auth-session";
 import type {
   LoginRequest,
   LoginResponse,
@@ -15,8 +15,8 @@ export const authService = {
       credentials,
     );
 
-    if (response.token) {
-      localStorage.setItem("auth_token", response.token);
+    if (response.token && response.user) {
+      setAuthSession(response.token, response.user);
     }
     return response;
   },

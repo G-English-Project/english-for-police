@@ -7,25 +7,22 @@ import {
   AUTH_SESSION_CHANGED_EVENT,
   assertValidAuthToken,
   getAuthToken,
+  getStoredAuthUser,
   handleUnauthorizedSession,
   isJwtExpired,
+  setAuthSession,
 } from "@/utils/auth-session";
 
 const AUTH_CHANGED_EVENT = AUTH_SESSION_CHANGED_EVENT;
-
-function getStoredUser() {
-  const savedUser = localStorage.getItem("auth_user");
-  return savedUser ? (JSON.parse(savedUser) as User) : null;
-}
 
 export function useAuth() {
   const { notifySuccess, notifyAuthError, notifyError, notifyInfo } = useSonner();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(() => getStoredUser());
+  const [user, setUser] = useState<User | null>(() => getStoredAuthUser());
 
   useEffect(() => {
-    const syncAuth = () => setUser(getStoredUser());
+    const syncAuth = () => setUser(getStoredAuthUser());
     window.addEventListener("storage", syncAuth);
     window.addEventListener(AUTH_CHANGED_EVENT, syncAuth);
     return () => {
@@ -46,7 +43,7 @@ export function useAuth() {
       const token = getAuthToken();
       if (token && isJwtExpired(token)) {
         assertValidAuthToken();
-        setUser(getStoredUser());
+        setUser(getStoredAuthUser());
       }
     };
     window.addEventListener("focus", onFocus);
@@ -60,7 +57,9 @@ export function useAuth() {
     try {
       const response = await authService.login(processedData);
       setUser(response.user);
-      localStorage.setItem("auth_user", JSON.stringify(response.user));
+      if (response.token) {
+        setAuthSession(response.token, response.user);
+      }
       window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
       notifySuccess("Đăng nhập thành công", "Chào mừng bạn quay trở lại hệ thống.");
       return response;
