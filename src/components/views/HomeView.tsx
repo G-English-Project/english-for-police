@@ -24,10 +24,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useProgress } from "@/hooks/use-progress";
 import {
-  isUnitCompleted,
-  unitFlashcardCounts,
+  isUnitCombinedCompleted,
+  unitCombinedProgressCounts,
+  unitCombinedProgressPercent,
   unitProgressByNumber,
-  unitProgressPercent,
 } from "@/lib/unit-progress";
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
@@ -233,9 +233,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <div className="flex flex-col gap-4">
           {lessons.map((unit) => {
             const unitProgress = unitsByNumber.get(unit.id);
-            const percent = unitProgressPercent(unitProgress);
-            const completed = isUnitCompleted(unitProgress);
-            const flashCounts = unitFlashcardCounts(unitProgress);
+            const percent = unitCombinedProgressPercent(unitProgress);
+            const completed = isUnitCombinedCompleted(unitProgress);
+            const combinedCounts = unitCombinedProgressCounts(unitProgress);
 
             return (
             <Card
@@ -269,7 +269,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                    <span className="text-slate-400">Flashcard</span>
+                    <span className="text-slate-400">Progress</span>
                     <span
                       className={
                         completed
@@ -280,9 +280,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
                       {percent}%
                     </span>
                   </div>
-                  {flashCounts && flashCounts.total > 0 && (
+                  {combinedCounts && combinedCounts.total > 0 && (
                     <p className="text-[9px] text-slate-400 font-medium">
-                      Đã xem {flashCounts.viewed}/{flashCounts.total} thẻ
+                      Hoàn thành {combinedCounts.done}/{combinedCounts.total}{" "}
+                      hạng mục (flashcard, công cụ, luyện tập)
                     </p>
                   )}
                   <Progress

@@ -57,3 +57,49 @@ export function unitPracticeSubLessonCounts(
     percent: unit.practiceSubLessonsPercent ?? 0,
   };
 }
+
+/** Flashcard + công cụ + luyện tập (counts from API unit progress). */
+export function unitCombinedProgressCounts(
+  unit: UnitProgress | undefined,
+): { done: number; total: number } | null {
+  if (!unit) return null;
+
+  const flash = unitFlashcardCounts(unit);
+  const tools = unitToolsCounts(unit);
+  const practice = unitPracticeSubLessonCounts(unit);
+
+  let done = 0;
+  let total = 0;
+  if (flash && flash.total > 0) {
+    done += flash.viewed;
+    total += flash.total;
+  }
+  if (tools && tools.total > 0) {
+    done += tools.attempted;
+    total += tools.total;
+  }
+  if (practice && practice.total > 0) {
+    done += practice.attempted;
+    total += practice.total;
+  }
+
+  if (total <= 0) return null;
+  return { done: Math.min(done, total), total };
+}
+
+/** Combined % for roadmap / chapter cards (not flashcard-only). */
+export function unitCombinedProgressPercent(
+  unit: UnitProgress | undefined,
+): number {
+  const counts = unitCombinedProgressCounts(unit);
+  if (!counts) return unitProgressPercent(unit);
+  return Math.min(100, Math.round((counts.done / counts.total) * 100));
+}
+
+export function isUnitCombinedCompleted(
+  unit: UnitProgress | undefined,
+): boolean {
+  const counts = unitCombinedProgressCounts(unit);
+  if (!counts || counts.total <= 0) return false;
+  return counts.done >= counts.total;
+}
