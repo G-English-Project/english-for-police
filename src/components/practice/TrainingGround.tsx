@@ -97,6 +97,7 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
       const backendAnswers = mapAnswersToBackendPayload(
         questions,
         combinedAnswers,
+        unit.id,
       );
       if (backendAnswers.length === 0) {
         notifyError(

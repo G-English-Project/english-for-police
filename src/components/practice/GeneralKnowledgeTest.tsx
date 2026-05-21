@@ -374,9 +374,12 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
 
     try {
       const combinedAnswers = getCombinedAnswers();
+      const unitForSubmit =
+        mode === "unit" && lessons.length === 1 ? lessons[0].id : undefined;
       const backendAnswers = mapAnswersToBackendPayload(
         scopedQuestions,
         combinedAnswers,
+        unitForSubmit,
       );
 
       if (backendAnswers.length === 0) {

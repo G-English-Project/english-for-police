@@ -465,29 +465,98 @@ export function extractQuestion(
   return null;
 }
 
-export function serializeAnswerForApi(answer: unknown): string {
-  // Keep legacy transport format for backend compatibility.
-  // This preserves previous behavior used before refactor:
-  // - arrays => comma-joined by JS String()
-  // - objects => "[object Object]"
-  return String(answer ?? "");
+/** Backend grading keys: `{unit}-{TYPE}-{sortOrder}-{promptHash}` */
+const BACKEND_QUESTION_KEY_REGEX = /^(\d+)-([A-Za-z]+)-(\d+)-(\d+)$/;
+
+export function resolveBackendQuestionRef(
+  question: Question,
+  clientQuestionId: string,
+  fallbackUnitNumber?: number,
+): { unitNumber: number; questionId: string } | null {
+  if (question.backendQuestionId && question.backendUnitNumber != null) {
+    return {
+      unitNumber: question.backendUnitNumber,
+      questionId: question.backendQuestionId,
+    };
+  }
+
+  const extracted = extractQuestion(
+    clientQuestionId,
+    question.backendUnitNumber ?? fallbackUnitNumber,
+  );
+  if (extracted) {
+    return extracted;
+  }
+
+  const keyMatch = clientQuestionId.match(BACKEND_QUESTION_KEY_REGEX);
+  if (keyMatch) {
+    return {
+      unitNumber: Number(keyMatch[1]),
+      questionId: clientQuestionId,
+    };
+  }
+
+  if (question.id === clientQuestionId) {
+    const unitFromId = extractUnitId(clientQuestionId);
+    if (unitFromId != null) {
+      return { unitNumber: unitFromId, questionId: clientQuestionId };
+    }
+  }
+
+  return null;
+}
+
+export function serializeAnswerForApi(
+  answer: unknown,
+  question?: Question,
+): string {
+  if (answer == null) return "";
+
+  if (question?.type === "Matching") {
+    if (typeof answer === "object" && !Array.isArray(answer)) {
+      return JSON.stringify(answer);
+    }
+  }
+
+  if (question?.type === "Arrangement" && Array.isArray(answer)) {
+    return answer.map((w) => String(w).trim()).filter(Boolean).join(" ");
+  }
+
+  if (typeof answer === "string") return answer;
+  if (typeof answer === "number" || typeof answer === "boolean") {
+    return String(answer);
+  }
+
+  try {
+    return JSON.stringify(answer);
+  } catch {
+    return String(answer);
+  }
 }
 
 export function mapAnswersToBackendPayload(
   questions: Question[],
   combinedAnswers: Record<string, unknown>,
+  fallbackUnitNumber?: number,
 ) {
   const questionById = new Map(questions.map((q) => [q.id, q]));
+
   return Object.entries(combinedAnswers)
     .map(([clientQuestionId, answer]) => {
       const question = questionById.get(clientQuestionId);
-      if (!question?.backendQuestionId || question.backendUnitNumber == null) {
-        return null;
-      }
+      if (!question) return null;
+
+      const ref = resolveBackendQuestionRef(
+        question,
+        clientQuestionId,
+        fallbackUnitNumber,
+      );
+      if (!ref) return null;
+
       return {
-        unitNumber: question.backendUnitNumber,
-        questionId: question.backendQuestionId,
-        answer: serializeAnswerForApi(answer),
+        unitNumber: ref.unitNumber,
+        questionId: ref.questionId,
+        answer: serializeAnswerForApi(answer, question),
       };
     })
     .filter((item): item is NonNullable<typeof item> => !!item);

@@ -78,10 +78,16 @@ export function mapPracticeQuestionDto(item: PracticeQuestionApiDto): Question {
       : normalizePair(p as Record<string, string>),
   );
 
+  const backendId =
+    typeof item.id === "string" && item.id.trim().length > 0
+      ? item.id.trim()
+      : undefined;
+
   return {
-    id: item.id,
-    backendQuestionId: item.id,
-    backendUnitNumber: item.unitNumber,
+    id: backendId ?? `missing-${item.unitNumber}-${item.type}`,
+    backendQuestionId: backendId,
+    backendUnitNumber:
+      typeof item.unitNumber === "number" ? item.unitNumber : undefined,
     sourceCategory: narrowSourceCategory(item.sourceCategory),
     testLane: narrowTestLane(item.testLane as string | undefined),
     type: item.type,
