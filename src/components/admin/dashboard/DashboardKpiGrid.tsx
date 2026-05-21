@@ -1,9 +1,15 @@
-import { Activity, BarChart3, TrendingUp, Users } from "lucide-react";
+import { Activity, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import type { AdminReportOverview } from "@/models/admin.model";
 
 interface DashboardKpiGridProps {
   overview: AdminReportOverview;
+  /** grid = 2 cột ngang; stack = xếp dọc (cạnh chart) */
+  layout?: "grid" | "stack";
+  /** embedded = nằm trong card chung với chart (không bọc Card riêng) */
+  variant?: "card" | "embedded";
+  className?: string;
 }
 
 const KPI_ITEMS = [
@@ -23,52 +29,105 @@ const KPI_ITEMS = [
     bg: "bg-blue-50",
     format: (v: number) => String(v),
   },
-  {
-    key: "avgOverallProgressPercent" as const,
-    label: "Tiến độ TB",
-    icon: TrendingUp,
-    color: "text-emerald-600",
-    bg: "bg-emerald-50",
-    format: (v: number) => `${Math.round(v)}%`,
-  },
-  {
-    key: "avgOverallScorePercent" as const,
-    label: "Điểm TB",
-    icon: BarChart3,
-    color: "text-violet-600",
-    bg: "bg-violet-50",
-    format: (v: number) => `${(v / 10).toFixed(1)}/10`,
-  },
 ];
 
-export function DashboardKpiGrid({ overview }: DashboardKpiGridProps) {
+function KpiMetricRow({
+  label,
+  value,
+  icon: Icon,
+  color,
+  bg,
+}: (typeof KPI_ITEMS)[number] & { value: string }) {
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      {KPI_ITEMS.map(({ key, label, icon: Icon, color, bg, format }) => {
-        const value = overview[key];
-        return (
-          <Card
-            key={key}
-            className="border border-slate-200 bg-white shadow-sm"
-          >
-            <CardContent className="flex items-center justify-between gap-3 p-4">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                  {label}
-                </p>
-                <p className="mt-1 text-xl font-bold tabular-nums text-slate-900">
-                  {format(value)}
-                </p>
-              </div>
-              <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${bg}`}
-              >
-                <Icon className={`h-5 w-5 ${color}`} aria-hidden />
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+          {label}
+        </p>
+        <p className="mt-0.5 text-2xl font-bold leading-none tabular-nums text-slate-900">
+          {value}
+        </p>
+      </div>
+      <div
+        className={cn(
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-md",
+          bg,
+        )}
+      >
+        <Icon className={cn("h-4 w-4", color)} aria-hidden />
+      </div>
+    </div>
+  );
+}
+
+function KpiStackMetrics({
+  overview,
+  className,
+}: {
+  overview: AdminReportOverview;
+  className?: string;
+}) {
+  return (
+    <div className={cn("divide-y divide-slate-200/80", className)}>
+      {KPI_ITEMS.map((item) => (
+        <div key={item.key} className="px-4 py-3.5">
+          <KpiMetricRow
+            {...item}
+            value={item.format(overview[item.key])}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function DashboardKpiGrid({
+  overview,
+  layout = "grid",
+  variant = "card",
+  className,
+}: DashboardKpiGridProps) {
+  const isStack = layout === "stack";
+
+  if (isStack && variant === "embedded") {
+    return (
+      <KpiStackMetrics
+        overview={overview}
+        className={cn("flex h-full flex-col justify-center", className)}
+      />
+    );
+  }
+
+  if (isStack) {
+    return (
+      <Card
+        className={cn(
+          "w-full shrink-0 border border-slate-200 bg-white shadow-sm lg:w-[220px]",
+          className,
+        )}
+      >
+        <CardContent className="p-0">
+          <KpiStackMetrics overview={overview} />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className={cn("grid grid-cols-2 gap-3", className)}>
+      {KPI_ITEMS.map((item) => (
+        <Card
+          key={item.key}
+          className="border border-slate-200 bg-white shadow-sm"
+        >
+          <CardContent className="p-4">
+            <KpiMetricRow
+              {...item}
+              value={item.format(overview[item.key])}
+            />
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Activity, AlertTriangle, RefreshCw } from "lucide-react";
+import { Activity, AlertTriangle } from "lucide-react";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
-import { EvaluationPeriodFilter } from "@/components/admin/evaluation/EvaluationPeriodFilter";
 import {
-  DashboardDailyActiveChart,
   DashboardDistributionCharts,
   DashboardHighlights,
-  DashboardKpiGrid,
+  DashboardKpiActivityRow,
   DashboardStudentTable,
   DashboardUnitTracksChart,
   StudentDashboardSheet,
@@ -21,9 +19,6 @@ const STUDENT_PAGE_SIZE = 10;
 
 export default function UnitsProgressPage() {
   const {
-    period,
-    setPeriod,
-    applyPreset,
     overview,
     students,
     studentDashboard,
@@ -36,12 +31,8 @@ export default function UnitsProgressPage() {
     closeStudentDetail,
   } = useAdminDashboard();
 
-  const {
-    unitTrackAverages,
-    isLoadingTracks,
-    tracksError,
-    reloadTracks,
-  } = useAdminUnitTrackAverages(students, !isLoading && students.length > 0);
+  const { unitTrackAverages, isLoadingTracks, tracksError } =
+    useAdminUnitTrackAverages(students, !isLoading && students.length > 0);
 
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebouncedValue(searchQuery, 300);
@@ -74,30 +65,6 @@ export default function UnitsProgressPage() {
       title="Bảng điều khiển học viên"
       description="Tổng quan hệ thống, phân bố tiến độ/điểm và danh sách học viên từ API reports dashboard."
     >
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <EvaluationPeriodFilter
-          period={period}
-          onPeriodChange={setPeriod}
-          onPreset={applyPreset}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-8 gap-1.5 border-slate-300 text-xs font-semibold"
-          disabled={isLoading}
-          onClick={() => {
-            void reload();
-            void reloadTracks();
-          }}
-        >
-          <RefreshCw
-            className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`}
-          />
-          Làm mới
-        </Button>
-      </div>
-
       {isLoading ? (
         <div className="flex h-64 flex-col items-center justify-center gap-4 text-slate-500">
           <Activity className="h-8 w-8 animate-spin text-slate-700" />
@@ -119,7 +86,7 @@ export default function UnitsProgressPage() {
         </div>
       ) : overview ? (
         <div className="space-y-6">
-          <DashboardKpiGrid overview={overview} />
+          <DashboardKpiActivityRow overview={overview} />
 
           <DashboardUnitTracksChart
             data={unitTrackAverages}
@@ -131,8 +98,6 @@ export default function UnitsProgressPage() {
             progressBuckets={overview.progressDistributionBuckets}
             scoreBuckets={overview.scoreDistributionBuckets}
           />
-
-          <DashboardDailyActiveChart points={overview.dailyActiveUsers} />
 
           <DashboardHighlights
             topStudents={overview.topStudents}

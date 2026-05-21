@@ -2,6 +2,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -15,12 +16,14 @@ interface DashboardDistributionChartsProps {
   scoreBuckets: AdminReportDistributionBucket[];
 }
 
-function DistributionChart({
+function DistributionBarChart({
   title,
+  subtitle,
   buckets,
   barColor,
 }: {
   title: string;
+  subtitle: string;
   buckets: AdminReportDistributionBucket[];
   barColor: string;
 }) {
@@ -28,25 +31,26 @@ function DistributionChart({
     label: b.label,
     count: b.count,
   }));
+  const maxCount = Math.max(1, ...data.map((d) => d.count));
 
   return (
     <Card className="border border-slate-200 bg-white shadow-sm">
       <CardHeader className="border-b border-slate-100 bg-slate-50 px-5 py-4">
-        <CardTitle className="text-sm font-bold text-slate-900">
-          {title}
-        </CardTitle>
+        <CardTitle className="text-sm font-bold text-slate-900">{title}</CardTitle>
+        <p className="mt-1 text-xs text-slate-500">{subtitle}</p>
       </CardHeader>
       <CardContent className="p-4">
         {data.length === 0 ? (
-          <p className="py-8 text-center text-sm text-slate-500">
+          <p className="py-10 text-center text-sm text-slate-500">
             Chưa có dữ liệu.
           </p>
         ) : (
-          <div className="h-[200px] w-full min-w-0">
+          <div className="h-[240px] w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={data}
-                margin={{ top: 4, right: 8, left: -16, bottom: 0 }}
+                margin={{ top: 20, right: 12, left: 0, bottom: 4 }}
+                barCategoryGap="20%"
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
@@ -55,33 +59,57 @@ function DistributionChart({
                 />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 10, fill: "#64748b" }}
+                  tick={{ fontSize: 11, fill: "#64748b" }}
                   axisLine={{ stroke: "#e2e8f0" }}
                   tickLine={false}
+                  label={{
+                    value: "Khoảng %",
+                    position: "insideBottom",
+                    offset: -2,
+                    fontSize: 10,
+                    fill: "#94a3b8",
+                  }}
                 />
                 <YAxis
                   allowDecimals={false}
+                  domain={[0, Math.max(maxCount, 1)]}
                   tick={{ fontSize: 10, fill: "#64748b" }}
                   axisLine={false}
                   tickLine={false}
+                  label={{
+                    value: "Số học viên",
+                    angle: -90,
+                    position: "insideLeft",
+                    fontSize: 10,
+                    fill: "#94a3b8",
+                  }}
                 />
                 <Tooltip
+                  cursor={{ fill: "rgba(148, 163, 184, 0.12)" }}
                   contentStyle={{
                     fontSize: 12,
-                    borderRadius: 6,
+                    borderRadius: 8,
                     border: "1px solid #e2e8f0",
                   }}
                   formatter={(value) => [
                     `${Number(value ?? 0)} học viên`,
                     "Số lượng",
                   ]}
+                  labelFormatter={(label) => `Khoảng ${label}%`}
                 />
                 <Bar
                   dataKey="count"
+                  name="Học viên"
                   fill={barColor}
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={48}
-                />
+                  radius={[6, 6, 0, 0]}
+                  maxBarSize={56}
+                >
+                  <LabelList
+                    dataKey="count"
+                    position="top"
+                    className="fill-slate-600 text-[10px] font-bold"
+                  />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -97,13 +125,15 @@ export function DashboardDistributionCharts({
 }: DashboardDistributionChartsProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <DistributionChart
+      <DistributionBarChart
         title="Phân bố tiến độ"
+        subtitle="Số học viên theo khoảng % hoàn thành chương"
         buckets={progressBuckets}
         barColor="#2563eb"
       />
-      <DistributionChart
+      <DistributionBarChart
         title="Phân bố điểm"
+        subtitle="Số học viên theo khoảng % điểm trung bình"
         buckets={scoreBuckets}
         barColor="#059669"
       />
