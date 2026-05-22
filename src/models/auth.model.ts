@@ -28,3 +28,18 @@ export interface ApiError {
   code?: string;
   status?: number;
 }
+
+export interface BaseApiResponse<T = void> {
+  code: string;
+  message: string;
+  data?: T;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}

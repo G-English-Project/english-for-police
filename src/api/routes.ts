@@ -6,6 +6,9 @@ export const API_ROUTES = {
   AUTH: {
     LOGIN: "/api/v1/auth/login",
     REGISTER: "/api/v1/auth/register",
+    FORGOT_PASSWORD: "/api/v1/auth/forgot-password",
+    RESET_PASSWORD: "/api/v1/auth/reset-password",
+    VALIDATE_RESET_TOKEN: "/api/v1/auth/validate-reset-token",
   },
   USER: {
     LIST: "/api/v1/user",

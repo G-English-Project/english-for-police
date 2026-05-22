@@ -63,6 +63,11 @@ const GeneralTestPage = lazy(() =>
     default: m.GeneralTestPage,
   })),
 );
+const ResetPasswordPage = lazy(() =>
+  import("@/pages/ResetPasswordPage").then((m) => ({
+    default: m.ResetPasswordPage,
+  })),
+);
 const UnitsProgressPage = lazy(() => import("@/pages/admin/UnitsProgressPage"));
 const GeneralAttemptsPage = lazy(
   () => import("@/pages/admin/GeneralAttemptsPage"),
@@ -195,6 +200,7 @@ export function AppRouter() {
           }
         >
           <Routes location={location}>
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route
               path="/"
               element={

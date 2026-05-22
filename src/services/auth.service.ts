@@ -2,10 +2,13 @@ import { API_ROUTES } from "@/api/routes";
 import { api } from "@/utils/api-client";
 import { clearAuthSession, setAuthSession } from "@/utils/auth-session";
 import type {
+  BaseApiResponse,
+  ForgotPasswordRequest,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  ResetPasswordRequest,
 } from "@/models/auth.model";
 
 export const authService = {
@@ -27,5 +30,30 @@ export const authService = {
 
   logout: () => {
     clearAuthSession();
+  },
+
+  forgotPassword: async (
+    payload: ForgotPasswordRequest,
+  ): Promise<BaseApiResponse> => {
+    return api.post<BaseApiResponse>(
+      API_ROUTES.AUTH.FORGOT_PASSWORD,
+      payload,
+    );
+  },
+
+  validateResetToken: async (token: string): Promise<BaseApiResponse<boolean>> => {
+    const query = new URLSearchParams({ token }).toString();
+    return api.get<BaseApiResponse<boolean>>(
+      `${API_ROUTES.AUTH.VALIDATE_RESET_TOKEN}?${query}`,
+    );
+  },
+
+  resetPassword: async (
+    payload: ResetPasswordRequest,
+  ): Promise<BaseApiResponse> => {
+    return api.post<BaseApiResponse>(
+      API_ROUTES.AUTH.RESET_PASSWORD,
+      payload,
+    );
   },
 };

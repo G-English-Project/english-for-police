@@ -18,12 +18,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { usePasswordReset } from "@/hooks/use-password-reset";
+
+type AuthView = "login" | "register" | "forgot";
 
 interface AuthDialogsProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  view: "login" | "register";
-  setView: (view: "login" | "register") => void;
+  view: AuthView;
+  setView: (view: AuthView) => void;
 }
 
 export function AuthDialogs({
@@ -33,6 +36,8 @@ export function AuthDialogs({
   setView,
 }: AuthDialogsProps) {
   const { login, register, isLoading, setError } = useAuth();
+  const { requestForgotPassword, isLoading: isForgotLoading } =
+    usePasswordReset();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,9 +57,18 @@ export function AuthDialogs({
     onOpenChange(open);
   };
 
-  const handleViewChange = (nextView: "login" | "register") => {
+  const handleViewChange = (nextView: AuthView) => {
     setShowPassword(false);
     setView(nextView);
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await requestForgotPassword(email);
+    } catch {
+      // Toast handled in hook.
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -85,7 +99,81 @@ export function AuthDialogs({
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="sm:max-w-md p-0 border-none overflow-hidden glass police-shadow">
-        {view === "login" ? (
+        {view === "forgot" ? (
+          <form onSubmit={handleForgotPassword}>
+            <DialogHeader className="primary-gradient p-8 text-white relative">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <Shield className="h-24 w-24" />
+              </div>
+              <div className="space-y-1 relative z-10 text-left">
+                <DialogTitle className="text-3xl font-heading font-black tracking-tight text-white">
+                  Quên mật khẩu
+                </DialogTitle>
+                <p className="text-sm text-white/70 font-medium">
+                  Forgot password — Nhập email đã đăng ký để nhận liên kết đặt
+                  lại mật khẩu.
+                </p>
+              </div>
+            </DialogHeader>
+
+            <div className="p-8 space-y-6 bg-white/40">
+              <div className="space-y-2 group">
+                <Label
+                  htmlFor="forgotEmail"
+                  className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground group-focus-within:text-primary transition-colors"
+                >
+                  Email
+                </Label>
+                <div className="relative tactical-border">
+                  <Mail className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="forgotEmail"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@police.gov.vn"
+                    required
+                    className="border-none bg-transparent h-11 pl-7 pr-0 focus-visible:ring-0 placeholder:text-muted-foreground/30 font-medium"
+                  />
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Nếu sau 5 phút chưa nhận được email, vui lòng kiểm tra thư mục
+                Spam/Junk hoặc liên hệ quản trị hệ thống.
+              </p>
+
+              <Button
+                type="submit"
+                disabled={isForgotLoading}
+                className="w-full h-12 primary-gradient text-white font-bold uppercase tracking-widest rounded shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all group overflow-hidden relative"
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  {isForgotLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Đang gửi...
+                    </>
+                  ) : (
+                    <>
+                      Gửi / Submit{" "}
+                      <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </span>
+              </Button>
+
+              <div className="text-center pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleViewChange("login")}
+                  className="text-xs text-primary font-bold hover:underline underline-offset-4"
+                >
+                  Quay lại đăng nhập
+                </button>
+              </div>
+            </div>
+          </form>
+        ) : view === "login" ? (
           <form onSubmit={handleLogin}>
             <DialogHeader className="primary-gradient p-8 text-white relative">
               <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -132,6 +220,13 @@ export function AuthDialogs({
                     >
                       Mật khẩu
                     </Label>
+                    <button
+                      type="button"
+                      onClick={() => handleViewChange("forgot")}
+                      className="text-[10px] font-bold text-primary hover:underline underline-offset-4"
+                    >
+                      Quên mật khẩu?
+                    </button>
                   </div>
                   <div className="relative tactical-border">
                     <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
