@@ -27,6 +27,7 @@ import { UserRole } from "@/models/user.model";
 import { fetchLessons } from "@/lib/lessonApi";
 
 // Lazy-loaded route components
+const ResetPasswordPage = lazy(() => import("@/pages/ResetPasswordPage"));
 const HomeView = lazy(() =>
   import("@/components/views/HomeView").then((m) => ({ default: m.HomeView })),
 );
@@ -160,6 +161,14 @@ export function AppRouter() {
     );
     return match ? Number(match[2]) : undefined;
   }, [location.pathname]);
+
+  if (location.pathname === "/reset-password") {
+    return (
+      <Suspense fallback={null}>
+        <ResetPasswordPage />
+      </Suspense>
+    );
+  }
 
   return (
     <>

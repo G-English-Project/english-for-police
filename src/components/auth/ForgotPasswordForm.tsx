@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { authService } from "@/services/auth.service";
+import type { ApiError } from "@/models/auth.model";
 
 interface ForgotPasswordFormProps {
   onBackToLogin: () => void;
@@ -29,20 +31,11 @@ export function ForgotPasswordForm({ onBackToLogin }: ForgotPasswordFormProps) {
     setError(null);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        throw new Error("Địa chỉ email không đúng định dạng.");
-      }
-
+      await authService.forgotPassword({ email });
       setIsSubmitted(true);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Đã có lỗi xảy ra. Vui lòng thử lại.",
-      );
+      const apiErr = err as ApiError;
+      setError(apiErr.message ?? "Đã có lỗi xảy ra. Vui lòng thử lại.");
     } finally {
       setIsLoading(false);
     }
