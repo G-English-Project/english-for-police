@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle } from "lucide-react";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import {
-  DashboardDistributionCharts,
   DashboardHighlights,
   DashboardKpiActivityRow,
   DashboardStudentTable,
@@ -63,7 +62,7 @@ export default function UnitsProgressPage() {
   return (
     <AdminPageLayout
       title="Bảng điều khiển học viên"
-      description="Tổng quan hệ thống, phân bố tiến độ/điểm và danh sách học viên từ API reports dashboard."
+      description="Tổng quan hệ thống và danh sách học viên từ API reports dashboard."
     >
       {isLoading ? (
         <div className="flex h-64 flex-col items-center justify-center gap-4 text-slate-500">
@@ -92,11 +91,6 @@ export default function UnitsProgressPage() {
             data={unitTrackAverages}
             isLoading={isLoadingTracks}
             error={tracksError}
-          />
-
-          <DashboardDistributionCharts
-            progressBuckets={overview.progressDistributionBuckets}
-            scoreBuckets={overview.scoreDistributionBuckets}
           />
 
           <DashboardHighlights
