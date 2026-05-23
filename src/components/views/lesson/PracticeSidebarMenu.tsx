@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import {
   PRACTICE_MENU_LABEL_TO_LANE,
   practiceTypesForSubLesson,
@@ -53,14 +53,17 @@ export function PracticeSidebarMenu({
     ),
   );
 
-  const labelsForSub = (subId: string) =>
-    new Set(
-      practiceTypesForSubLesson(practiceQuestions, subId)
-        .map((t) => t.label)
-        .filter((label) =>
-          (PHRASE_PRACTICE_TYPE_LABELS as readonly string[]).includes(label),
-        ),
-    );
+  const labelsForSub = useCallback(
+    (subId: string) =>
+      new Set(
+        practiceTypesForSubLesson(practiceQuestions, subId)
+          .map((t) => t.label)
+          .filter((label) =>
+            (PHRASE_PRACTICE_TYPE_LABELS as readonly string[]).includes(label),
+          ),
+      ),
+    [practiceQuestions],
+  );
 
   const hasVocab =
     showUnavailable ||
@@ -74,7 +77,10 @@ export function PracticeSidebarMenu({
     vocabLabelsToTrack,
   );
 
-  const phraseSubs = subNavItems.length > 0 ? subNavItems : [];
+  const phraseSubs = useMemo(
+    () => (subNavItems.length > 0 ? subNavItems : []),
+    [subNavItems],
+  );
   const hasPhraseSection =
     phraseSubs.length > 0
       ? phraseSubs.some(
@@ -88,17 +94,6 @@ export function PracticeSidebarMenu({
         PHRASE_PRACTICE_TYPE_LABELS.some((l) =>
           availableLanes.has(PRACTICE_MENU_LABEL_TO_LANE[l]),
         );
-
-  if (!hasVocab && !hasPhraseSection) {
-    return (
-      <p className="px-2 py-1.5 text-[10px] italic text-muted-foreground">
-        {emptyMessage}
-      </p>
-    );
-  }
-
-  const hint =
-    unavailableHint?.() ?? "Phần luyện tập này hiện chưa có nội dung.";
 
   const phraseGroupComplete = useMemo(() => {
     const phrasePartsToTrack: { labels: string[]; subId?: string }[] = [];
@@ -126,7 +121,18 @@ export function PracticeSidebarMenu({
         arePracticeTypeLabelsComplete(unitProgress, part.labels, part.subId),
       )
     );
-  }, [phraseSubs, practiceQuestions, availableLanes, unitProgress]);
+  }, [phraseSubs, labelsForSub, availableLanes, unitProgress]);
+
+  if (!hasVocab && !hasPhraseSection) {
+    return (
+      <p className="px-2 py-1.5 text-[10px] italic text-muted-foreground">
+        {emptyMessage}
+      </p>
+    );
+  }
+
+  const hint =
+    unavailableHint?.() ?? "Phần luyện tập này hiện chưa có nội dung.";
 
   return (
     <PracticeMenuGroup>
@@ -148,7 +154,10 @@ export function PracticeSidebarMenu({
                   label={typeLabel}
                   depth={1}
                   isAvailable={vocabAvailable.has(typeLabel)}
-                  completed={isPracticeTypeLabelComplete(unitProgress, typeLabel)}
+                  completed={isPracticeTypeLabelComplete(
+                    unitProgress,
+                    typeLabel,
+                  )}
                   showUnavailable={showUnavailable}
                   unavailableHint={hint}
                   onSelect={() => onSelectType(typeLabel)}

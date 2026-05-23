@@ -38,7 +38,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 }) => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
-  const [authView, setAuthView] = useState<"login" | "register">("login");
+  const [authView, setAuthView] = useState<
+    "login" | "register" | "forgot-password"
+  >("login");
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 

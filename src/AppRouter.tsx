@@ -249,8 +249,7 @@ export function AppRouter() {
                     onBack={navigateToLesson}
                     onComplete={(summary) => {
                       setFlashcardSummary(summary);
-                      const { unitId } =
-                        parseUnitIdFromPath(location.pathname);
+                      const { unitId } = parseUnitIdFromPath(location.pathname);
                       navigate(`/flashcards/${unitId}/results`);
                       updateDailyTask("vocab", summary.knownCount);
                     }}
@@ -263,29 +262,29 @@ export function AppRouter() {
               element={
                 <RequireAuthForLessonTests>
                   <FlashcardResultsPage
-                  lessons={lessons}
-                  flashcardSummary={flashcardSummary}
-                  onBack={navigateToLesson}
-                  onRetry={(unit) => {
-                    localStorage.removeItem(
-                      getFlashcardStatusStorageKey(
-                        unit.id,
-                        flashcardSummary!.deckMode,
-                      ),
-                    );
-                    setFlashcardRound((prev) => prev + 1);
-                    navigate(`/flashcards/${unit.id}`);
-                  }}
-                  onContinue={(unit) => {
-                    const nextMode =
-                      flashcardSummary?.deckMode === "vocabulary"
-                        ? "sentencePatterns"
-                        : "vocabulary";
-                    navigate(`/flashcards/${unit.id}`, {
-                      state: { initialMode: nextMode },
-                    });
-                  }}
-                />
+                    lessons={lessons}
+                    flashcardSummary={flashcardSummary}
+                    onBack={navigateToLesson}
+                    onRetry={(unit) => {
+                      localStorage.removeItem(
+                        getFlashcardStatusStorageKey(
+                          unit.id,
+                          flashcardSummary!.deckMode,
+                        ),
+                      );
+                      setFlashcardRound((prev) => prev + 1);
+                      navigate(`/flashcards/${unit.id}`);
+                    }}
+                    onContinue={(unit) => {
+                      const nextMode =
+                        flashcardSummary?.deckMode === "vocabulary"
+                          ? "sentencePatterns"
+                          : "vocabulary";
+                      navigate(`/flashcards/${unit.id}`, {
+                        state: { initialMode: nextMode },
+                      });
+                    }}
+                  />
                 </RequireAuthForLessonTests>
               }
             />
@@ -335,7 +334,16 @@ export function AppRouter() {
                 />
               }
             />
-            <Route path="/admin/units" element={<UnitsProgressPage />} />
+            <Route
+              path="/admin/units"
+              element={
+                user?.role === UserRole.ADMIN ? (
+                  <UnitsProgressPage />
+                ) : (
+                  <Navigate to="/" replace />
+                )
+              }
+            />
             <Route
               path="/admin/general-attempts"
               element={

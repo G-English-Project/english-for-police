@@ -465,6 +465,8 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     subLessonIdParam,
     testMode,
     areAllQuestionsAnswered,
+    lessons,
+    mode,
   ]);
 
   const handleBack = () => {

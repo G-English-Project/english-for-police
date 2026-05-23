@@ -216,12 +216,13 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
       : 0;
   const currentCard = cards[safeIndex];
 
-  useEffect(() => {
-    if (cards.length === 0) return;
+  const [prevCardsLength, setPrevCardsLength] = useState(cards.length);
+  if (cards.length !== prevCardsLength) {
+    setPrevCardsLength(cards.length);
     if (currentIndex !== safeIndex) {
       setCurrentIndex(safeIndex);
     }
-  }, [cards.length, currentIndex, safeIndex]);
+  }
 
   useEffect(() => {
     if (!currentCard) return;
@@ -248,9 +249,7 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
 
   const nextCard = useCallback(() => {
     setIsFlipped(false);
-    setCurrentIndex((prev) =>
-      prev < cards.length - 1 ? prev + 1 : prev,
-    );
+    setCurrentIndex((prev) => (prev < cards.length - 1 ? prev + 1 : prev));
   }, [cards.length]);
 
   const finishSession = useCallback(

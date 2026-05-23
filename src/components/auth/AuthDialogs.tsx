@@ -18,12 +18,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { ForgotPasswordForm } from "./ForgotPasswordForm";
 
 interface AuthDialogsProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  view: "login" | "register";
-  setView: (view: "login" | "register") => void;
+  view: "login" | "register" | "forgot-password";
+  setView: (view: "login" | "register" | "forgot-password") => void;
 }
 
 export function AuthDialogs({
@@ -52,7 +53,9 @@ export function AuthDialogs({
     onOpenChange(open);
   };
 
-  const handleViewChange = (nextView: "login" | "register") => {
+  const handleViewChange = (
+    nextView: "login" | "register" | "forgot-password",
+  ) => {
     setShowPassword(false);
     setView(nextView);
   };
@@ -132,6 +135,13 @@ export function AuthDialogs({
                     >
                       Mật khẩu
                     </Label>
+                    <button
+                      type="button"
+                      onClick={() => handleViewChange("forgot-password")}
+                      className="text-[10px] font-bold uppercase tracking-widest text-primary hover:underline transition-colors"
+                    >
+                      Quên mật khẩu?
+                    </button>
                   </div>
                   <div className="relative tactical-border">
                     <Lock className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -207,7 +217,7 @@ export function AuthDialogs({
               </div>
             </div>
           </form>
-        ) : (
+        ) : view === "register" ? (
           <form onSubmit={handleRegister}>
             <DialogHeader className="primary-gradient p-8 text-white relative">
               <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -332,6 +342,8 @@ export function AuthDialogs({
               </div>
             </div>
           </form>
+        ) : (
+          <ForgotPasswordForm onBackToLogin={() => handleViewChange("login")} />
         )}
       </DialogContent>
     </Dialog>
