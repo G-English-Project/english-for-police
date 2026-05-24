@@ -63,7 +63,6 @@ function KpiMetricRow({
 
 function ActiveVisitorsRow() {
   const count = useActiveVisitors();
-  if (count === null) return null;
   return (
     <div className="px-4 py-3.5">
       <div className="flex items-center justify-between gap-3">
@@ -72,14 +71,16 @@ function ActiveVisitorsRow() {
             Đang truy cập
           </p>
           <p className="mt-0.5 text-2xl font-bold leading-none tabular-nums text-emerald-600">
-            {count}
+            {count ?? "—"}
           </p>
         </div>
         <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-50">
           <Radio className="h-4 w-4 text-emerald-600" aria-hidden />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-emerald-500">
-            <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-75" />
-          </span>
+          {count !== null && (
+            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-emerald-500">
+              <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-75" />
+            </span>
+          )}
         </div>
       </div>
     </div>

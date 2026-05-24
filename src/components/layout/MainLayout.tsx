@@ -33,15 +33,16 @@ interface MainLayoutProps {
 
 function ActiveVisitorsFooter() {
   const count = useActiveVisitors();
-  if (count === null) return null;
   return (
     <div className="flex items-center justify-center gap-2 py-3 text-xs text-muted-foreground border-t border-slate-100 bg-white/60">
       <span className="relative flex h-2 w-2">
-        <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-75" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+        {count !== null && (
+          <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-75" />
+        )}
+        <span className={`relative inline-flex h-2 w-2 rounded-full ${count !== null ? "bg-emerald-500" : "bg-slate-300"}`} />
       </span>
       <span>
-        <span className="font-semibold text-emerald-600">{count}</span> người đang truy cập
+        <span className="font-semibold text-emerald-600">{count ?? "—"}</span> người đang truy cập
       </span>
     </div>
   );
