@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
+import { API_BASE_URL } from "@/api/routes";
 
-const UMAMI_BASE_URL = "https://umami.espforpolice.vn";
-const UMAMI_WEBSITE_ID = "f8861508-a4d3-4ea1-b5f2-ce0da43751db";
-const UMAMI_SHARE_TOKEN = "BbTKY49R11vXXKuS";
 const POLL_MS = 30_000;
 
 export function useActiveVisitors(): number | null {
@@ -11,16 +9,12 @@ export function useActiveVisitors(): number | null {
   useEffect(() => {
     const fetch_ = async () => {
       try {
-        const res = await fetch(
-          `${UMAMI_BASE_URL}/api/websites/${UMAMI_WEBSITE_ID}/active`,
-          { headers: { "x-umami-share-token": UMAMI_SHARE_TOKEN } },
-        );
+        const res = await fetch(`${API_BASE_URL}/api/v1/analytics/active-visitors`);
         if (!res.ok) return;
-        const data = (await res.json()) as { x?: number; visitors?: number };
-        const v = data.x ?? data.visitors ?? null;
-        if (v !== null) setCount(v);
+        const data = (await res.json()) as { count?: number };
+        if (data.count !== undefined) setCount(data.count);
       } catch {
-        // silently ignore network errors
+        // silently ignore
       }
     };
 
