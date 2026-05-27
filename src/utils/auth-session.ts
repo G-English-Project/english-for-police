@@ -14,7 +14,10 @@ let handlingUnauthorized = false;
 
 /** Pre-v2 localStorage key names (built at runtime — not credentials). */
 function legacyStorageKeys(): { token: string; user: string } {
-  return { token: ["auth", "token"].join("_"), user: ["auth", "user"].join("_") };
+  return {
+    token: ["auth", "token"].join("_"),
+    user: ["auth", "user"].join("_"),
+  };
 }
 
 function migrateLegacyAuthStorage(): void {
@@ -117,9 +120,9 @@ export function shouldHandleUnauthorizedApi(
   endpoint: string,
   status: number,
 ): boolean {
-  if (status !== 401) return false;
+  if (status !== 401 && status !== 403) return false;
   if (isAuthApiEndpoint(endpoint)) return false;
-  return !!getAuthToken() || !!getStoredAuthUserRaw();
+  return true;
 }
 
 export interface HandleUnauthorizedOptions {

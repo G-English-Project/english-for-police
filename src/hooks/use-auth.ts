@@ -5,7 +5,7 @@ import type { User } from "@/models/user.model";
 import { useSonner } from "@/hooks/use-sonner";
 import {
   AUTH_SESSION_CHANGED_EVENT,
-  assertValidAuthToken,
+  clearAuthSession,
   getAuthToken,
   getStoredAuthUser,
   handleUnauthorizedSession,
@@ -16,10 +16,18 @@ import {
 const AUTH_CHANGED_EVENT = AUTH_SESSION_CHANGED_EVENT;
 
 export function useAuth() {
-  const { notifySuccess, notifyAuthError, notifyError, notifyInfo } = useSonner();
+  const { notifySuccess, notifyAuthError, notifyError, notifyInfo } =
+    useSonner();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(() => getStoredAuthUser());
+  const [user, setUser] = useState<User | null>(() => {
+    const token = getAuthToken();
+    if (token && isJwtExpired(token)) {
+      clearAuthSession();
+      return null;
+    }
+    return getStoredAuthUser();
+  });
 
   useEffect(() => {
     const syncAuth = () => setUser(getStoredAuthUser());
@@ -31,6 +39,9 @@ export function useAuth() {
     };
   }, []);
 
+  // Edge case: token expires in the tiny window between the state initializer
+  // and effects running. The initializer already handles already-expired tokens;
+  // API responses (401/403) handle the mid-session case.
   useEffect(() => {
     const token = getAuthToken();
     if (token && isJwtExpired(token)) {
@@ -42,12 +53,22 @@ export function useAuth() {
     const onFocus = () => {
       const token = getAuthToken();
       if (token && isJwtExpired(token)) {
-        assertValidAuthToken();
-        setUser(getStoredAuthUser());
+        handleUnauthorizedSession({ reason: "expired" });
+        setUser(null);
       }
     };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const token = getAuthToken();
+      if (token && isJwtExpired(token)) {
+        handleUnauthorizedSession({ reason: "expired" });
+      }
+    }, 60_000);
+    return () => window.clearInterval(interval);
   }, []);
 
   const login = async (data: LoginRequest) => {
@@ -61,7 +82,10 @@ export function useAuth() {
         setAuthSession(response.token, response.user);
       }
       window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
-      notifySuccess("Đăng nhập thành công", "Chào mừng bạn quay trở lại hệ thống.");
+      notifySuccess(
+        "Đăng nhập thành công",
+        "Chào mừng bạn quay trở lại hệ thống.",
+      );
       return response;
     } catch (err) {
       const apiError = err as { message?: string };
