@@ -35,6 +35,7 @@ import {
   preparePracticeQuestionsForSections,
   shuffleArray,
   generateGeneralQuestions,
+  applyMatchingPair,
 } from "./utils/testUtils";
 import { useGeneralTestState } from "./hooks/useGeneralTestState";
 import { useSonner } from "@/hooks/use-sonner";
@@ -544,13 +545,9 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
     onMatchingSelectLeft: (qid, left) =>
       setSelectedLeft((prev) => ({ ...prev, [qid]: left })),
     onMatchingMatch: (qid, left, right) => {
-      const newMatches = {
-        ...(matchingAnswers[qid] || {}),
-        [left]: right,
-      };
       setMatchingAnswers((prev) => ({
         ...prev,
-        [qid]: newMatches,
+        [qid]: applyMatchingPair(prev[qid] || {}, left, right),
       }));
       setSelectedLeft((prev) => ({ ...prev, [qid]: null }));
     },
@@ -658,6 +655,10 @@ export const GeneralKnowledgeTest: React.FC<GeneralKnowledgeTestProps> = ({
         questions={scopedQuestions}
         userAnswers={getCombinedAnswers()}
         onBack={handleBack}
+        onRetry={() => {
+          setIsReviewMode(false);
+          resetTestState();
+        }}
         onReview={() => setIsReviewMode(true)}
         title={
           isChapterGeneralTest

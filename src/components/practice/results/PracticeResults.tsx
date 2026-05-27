@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, XCircle, Home } from "lucide-react";
+import { CheckCircle2, XCircle, Home, RotateCcw } from "lucide-react";
 import type { Question } from "@/types";
 
 interface PracticeResultsProps {
@@ -11,6 +11,7 @@ interface PracticeResultsProps {
   userAnswers: Record<string, string | Record<string, string> | string[]>;
   onBack: () => void;
   onReview?: () => void;
+  onRetry?: () => void;
   title?: string;
   subtitle?: string;
 }
@@ -22,6 +23,7 @@ export const PracticeResults: React.FC<PracticeResultsProps> = ({
   userAnswers,
   onBack,
   onReview,
+  onRetry,
   title = "KẾT QUẢ BÀI LÀM",
   subtitle,
 }) => {
@@ -136,7 +138,18 @@ export const PracticeResults: React.FC<PracticeResultsProps> = ({
         })}
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col sm:flex-row gap-4">
+        {onRetry && (
+          <Button
+            size="lg"
+            variant="outline"
+            className="flex-1 h-12 font-bold border-2 border-orange-500 text-orange-600 hover:bg-orange-500/5"
+            onClick={onRetry}
+          >
+            <RotateCcw className="mr-2 h-4 w-4" />
+            LÀM LẠI
+          </Button>
+        )}
         <Button
           size="lg"
           variant="outline"

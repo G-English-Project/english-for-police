@@ -18,6 +18,7 @@ import {
   mapAnswersToBackendPayload,
   preparePracticeQuestions,
   shuffleArray,
+  applyMatchingPair,
 } from "./utils/testUtils";
 import { PracticeSidebar } from "./layout/PracticeSidebar";
 import { PracticeHeader } from "./layout/PracticeHeader";
@@ -63,6 +64,7 @@ export const QuickTest: React.FC<QuickTestProps> = ({
     areAllQuestionsAnswered,
     calculateCorrectCount,
     getCombinedAnswers,
+    resetAnswers,
   } = useQuestionAnswers(questions);
 
   const allQuestionsAnswered = areAllQuestionsAnswered(questions);
@@ -167,6 +169,12 @@ export const QuickTest: React.FC<QuickTestProps> = ({
         questions={questions}
         userAnswers={combinedAnswers}
         onBack={onBack}
+        onRetry={() => {
+          resetAnswers();
+          setSubmitted(false);
+          setIsReviewMode(false);
+          setCurrentIndex(0);
+        }}
         onReview={() => setIsReviewMode(true)}
         title="⚡ KẾT QUẢ TEST NHANH"
       />
@@ -330,10 +338,9 @@ export const QuickTest: React.FC<QuickTestProps> = ({
                       setSelectedLeft((prev) => ({ ...prev, [qid]: left }))
                     }
                     onMatchingMatch={(qid, left, right) => {
-                      const current = matchingAnswers[qid] || {};
                       setMatchingAnswers((prev) => ({
                         ...prev,
-                        [qid]: { ...current, [left]: right },
+                        [qid]: applyMatchingPair(prev[qid] || {}, left, right),
                       }));
                       setSelectedLeft((prev) => ({ ...prev, [qid]: null }));
                     }}

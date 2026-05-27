@@ -185,7 +185,7 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
                             "h-8 w-full justify-between px-2 text-[11px] font-medium transition-all",
                             isAvailable
                               ? "text-muted-foreground hover:text-primary"
-                              : "cursor-not-allowed text-muted-foreground/30 line-through",
+                              : "cursor-not-allowed text-muted-foreground/50",
                           )}
                           onClick={() => isAvailable && onStartVocabDrill(id)}
                         >

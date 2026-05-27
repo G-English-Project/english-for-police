@@ -12,6 +12,7 @@ import {
   mapAnswersToBackendPayload,
   pickBalancedPracticeSet,
   preparePracticeQuestions,
+  applyMatchingPair,
 } from "./utils/testUtils";
 import { PracticeSidebar } from "./layout/PracticeSidebar";
 import { PracticeResults } from "./results/PracticeResults";
@@ -48,6 +49,7 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
     areAllQuestionsAnswered,
     calculateCorrectCount,
     getCombinedAnswers,
+    resetAnswers,
   } = useQuestionAnswers(questions);
 
   const [timeLeft, setTimeLeft] = useState(600);
@@ -220,6 +222,14 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
         questions={questions}
         userAnswers={combinedAnswers}
         onBack={handleBackToHome}
+        onRetry={() => {
+          resetAnswers();
+          setShowResults(false);
+          setIsReviewMode(false);
+          setIsFinished(false);
+          setCurrentScore(null);
+          setTimeLeft(600);
+        }}
         onReview={() => setIsReviewMode(true)}
         title="KIỂM TRA NĂNG LỰC"
       />
@@ -351,10 +361,9 @@ export const TrainingGround: React.FC<TrainingGroundProps> = ({
                         setSelectedLeft((prev) => ({ ...prev, [qid]: left }))
                       }
                       onMatchingMatch={(qid, left, right) => {
-                        const current = matchingAnswers[qid] || {};
                         setMatchingAnswers((prev) => ({
                           ...prev,
-                          [qid]: { ...current, [left]: right },
+                          [qid]: applyMatchingPair(prev[qid] || {}, left, right),
                         }));
                         setSelectedLeft((prev) => ({ ...prev, [qid]: null }));
                       }}

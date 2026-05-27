@@ -69,7 +69,7 @@ export function PracticeMenuRow({
             : "font-medium text-muted-foreground hover:text-primary",
         disabled &&
           !isExpandable &&
-          "cursor-not-allowed text-muted-foreground/30 line-through",
+          "cursor-not-allowed text-muted-foreground/50",
       )}
       onClick={canClick}
     >

@@ -24,6 +24,8 @@ export const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
   showResults = false,
   disabled = false,
 }) => {
+  const locked = disabled || showResults;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -41,7 +43,7 @@ export const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
                 variant={
                   isSelected ? "default" : isMatched ? "secondary" : "outline"
                 }
-                disabled={disabled || isMatched || showResults}
+                disabled={locked}
                 onClick={() => onSelectLeft(pair.left)}
                 className="w-full justify-start text-xs h-auto min-h-10 py-2 relative overflow-hidden font-bold whitespace-normal text-left leading-tight"
               >
@@ -60,14 +62,23 @@ export const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
             Nghĩa Tiếng Việt
           </p>
           {shuffledRightOptions.map((pair) => {
-            const isMatched = Object.values(matchingAnswers).includes(
-              pair.right,
-            );
+            const matchedLeft = Object.entries(matchingAnswers).find(
+              ([, r]) => r === pair.right,
+            )?.[0];
+            const isMatched = !!matchedLeft;
+            const isSelectedPair =
+              !!selectedLeft && matchingAnswers[selectedLeft] === pair.right;
             return (
               <Button
                 key={pair.right}
-                variant={isMatched ? "secondary" : "outline"}
-                disabled={disabled || isMatched || !selectedLeft || showResults}
+                variant={
+                  isSelectedPair
+                    ? "default"
+                    : isMatched
+                      ? "secondary"
+                      : "outline"
+                }
+                disabled={locked || !selectedLeft}
                 onClick={() => {
                   if (selectedLeft) {
                     onMatch(selectedLeft, pair.right);
@@ -84,7 +95,8 @@ export const MatchingQuestion: React.FC<MatchingQuestionProps> = ({
 
       {!showResults && (
         <p className="text-[11px] text-muted-foreground italic text-center bg-muted/30 py-1.5 rounded-lg">
-          * Chọn một từ bên trái sau đó chọn nghĩa phù hợp bên phải
+          * Chọn từ bên trái, rồi chọn nghĩa bên phải. Nhấn lại từ đã ghép để
+          đổi cặp.
         </p>
       )}
 

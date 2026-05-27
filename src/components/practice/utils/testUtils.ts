@@ -162,6 +162,22 @@ export type SectionResult = {
 
 export const QUESTIONS_PER_PAGE = 20;
 
+/** Gán ghép cặp; nếu nghĩa phải đã gán cho vế trái khác thì bỏ ghép cũ. */
+export function applyMatchingPair(
+  current: Record<string, string>,
+  left: string,
+  right: string,
+): Record<string, string> {
+  const next = { ...current };
+  for (const [otherLeft, otherRight] of Object.entries(next)) {
+    if (otherRight === right && otherLeft !== left) {
+      delete next[otherLeft];
+    }
+  }
+  next[left] = right;
+  return next;
+}
+
 export function shuffleArray<T>(arr: T[]): T[] {
   const shuffled = [...arr];
   for (let i = shuffled.length - 1; i > 0; i--) {
