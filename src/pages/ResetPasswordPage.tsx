@@ -1,26 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-  KeyRound,
-  Loader2,
-  CheckCircle,
-  XCircle,
-  Eye,
-  EyeOff,
-} from "lucide-react";
+import { KeyRound, Loader2, CheckCircle, XCircle, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authService } from "@/services/auth.service";
 import type { ApiError } from "@/models/auth.model";
 
-type Status =
-  | "validating"
-  | "ready"
-  | "invalid"
-  | "submitting"
-  | "success"
-  | "error";
+type Status = "validating" | "ready" | "invalid" | "submitting" | "success" | "error";
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -35,7 +22,7 @@ export default function ResetPasswordPage() {
 
   useEffect(() => {
     if (!token) {
-      void Promise.resolve().then(() => setStatus("invalid"));
+      setStatus("invalid");
       return;
     }
     authService
@@ -111,8 +98,8 @@ export default function ResetPasswordPage() {
                   Liên kết không hợp lệ
                 </p>
                 <p className="text-xs text-muted-foreground max-w-xs mx-auto leading-relaxed">
-                  Liên kết đặt lại mật khẩu đã hết hạn hoặc đã được sử dụng. Vui
-                  lòng yêu cầu một liên kết mới.
+                  Liên kết đặt lại mật khẩu đã hết hạn hoặc đã được sử dụng.
+                  Vui lòng yêu cầu một liên kết mới.
                 </p>
               </div>
               <Button
@@ -148,9 +135,7 @@ export default function ResetPasswordPage() {
           )}
 
           {/* Form */}
-          {(status === "ready" ||
-            status === "submitting" ||
-            status === "error") && (
+          {(status === "ready" || status === "submitting" || status === "error") && (
             <form onSubmit={handleSubmit} className="space-y-5">
               {errorMessage && (
                 <div className="p-3.5 rounded bg-destructive/10 border border-destructive/20 text-xs font-semibold text-destructive">
@@ -216,9 +201,7 @@ export default function ResetPasswordPage() {
 
               <Button
                 type="submit"
-                disabled={
-                  status === "submitting" || !newPassword || !confirmPassword
-                }
+                disabled={status === "submitting" || !newPassword || !confirmPassword}
                 className="w-full h-12 primary-gradient text-white font-bold uppercase tracking-widest rounded shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
               >
                 {status === "submitting" ? (
