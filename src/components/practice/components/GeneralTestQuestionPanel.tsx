@@ -132,23 +132,36 @@ export const GeneralTestQuestionPanel: React.FC<
       </CardContent>
 
       {currentQuestion && (
-        <div className="border-t bg-muted/10 px-5 py-3 flex items-center justify-between gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0 flex items-center gap-1.5 font-bold text-xs border-primary/20 text-primary hover:bg-primary/5 disabled:opacity-30"
-            disabled={isFirstQuestion}
-            onClick={onPrevQuestion}
-          >
-            <ChevronLeft className="h-3.5 w-3.5" />
-            Câu Trước
-          </Button>
+        <div className="border-t bg-muted/10 px-5 py-3 flex flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0 flex items-center gap-1.5 font-bold text-xs border-primary/20 text-primary hover:bg-primary/5 disabled:opacity-30"
+              disabled={isFirstQuestion}
+              onClick={onPrevQuestion}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              Câu Trước
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0 flex items-center gap-1.5 font-bold text-xs border-primary/20 text-primary hover:bg-primary/5 disabled:opacity-30"
+              disabled={isLastQuestion || pagedSectionQuestionsLength === 0}
+              onClick={onNextQuestion}
+            >
+              Câu Sau
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
 
           {inlineSubmit && sectionQuestionsLength > 0 ? (
             <Button
               type="button"
               size="sm"
-              className="min-w-34 shrink-0 font-black text-xs primary-gradient police-shadow"
+              className="w-full font-black text-xs primary-gradient police-shadow"
               disabled={inlineSubmit.submitting || !inlineSubmit.canSubmit}
               onClick={inlineSubmit.onSubmit}
             >
@@ -158,20 +171,7 @@ export const GeneralTestQuestionPanel: React.FC<
                   ? "Nộp bài"
                   : "Nộp bài (làm hết câu hỏi)"}
             </Button>
-          ) : (
-            <div className="min-w-34 shrink-0" aria-hidden />
-          )}
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0 flex items-center gap-1.5 font-bold text-xs border-primary/20 text-primary hover:bg-primary/5 disabled:opacity-30"
-            disabled={isLastQuestion || pagedSectionQuestionsLength === 0}
-            onClick={onNextQuestion}
-          >
-            Câu Sau
-            <ChevronRight className="h-3.5 w-3.5" />
-          </Button>
+          ) : null}
         </div>
       )}
     </Card>
