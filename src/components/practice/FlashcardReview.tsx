@@ -439,7 +439,7 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
       <FlashcardStats learningCount={stats.learning} knownCount={stats.known} />
 
       <div className="w-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-8 mt-4 lg:mt-6">
-        <div className="w-full flex-1 max-w-3xl order-1 lg:order-2">
+        <div className="w-full flex-1 max-w-4xl order-1 lg:order-2">
           <Flashcard
             front={currentCard.front}
             back={currentCard.back}

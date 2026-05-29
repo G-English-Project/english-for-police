@@ -28,7 +28,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
 }) => {
   return (
     <div
-      className="flashcard-scene w-full max-w-2xl mx-auto aspect-4/5 md:aspect-16/10 min-h-[450px] md:min-h-[400px] relative group cursor-pointer"
+      className="flashcard-scene w-full max-w-4xl mx-auto h-[430px] sm:h-[400px] md:h-[380px] relative group cursor-pointer"
       onClick={onFlip}
     >
       {/* Decorative Glow Effect */}
@@ -42,7 +42,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
       >
         {/* Front Side — transform/backface only here; overflow on inner avoids Safari 3D bugs */}
         <div className="flashcard-face absolute inset-0">
-          <div className="absolute inset-0 bg-[#1a1f35] rounded-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col p-8 md:p-12 overflow-hidden border border-white/10 group-hover:border-primary/30 transition-colors duration-500">
+          <div className="absolute inset-0 bg-[#1a1f35] rounded-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col p-6 md:p-8 overflow-hidden border border-white/10 group-hover:border-primary/30 transition-colors duration-500">
             {/* Grain Overlay */}
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
 
@@ -69,7 +69,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 py-8">
-              <h2 className="text-4xl md:text-7xl font-black tracking-tighter text-white mb-6 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)]">
+              <h2 className="text-3xl md:text-5xl font-black tracking-tighter text-white mb-4 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] leading-tight">
                 {front}
               </h2>
               {phonetic && (
@@ -103,7 +103,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
 
         {/* Back Side */}
         <div className="flashcard-face flashcard-face--back absolute inset-0">
-          <div className="absolute inset-0 bg-[#0f1225] rounded-3xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] flex flex-col p-8 md:p-12 overflow-hidden border border-emerald-500/20">
+          <div className="absolute inset-0 bg-[#0f1225] rounded-3xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] flex flex-col p-6 md:p-8 overflow-hidden border border-emerald-500/20">
             {/* Gradient Highlight */}
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px]" />
 
@@ -114,7 +114,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 py-6 overflow-y-auto custom-scrollbar">
-              <h3 className="text-3xl md:text-6xl font-black text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-teal-300 mb-6 py-2 drop-shadow-sm">
+              <h3 className="text-2xl md:text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-teal-300 mb-4 py-1 drop-shadow-sm leading-tight">
                 {back}
               </h3>
 
