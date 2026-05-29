@@ -68,7 +68,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
               </Button>
             </div>
 
-            <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 py-8">
+            <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 py-3">
               <h2 className="text-3xl md:text-5xl font-normal tracking-tight text-white mb-4 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] leading-tight">
                 {front}
               </h2>
@@ -81,7 +81,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
               )}
             </div>
 
-            <div className="relative z-10 mt-auto pt-6 border-t border-white/5">
+            <div className="relative z-10 mt-auto pt-3 border-t border-white/5">
               <div className="flex items-center justify-center gap-3">
                 <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md shadow-inner">
                   <span className="text-white/40 text-[9px] font-black uppercase tracking-widest">
