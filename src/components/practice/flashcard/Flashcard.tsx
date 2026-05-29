@@ -69,7 +69,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 py-8">
-              <h2 className="text-3xl md:text-5xl font-black tracking-tighter text-white mb-4 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] leading-tight">
+              <h2 className="text-3xl md:text-5xl font-normal tracking-tight text-white mb-4 drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] leading-tight">
                 {front}
               </h2>
               {phonetic && (
@@ -114,7 +114,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
             </div>
 
             <div className="flex-1 flex flex-col items-center justify-center text-center relative z-10 py-6 overflow-y-auto custom-scrollbar">
-              <h3 className="text-2xl md:text-4xl font-black text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-teal-300 mb-4 py-1 drop-shadow-sm leading-tight">
+              <h3 className="text-2xl md:text-4xl font-normal text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-teal-300 mb-4 py-1 drop-shadow-sm leading-tight">
                 {back}
               </h3>
 
