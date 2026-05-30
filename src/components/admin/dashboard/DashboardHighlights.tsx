@@ -60,7 +60,7 @@ function StudentHighlightList({
   );
 }
 
-export function DashboardHighlights({
+export function vvvzz({
   topStudents,
   onSelectStudent,
 }: DashboardHighlightsProps) {

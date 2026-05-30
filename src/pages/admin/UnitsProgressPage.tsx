@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Activity, AlertTriangle } from "lucide-react";
 import { AdminPageLayout } from "@/components/admin/AdminPageLayout";
 import {
-  DashboardHighlights,
   DashboardKpiActivityRow,
   DashboardStudentTable,
   DashboardUnitTracksChart,
@@ -91,11 +90,6 @@ export default function UnitsProgressPage() {
             data={unitTrackAverages}
             isLoading={isLoadingTracks}
             error={tracksError}
-          />
-
-          <DashboardHighlights
-            topStudents={overview.topStudents}
-            onSelectStudent={(id) => void openStudentDetail(id)}
           />
 
           <DashboardStudentTable
