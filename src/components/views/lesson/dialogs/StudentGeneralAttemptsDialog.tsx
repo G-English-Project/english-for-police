@@ -1,16 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import type { GeneralAttemptStudentDetail } from "@/models/general-attempts.model";
 import { AttemptsStatsSummary } from "../charts/AttemptsStatsSummary";
-import { AttemptsTrendChart } from "../charts/AttemptsTrendChart";
-import { ChapterStatsChart } from "../charts/ChapterStatsChart";
 import { AttemptsDetailTable } from "../charts/AttemptsDetailTable";
 
 interface StudentGeneralAttemptsDialogProps {
@@ -24,8 +21,6 @@ interface StudentGeneralAttemptsDialogProps {
 export const StudentGeneralAttemptsDialog: React.FC<
   StudentGeneralAttemptsDialogProps
 > = ({ open, onOpenChange, data, isLoading, error }) => {
-  const [activeTab, setActiveTab] = useState("overview");
-
   if (!data && !isLoading && !error) {
     return null;
   }
@@ -34,18 +29,18 @@ export const StudentGeneralAttemptsDialog: React.FC<
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-xl sm:max-w-2xl md:max-w-6xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-xl">
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Loading attempts data...
+                Đang tải dữ liệu lần làm...
               </span>
             ) : error ? (
-              <span className="text-red-600">Error loading data</span>
+              <span className="text-red-600">Lỗi khi tải dữ liệu</span>
             ) : (
-              `${data?.fullName} - General Test Attempts`
+              `${data?.fullName} - Lần làm bài kiểm tra chung`
             )}
           </DialogTitle>
         </DialogHeader>
@@ -59,59 +54,29 @@ export const StudentGeneralAttemptsDialog: React.FC<
             <p className="font-semibold">{error.message}</p>
           </div>
         ) : data ? (
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="trends">Trends</TabsTrigger>
-              <TabsTrigger value="chapters">By Chapter</TabsTrigger>
-              <TabsTrigger value="details">Details</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="space-y-6">
+          <div className="space-y-6 sm:space-y-8">
+            {/* Overview Section */}
+            <section>
+              <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Tổng quan</h2>
               <AttemptsStatsSummary data={data} />
               {allAttempts.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  No attempts recorded yet
+                <div className="text-center py-4 text-muted-foreground">
+                  Chưa có lần làm nào
                 </div>
               )}
-            </TabsContent>
+            </section>
 
-            <TabsContent value="trends" className="space-y-6">
-              {allAttempts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No attempts to display trends
-                </div>
-              ) : (
-                <AttemptsTrendChart attempts={allAttempts} />
-              )}
-            </TabsContent>
-
-            <TabsContent value="chapters" className="space-y-6">
-              {data.chapters.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No chapter data available
-                </div>
-              ) : (
-                <ChapterStatsChart chapters={data.chapters} />
-              )}
-            </TabsContent>
-
-            <TabsContent value="details" className="space-y-6">
-              {allAttempts.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  No attempts to display
-                </div>
-              ) : (
+            {/* Details Section */}
+            {allAttempts.length > 0 && (
+              <section>
+                <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Chi tiết lần làm</h2>
                 <AttemptsDetailTable data={data} />
-              )}
-            </TabsContent>
-          </Tabs>
+              </section>
+            )}
+          </div>
         ) : null}
       </DialogContent>
     </Dialog>
   );
 };
+

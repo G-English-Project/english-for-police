@@ -40,48 +40,48 @@ export const AttemptsStatsSummary: React.FC<AttemptsStatsSummaryProps> = ({
   );
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-      <Card>
+    <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
+      <Card className="rounded-md">
         <CardHeader className="pb-2">
           <CardTitle className="text-xs font-medium text-muted-foreground">
-            Total Attempts
+            Tổng lần làm
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold">{totalAttempts}</p>
+          <p className="text-xl sm:text-2xl font-bold">{totalAttempts}</p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="rounded-md">
         <CardHeader className="pb-2">
           <CardTitle className="text-xs font-medium text-muted-foreground">
-            Average Score
+            Điểm trung bình
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold">{averageScore}%</p>
+          <p className="text-xl sm:text-2xl font-bold">{averageScore}%</p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="rounded-md">
         <CardHeader className="pb-2">
           <CardTitle className="text-xs font-medium text-muted-foreground">
-            Best Score
+            Điểm cao nhất
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold">{bestScore}%</p>
+          <p className="text-xl sm:text-2xl font-bold">{bestScore}%</p>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="rounded-md">
         <CardHeader className="pb-2">
           <CardTitle className="text-xs font-medium text-muted-foreground">
-            Correct Answers
+            Câu trả lời đúng
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold">
+          <p className="text-xl sm:text-2xl font-bold">
             {totalCorrect}/{totalQuestions}
           </p>
         </CardContent>
