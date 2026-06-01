@@ -1,8 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { speak } from "@/lib/speech";
 import { useNavigate } from "react-router-dom";
+import { BarChart3, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";  
 import type { Unit, FlaggedItem } from "../../types";
 import { useAuth } from "@/hooks/use-auth";
+import { useStudentGeneralAttempts } from "@/hooks/use-student-general-attempts";
+import { StudentGeneralAttemptsDialog } from "./lesson/dialogs/StudentGeneralAttemptsDialog";
 import { LessonTableOfContents } from "./lesson/LessonTableOfContents";
 import { LessonShortcutButtons } from "./lesson/LessonShortcutButtons";
 import { LessonVocabularySection } from "./lesson/LessonVocabularySection";
@@ -31,10 +35,11 @@ export const LessonView: React.FC<LessonViewProps> = ({
   onPhraseAction,
 }) => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [availableLanes, setAvailableLanes] = useState<Set<LessonTestLane>>(
     new Set(),
   );
+  const [attemptsDialogOpen, setAttemptsDialogOpen] = useState(false);
   const [lessonQuestions, setLessonQuestions] = useState<Question[]>([]);
 
   useEffect(() => {
@@ -69,6 +74,11 @@ export const LessonView: React.FC<LessonViewProps> = ({
   );
 
   const testsLocked = !isAuthenticated;
+
+  const { data: attemptsData, isLoading: attemptsLoading, error: attemptsError } =
+    useStudentGeneralAttempts(
+      attemptsDialogOpen ? user?.userId ?? null : null,
+    );
 
   const startFlashcards = () => navigate(`/flashcards/${unit.id}`);
   const startGeneralTest = (
@@ -259,6 +269,25 @@ export const LessonView: React.FC<LessonViewProps> = ({
     />
   );
 
+  const attemptsButtonCard = isAuthenticated && user ? (
+    <div className="overflow-hidden rounded-md border bg-card police-shadow">
+      <div className="p-4">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-10 w-full justify-between font-bold"
+          onClick={() => setAttemptsDialogOpen(true)}
+        >
+          <span className="flex items-center gap-1.5">
+            <BarChart3 className="h-4 w-4 shrink-0" />
+            Xem thống kê
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0" />
+        </Button>
+      </div>
+    </div>
+  ) : null;
+
   const shortcutsCard = (
     <div className="overflow-hidden rounded-md border bg-card police-shadow">
       <div className="p-4">{shortcutButtons}</div>
@@ -281,7 +310,10 @@ export const LessonView: React.FC<LessonViewProps> = ({
       </aside>
 
       {/* Shortcuts — mobile only: below TOC, above lesson content */}
-      <aside className="w-full shrink-0 lg:hidden">{shortcutsCard}</aside>
+      <aside className="w-full shrink-0 lg:hidden">
+        {shortcutsCard}
+        {attemptsButtonCard}
+      </aside>
 
       {/* Main Content Area */}
       <div className="min-w-0 max-w-full flex-1 space-y-12 overflow-x-hidden pb-24">
@@ -314,7 +346,16 @@ export const LessonView: React.FC<LessonViewProps> = ({
       {/* Sticky shortcuts — desktop: right column */}
       <aside className="hidden w-full shrink-0 lg:sticky lg:top-20 lg:block lg:w-64 lg:self-start">
         {shortcutsCard}
+        {attemptsButtonCard}
       </aside>
+
+      <StudentGeneralAttemptsDialog
+        open={attemptsDialogOpen}
+        onOpenChange={setAttemptsDialogOpen}
+        data={attemptsData}
+        isLoading={attemptsLoading}
+        error={attemptsError}
+      />
     </div>
   );
 };

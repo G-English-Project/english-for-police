@@ -212,7 +212,7 @@ export const LessonShortcutButtons: React.FC<LessonShortcutButtonsProps> = ({
                       </div>
                     </TooltipTrigger>
                     {!isAvailable && (
-                      <TooltipContent side="right" className="max-w-[200px]">
+                      <TooltipContent side="right" className="max-w-200px">
                         <p className="text-[10px] font-medium">
                           Phần luyện tập này hiện chưa có nội dung cho chương
                           này.
