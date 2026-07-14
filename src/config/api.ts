@@ -3,4 +3,4 @@ export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL?.trim() || "https://backend.espforpolice.vn";
 export const ASR_API_BASE_URL = "/api/asr";
 export const TTS_API_BASE_URL = "/api/tts";
-export const DEFAULT_TTS_VOICE = "en-us/mary_ann-glow_tts";
+export const DEFAULT_TTS_VOICE = "en-us/ljspeech-glow_tts";
