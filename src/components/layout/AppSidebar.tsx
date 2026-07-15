@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { speak } from "@/lib/speech";
+import { useTTS } from "@/hooks/use-tts";
 import { AudioRecorderButton } from "@/components/common/AudioRecorderButton";
 import type { FlaggedItem, Phrase, Unit, Vocabulary } from "@/types";
 import { Drawer, DrawerContent, DrawerHeader } from "@/components/ui/drawer";
@@ -61,6 +61,7 @@ export function AppSidebar({
   open,
   onOpenChange,
 }: AppSidebarProps) {
+  const { speak } = useTTS();
   const [query, setQuery] = useState("");
   const [expandedChapterIds, setExpandedChapterIds] = useState<number[]>([]);
 

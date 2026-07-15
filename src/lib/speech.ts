@@ -4,6 +4,20 @@ let preferredVoice: SpeechSynthesisVoice | null = null;
 let currentAudio: HTMLAudioElement | null = null;
 let browserTtsTimeout: number | null = null;
 
+// TTS API Status Tracking
+let consecutiveApiFailures = 0;
+let lastApiFailureNotified = 0;
+const NOTIFICATION_COOLDOWN_MS = 30000; // Don't spam notifications more than every 30 seconds
+let apiFailureCallbacks: ((apiDown: boolean) => void)[] = [];
+
+// Register callback for when API status changes
+export function onTTSApiStatusChange(callback: (apiDown: boolean) => void) {
+  apiFailureCallbacks.push(callback);
+  return () => {
+    apiFailureCallbacks = apiFailureCallbacks.filter((cb) => cb !== callback);
+  };
+}
+
 export function initSpeech() {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
@@ -38,6 +52,25 @@ export function unlockSpeech() {
   audio.play().catch(() => {});
 }
 
+function notifyApiFailure() {
+  const now = Date.now();
+  if (now - lastApiFailureNotified > NOTIFICATION_COOLDOWN_MS) {
+    lastApiFailureNotified = now;
+    apiFailureCallbacks.forEach((cb) => cb(true));
+    console.warn(
+      "[TTS] API is unavailable. Falling back to browser TTS. Check if the TTS service is running.",
+    );
+  }
+}
+
+function notifyApiRecovery() {
+  if (consecutiveApiFailures > 0) {
+    apiFailureCallbacks.forEach((cb) => cb(false));
+    console.log("[TTS] API is back online");
+  }
+  consecutiveApiFailures = 0;
+}
+
 export async function speak(text: string, opts?: { onend?: () => void }) {
   if (typeof window === "undefined") return;
 
@@ -50,6 +83,8 @@ export async function speak(text: string, opts?: { onend?: () => void }) {
   const triggerFallback = () => {
     if (!fallbackTriggered) {
       fallbackTriggered = true;
+      consecutiveApiFailures++;
+      notifyApiFailure();
       speakWithBrowser(text, opts);
     }
   };
@@ -64,20 +99,74 @@ export async function speak(text: string, opts?: { onend?: () => void }) {
     const audio = new Audio(url.toString());
     currentAudio = audio;
 
+    // Race: audio playback vs 1.5-second network timeout
+    // This ensures quick fallback if API is unreachable
+    const playPromise = audio.play();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(
+        () => reject(new Error("[TTS] Network timeout - API not responding")),
+        1500,
+      ),
+    );
+
+    // Also set a longer timeout just in case
+    const audioTimeout = setTimeout(() => {
+      if (currentAudio === audio) {
+        console.warn(
+          "[TTS] Audio playback timeout, falling back to browser TTS",
+        );
+        audio.pause();
+        triggerFallback();
+      }
+    }, 2000);
+
     audio.onended = () => {
+      clearTimeout(audioTimeout);
+      if (consecutiveApiFailures === 0) {
+        notifyApiRecovery();
+      }
       if (opts?.onend) opts.onend();
     };
 
     audio.onerror = (e) => {
-      console.warn("Audio element error, falling back to browser TTS", e);
+      clearTimeout(audioTimeout);
+      console.warn(
+        "[TTS] Audio element error (code:",
+        audio.error?.code,
+        "), falling back to browser TTS",
+        e,
+      );
       triggerFallback();
     };
 
-    await audio.play();
+    audio.onloadstart = () => {
+      clearTimeout(audioTimeout);
+      // Reset failures on successful load start
+      if (consecutiveApiFailures > 0) {
+        notifyApiRecovery();
+      }
+    };
+
+    // Race against timeout - whichever completes first
+    try {
+      await Promise.race([playPromise, timeoutPromise]);
+    } catch (raceError) {
+      if (
+        raceError instanceof Error &&
+        raceError.message.includes("Network timeout")
+      ) {
+        console.warn("[TTS]", raceError.message);
+        audio.pause();
+        triggerFallback();
+      } else {
+        throw raceError;
+      }
+    }
+
     return;
   } catch (error) {
     console.warn(
-      "Remote TTS execution failed, falling back to browser TTS",
+      "[TTS] Remote TTS execution failed, falling back to browser TTS:",
       error,
     );
     triggerFallback();

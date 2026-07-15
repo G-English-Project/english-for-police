@@ -11,7 +11,7 @@ import { FlashcardStats } from "./flashcard/FlashcardStats";
 import { Flashcard } from "./flashcard/Flashcard";
 import { getFlashcardStatusStorageKey } from "./flashcardStorage";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { speak } from "@/lib/speech";
+import { useTTS } from "@/hooks/use-tts";
 import { Progress } from "@/components/ui/progress";
 import {
   buildFlashcardCatalogFromUnit,
@@ -108,6 +108,7 @@ export const FlashcardReview: React.FC<FlashcardReviewProps> = ({
   onComplete,
   initialMode = "vocabulary",
 }) => {
+  const { speak } = useTTS();
   const { markFlashcardViews, unitsProgress, fetchUnitsProgress } =
     useProgress();
 

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { speak } from "@/lib/speech";
+import { useTTS } from "@/hooks/use-tts";
 import { useNavigate } from "react-router-dom";
 import { BarChart3, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";  
@@ -34,6 +34,7 @@ export const LessonView: React.FC<LessonViewProps> = ({
   toggleFlag,
   onPhraseAction,
 }) => {
+  const { speak } = useTTS();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
   const [availableLanes, setAvailableLanes] = useState<Set<LessonTestLane>>(

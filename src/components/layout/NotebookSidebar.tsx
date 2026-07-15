@@ -1,5 +1,5 @@
 import React from "react";
-import { speak } from "@/lib/speech";
+import { useTTS } from "@/hooks/use-tts";
 import type { Unit, FlaggedItem, Vocabulary, Phrase } from "../../types";
 import {
   Sheet,
@@ -35,6 +35,7 @@ export const NotebookSidebar: React.FC<NotebookSidebarProps> = ({
   onRemoveItem,
   onNavigateToUnit,
 }) => {
+  const { speak } = useTTS();
   const groupedItems = flaggedItems.reduce(
     (acc, item) => {
       const unit = lessons.find((l) => l.id === item.unitId);
